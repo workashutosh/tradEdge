@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import api from '../../api/apiInstance'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,7 +23,7 @@ const LoginScreen = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('https://kyclogin.twmresearchalert.com/session', {
+      const response = await api.post('/session', {
         number: whatsAppNumber,
         password: password,
         platform: 'mobile', // Add platform if required by your backend
@@ -37,7 +38,15 @@ const LoginScreen = () => {
       // Redirect to the main screen
       router.replace('/main');
     } catch (error) {
-      Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
+      // if it is an axios error from api
+      if (error instanceof AxiosError) {
+        // Now we can safely access error.response and error.response.data
+        const errorMessage = error.response?.data?.messages?.[0] || 'An error occurred during login';
+        Alert.alert('Login Failed', errorMessage);
+      }else{
+        Alert.alert('Login Failed', 'An unexpected error occurred');
+      }
+
     } finally {
       setLoading(false);
     }

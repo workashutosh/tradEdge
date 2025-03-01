@@ -36,7 +36,7 @@ export default function RootLayout() {
           <Stack.Screen name="main" options={{ headerShown: false }} />
         ) : (
           // Render the login screen if not logged in
-          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="signup" options={{ headerShown: false }} />
         )}
         {/* Add or remove other routes as needed */}
         {/* <Stack.Screen name="other" options={{ headerShown: false }} /> */}

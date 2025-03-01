@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons'; // Import the icon set
+import { Pressable } from 'react-native';
 
 const LoginScreen = () => {
   const [whatsAppNumber, setWhatsAppNumber] = useState('');
@@ -89,6 +90,10 @@ const LoginScreen = () => {
             <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>Log In</Text>
           </TouchableOpacity>
         )}
+        <Text style={styles.subtitle}>Don’t have an account? </Text>
+        <Pressable onPress={() => router.replace('/signup')}>
+          <Text style={styles.link}>Register</Text>
+        </Pressable>
       </View>
     </LinearGradient>
   );
@@ -180,6 +185,12 @@ const styles = StyleSheet.create({
   forgotPassword: {
     fontSize: 14,
     color: '#FF6F61',
+    textDecorationLine: 'underline',
+  },
+  link: {
+    fontSize: 16,
+    color: '#007AFF',
+    fontWeight: '500',
     textDecorationLine: 'underline',
   },
 });

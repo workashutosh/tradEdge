@@ -36,7 +36,7 @@ const LoginScreen = () => {
       await AsyncStorage.setItem('user_name', response.data.data.user_name);
 
       // Redirect to the main screen
-      router.replace('/main');
+      router.replace('/home');
     } catch (error) {
       Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
     } finally {
@@ -99,7 +99,7 @@ const LoginScreen = () => {
   );
 };
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',

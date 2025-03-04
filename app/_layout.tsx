@@ -1,5 +1,6 @@
-import { Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+// app/_layout.tsx
+import { Stack, Redirect } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider } from '../context/AuthContext';
@@ -8,15 +9,22 @@ export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
+  const checkLoginStatus = useCallback(async () => {
+    try {
       const accessToken = await AsyncStorage.getItem('access_token');
-      setIsLoggedIn(!!accessToken);
+      const loggedIn = !!accessToken;
+      setIsLoggedIn(loggedIn);
+    } catch (error) {
+      console.error('Error checking login status:', error);
+      setIsLoggedIn(false);
+    } finally {
       setIsLoading(false);
-    };
-
-    checkLoginStatus();
+    }
   }, []);
+
+  useEffect(() => {
+    checkLoginStatus();
+  }, [checkLoginStatus]);
 
   if (isLoading) {
     return (
@@ -28,19 +36,15 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <Stack  screenOptions={{
-              headerShown: false,
-            }}>
-        {isLoggedIn ? (
-          // Render the main screen if logged in
-          <Stack.Screen name="main" options={{ headerShown: false }} />
-        ) : (
-          // Render the login screen if not logged in
-          <Stack.Screen name="signup" options={{ headerShown: false }} />
-        )}
-        {/* Add or remove other routes as needed */}
-        {/* <Stack.Screen name="other" options={{ headerShown: false }} /> */}
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="main/KycDoc" options={{ title: 'KYC Documents' }} />
+        <Stack.Screen name="signup/index" options={{ headerShown: false }} /> {/* Match signup/index */}
+        <Stack.Screen name="login/index" options={{ headerShown: false }} />  {/* Add login/index */}
       </Stack>
+      {/* Redirect based on login status */}
+      {!isLoggedIn && <Redirect href="/signup" />}
+      {isLoggedIn && <Redirect href="/(tabs)/home" />}
     </AuthProvider>
   );
 }

@@ -20,7 +20,7 @@ export default function TabTwoScreen() {
     xhr.send(null);
   }, []);
 
-  const IpoSection = ({ title, data }) => (
+  const IpoSection = ({ title, data }: { title: string; data: { logo?: string; name: string; additional_text?: string }[] }) => (
     <View style={styles.sectionContainer}>
       <Text style={[styles.sectionTitle, isDarkMode && styles.textDark]}>
         {title} <Text style={styles.count}>({data.length})</Text>
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#2d2d2d',
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.5,

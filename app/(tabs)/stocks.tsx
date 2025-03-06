@@ -13,13 +13,30 @@ import {
   Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
 const { width } = Dimensions.get('window');
 
 export default function Stocks() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [stockData, setStockData] = useState(null);
+  interface StockData {
+    companyName: string;
+    industry: string;
+    currentPrice: {
+      BSE: number;
+      NSE: number;
+    };
+    yearHigh: number;
+    yearLow: number;
+    percentChange: number;
+    stockTechnicalData: {
+      days: number;
+      bsePrice: string;
+      nsePrice: string;
+    }[];
+  }
+
+  const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const colorScheme = useColorScheme();
@@ -81,11 +98,11 @@ export default function Stocks() {
       >
         <Text style={[styles.cardTitle, { color: colors.text }]}>Company Overview</Text>
         <View style={styles.infoRow}>
-          <Icon name="business" size={20} color={colors.text} />
+          <MaterialIcons name="business" size={20} color={colors.text} />
           <Text style={[styles.value, { color: colors.text, marginLeft: 8 }]}>{stockData.companyName}</Text>
         </View>
         <View style={styles.infoRow}>
-          <Icon name="work" size={20} color={colors.text} />
+          <MaterialIcons name="work" size={20} color={colors.text} />
           <Text style={[styles.value, { color: colors.text, marginLeft: 8 }]}>{stockData.industry}</Text>
         </View>
       </LinearGradient>
@@ -152,12 +169,9 @@ export default function Stocks() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <LinearGradient
-        colors={[colors.gradientStart, colors.gradientEnd]}
-        style={styles.header}
-      >
-        <Text style={[styles.title, { color: colors.text }]}>Stock Search</Text>
-      </LinearGradient>
+      <View style={[styles.header, isDark ? styles.headerDark : styles.headerLight]}>
+        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Stock Search</Text>
+      </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.searchContainer}>
           <TextInput
@@ -176,7 +190,7 @@ export default function Stocks() {
             style={[styles.searchButton, { backgroundColor: colors.primary }]}
             onPress={searchStock}
           >
-            <Icon name="search" size={24} color="#ffffff" />
+            <MaterialIcons name="search" size={24} color="#ffffff" />
           </TouchableOpacity>
         </View>
 
@@ -188,7 +202,7 @@ export default function Stocks() {
 
         {error && (
           <View style={[styles.errorContainer, { backgroundColor: colors.error }]}>
-            <Icon name="error" size={24} color="#ffffff" />
+            <MaterialIcons name="error" size={24} color="#ffffff" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -210,12 +224,25 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    padding: 5
+    paddingVertical: 12,
+    borderBottomWidth: 1,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  headerLight: {
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#eef1f5',
+  },
+  headerDark: {
+    backgroundColor: '#1e1e1e',
+    borderBottomColor: '#2d2d2d',
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '600',
     textAlign: 'center',
+    letterSpacing: 0.5,
+  },
+  textDark: {
+    color: '#ffffff',
   },
   scrollContent: {
     padding: 16,

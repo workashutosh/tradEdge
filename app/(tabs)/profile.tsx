@@ -41,7 +41,8 @@ export default function Profile() {
       await AsyncStorage.clear();
       router.replace('/login');
     } catch (error) {
-      Alert.alert('Logout Failed', error.response?.data?.messages?.[0] || 'An error occurred');
+      const errorMessage = (error as any)?.response?.data?.messages?.[0] || 'An error occurred';
+      Alert.alert('Logout Failed', errorMessage);
     }
   };
 
@@ -97,10 +98,13 @@ const styles = StyleSheet.create({
     borderBottomColor: '#2d2d2d',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
     letterSpacing: 0.5,
+  },
+  textDark: {
+    color: '#ffffff',
   },
   container: {
     flex: 1,
@@ -115,8 +119,5 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     fontSize: 16,
-  },
-  textDark: {
-    color: '#ffffff',
   },
 });

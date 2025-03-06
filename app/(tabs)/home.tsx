@@ -1,22 +1,27 @@
-import { Image, StyleSheet, Platform, TouchableOpacity, useColorScheme, Modal, View, Dimensions } from 'react-native';
+import { Image, StyleSheet, Platform, TouchableOpacity, useColorScheme, SafeAreaView, View } from 'react-native';
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, UserCircle2 } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BuyProPopup } from '@/components/BuyProPopup'; // Import the popup
 
 export default function HomeScreen() {
-  const [username, setUsername] = useState('User'); // State for username
-  const [isBuyProModalVisible, setIsBuyProModalVisible] = useState(false); // State for modal visibility
-  const navigation = useNavigation();
+  const [username, setUsername] = useState('User');
+  const [isPopupVisible, setIsPopupVisible] = useState(false); // Add popup state
+  const insets = useSafeAreaInsets();
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = {
     background: isDark ? '#121212' : '#f7f7f7',
+    headerBackground: isDark ? '#1e1e1e' : '#ffffff',
+    headerBorderBottom: isDark ? '#2d2d2d' : '#eef1f5',
     text: isDark ? '#ffffff' : '#333333',
     card: isDark ? '#1e1e1e' : '#ffffff',
     border: isDark ? '#333333' : '#e0e0e0',
@@ -28,8 +33,7 @@ export default function HomeScreen() {
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
   };
 
-  // Load username from AsyncStorage on mount
-  React.useEffect(() => {
+  useEffect(() => {
     const loadUsername = async () => {
       try {
         const storedUsername = await AsyncStorage.getItem('user_name');
@@ -42,39 +46,46 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <>
+    <SafeAreaView style={styles.safeArea}>
       {/* Fixed Header */}
-      <ThemedView style={[styles.fixedHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View
+        style={[styles.fixedHeader, isDark ? styles.headerDark : styles.headerLight]}
+      >
         <ThemedView style={[styles.profileContainer, { backgroundColor: colors.card }]}>
-          <TouchableOpacity onPress={() => navigation.navigate('profile')}>
-            <UserCircle2 size={30} color={colors.text} />
+          <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')}>
+            {/* <UserCircle2 size={30} color={colors.text} /> */}
+            <FontAwesome name="user-circle-o" size={28} color={colors.text} />
           </TouchableOpacity>
-          <ThemedText style={[styles.greetingText, { color: colors.text }]}>Hi, {username}</ThemedText>
+          <ThemedText style={[styles.greetingText, { color: colors.text }]}>
+            Hi, {username}
+          </ThemedText>
         </ThemedView>
         <TouchableOpacity
           style={[styles.buyProButton, { backgroundColor: colors.primary }]}
-          onPress={() => setIsBuyProModalVisible(true)} // Show modal on click
+          onPress={() => setIsPopupVisible(true)} // Open popup
         >
           <Star size={16} color={colors.warning} fill={colors.warning} style={styles.starIcon} />
           <ThemedText style={styles.buyProText}>Buy Pro</ThemedText>
         </TouchableOpacity>
-      </ThemedView>
+      </View>
 
       {/* Parallax Scroll Content */}
       <ParallaxScrollView
         headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-        headerImage={
-          <Image source={require('../../assets/images/react-logo.png')} style={styles.reactLogo} />
-        }>
+        headerImage={<Image source={require('../../assets/images/react-logo.png')} style={styles.reactLogo} />}
+      >
         <ThemedView style={[styles.titleContainer, { backgroundColor: colors.background }]}>
-          <ThemedText type="title" style={{ color: colors.text }}>Welcome!</ThemedText>
+          <ThemedText type="title" style={{ color: colors.text }}>
+            Welcome!
+          </ThemedText>
           <HelloWave />
         </ThemedView>
         <ThemedView style={[styles.stepContainer, { backgroundColor: colors.background }]}>
-          <ThemedText type="subtitle" style={{ color: colors.text }}>Step 1: Try it</ThemedText>
+          <ThemedText type="subtitle" style={{ color: colors.text }}>
+            Step 1: Try it
+          </ThemedText>
           <ThemedText style={{ color: colors.text }}>
-            Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-            Press{' '}
+            Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes. Press{' '}
             <ThemedText type="defaultSemiBold">
               {Platform.select({ ios: 'cmd + d', android: 'cmd + m', web: 'F12' })}
             </ThemedText>{' '}
@@ -82,13 +93,17 @@ export default function HomeScreen() {
           </ThemedText>
         </ThemedView>
         <ThemedView style={[styles.stepContainer, { backgroundColor: colors.background }]}>
-          <ThemedText type="subtitle" style={{ color: colors.text }}>Step 2: Explore</ThemedText>
+          <ThemedText type="subtitle" style={{ color: colors.text }}>
+            Step 2: Explore
+          </ThemedText>
           <ThemedText style={{ color: colors.text }}>
             Tap the Explore tab to learn more about what's included in this starter app.
           </ThemedText>
         </ThemedView>
         <ThemedView style={[styles.stepContainer, { backgroundColor: colors.background }]}>
-          <ThemedText type="subtitle" style={{ color: colors.text }}>Step 3: Get a fresh start</ThemedText>
+          <ThemedText type="subtitle" style={{ color: colors.text }}>
+            Step 3: Get a fresh start
+          </ThemedText>
           <ThemedText style={{ color: colors.text }}>
             When you're ready, run{' '}
             <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
@@ -99,47 +114,41 @@ export default function HomeScreen() {
         </ThemedView>
       </ParallaxScrollView>
 
-      {/* Buy Pro Modal */}
-      <Modal
-        visible={isBuyProModalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setIsBuyProModalVisible(false)} // Close on back press (Android)
-      >
-        <View style={styles.modalOverlay}>
-          <ThemedView style={[styles.modalContent, { backgroundColor: colors.card }]}>
-            <ThemedText type="title" style={[styles.modalTitle, { color: colors.text }]}>
-              Upgrade to Pro
-            </ThemedText>
-            <ThemedText style={[styles.modalText, { color: colors.text }]}>
-              Unlock premium features with a Pro subscription! Enjoy exclusive content, advanced tools, and more.
-            </ThemedText>
-            <TouchableOpacity
-              style={[styles.closeButton, { backgroundColor: colors.primary }]}
-              onPress={() => setIsBuyProModalVisible(false)}
-            >
-              <ThemedText style={styles.closeButtonText}>Close</ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-        </View>
-      </Modal>
-    </>
+      {/* Buy Pro Popup */}
+      <BuyProPopup
+        visible={isPopupVisible}
+        onClose={() => setIsPopupVisible(false)}
+        colors={colors}
+      />
+    </SafeAreaView>
   );
 }
 
+// Styles remain the same
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   fixedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     zIndex: 10,
+  },
+  headerLight: {
+    backgroundColor: '#ffffff',
+    borderBottomColor: '#eef1f5',
+  },
+  headerDark: {
+    backgroundColor: '#1e1e1e',
+    borderBottomColor: '#2d2d2d',
   },
   profileContainer: {
     flexDirection: 'row',
@@ -180,38 +189,5 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     position: 'absolute',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent overlay
-  },
-  modalContent: {
-    height: Dimensions.get('window').height * 0.6, // 3/5 of screen height
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  modalText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  closeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-  },
-  closeButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });

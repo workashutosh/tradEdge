@@ -38,7 +38,6 @@ export default function RootLayout() {
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="main/KycDoc" options={{ title: 'KYC Documents' }} />
         <Stack.Screen name="signup/index" options={{ headerShown: false }} /> {/* Match signup/index */}
         <Stack.Screen name="login/index" options={{ headerShown: false }} />  {/* Add login/index */}
       </Stack>

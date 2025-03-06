@@ -6,7 +6,7 @@ import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Redirect } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { Home, Compass, User, TrendingUp, Newspaper } from 'lucide-react-native';
+import { Home, Compass, User, TrendingUp, Newspaper, Crown } from 'lucide-react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -81,6 +81,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="trades"
+        options={{
+          title: 'Trades',
+          tabBarIcon: ({ color }) => (
+            <Crown size={24} fill="rgb(255, 221, 0)" color="rgb(255, 221, 0)" strokeWidth={2.5} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
           title: 'IPO',
@@ -89,7 +98,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="news"
         options={{
           title: 'News',
@@ -97,7 +106,7 @@ export default function TabLayout() {
             <Newspaper size={24} color={color} strokeWidth={2.5} />
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="profile"
         options={{

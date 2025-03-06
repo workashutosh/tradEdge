@@ -37,7 +37,7 @@ const LoginScreen = () => {
 
       // Redirect to the main screen
       router.replace('/home');
-    } catch (error) {
+    } catch (error: any) {
       Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
     } finally {
       setLoading(false);

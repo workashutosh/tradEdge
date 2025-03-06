@@ -10,6 +10,7 @@ import {
   Image,
   ScrollView,
   Linking,
+  KeyboardTypeOptions,
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
@@ -160,28 +161,25 @@ const SignupScreen = () => {
           Alert.alert('Login Failed', 'Auto-login failed. Please log in manually.');
           router.replace('/login'); // Redirect to login if auto-login fails
         }
-      } catch (error) {
+      } catch (error: any) {
         if (
-          error &&
-          error.response?.data?.status === 'error' &&
+          error?.response?.data?.status === 'error' &&
           (
-            error.response?.data?.message === 'WhatsApp number already exists' ||
-            error.response?.data?.message === 'WhatsApp number already exists and Email already exists'
+            error.response.data.message === 'WhatsApp number already exists' ||
+            error.response.data.message === 'WhatsApp number already exists and Email already exists'
           )
         ) {
           Alert.alert('Signup Failed', 'WhatsApp number already exists! Try logging in.');
           router.replace('/login');
         } else if (
-          error &&
-          error.response?.data?.status === 'error' &&
-          error.response?.data?.message === 'Email already exists'
+          error?.response?.data?.status === 'error' &&
+          error.response.data.message === 'Email already exists'
         ) {
           Alert.alert('Signup Failed', 'Email already exists!');
           setCurrentStep(2);
         } else if (
-          error &&
-          error.response?.data?.status === 'error' &&
-          error.response?.data?.message === 'Email already exists'
+          error?.response?.data?.status === 'error' &&
+          error.response.data.message === 'Email already exists'
         ) {
           Alert.alert('Signup Failed', 'Email already exists!');
           setCurrentStep(2);
@@ -232,8 +230,8 @@ const SignupScreen = () => {
                 value={fields[currentStep].value}
                 onChangeText={fields[currentStep].setValue}
                 secureTextEntry={fields[currentStep].secureTextEntry}
-                keyboardType={fields[currentStep].keyboardType || 'default'}
-                autoCapitalize={fields[currentStep].autoCapitalize || 'sentences'}
+                keyboardType={fields[currentStep].keyboardType as KeyboardTypeOptions || 'default'}
+                autoCapitalize={fields[currentStep].autoCapitalize as 'none' | 'sentences' | 'words' | 'characters' || 'sentences'}
               />
               <TouchableOpacity
                 style={styles.eyeIcon}
@@ -253,9 +251,9 @@ const SignupScreen = () => {
               placeholderTextColor="#999"
               value={fields[currentStep].value}
               onChangeText={fields[currentStep].setValue}
-              keyboardType={fields[currentStep].keyboardType || 'default'}
               maxLength={fields[currentStep].maxLength}
-              autoCapitalize={fields[currentStep].autoCapitalize || 'sentences'}
+              keyboardType={fields[currentStep].keyboardType as KeyboardTypeOptions || 'default'}
+              autoCapitalize={fields[currentStep].autoCapitalize as 'none' | 'sentences' | 'words' | 'characters' || 'sentences'}
               />
             )}
         

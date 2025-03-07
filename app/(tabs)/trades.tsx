@@ -460,7 +460,7 @@ export default function Trades() {
                 </View> */}
 
                 <View style={styles.priceRow}>
-                  <ThemedText style={[styles.minInvestment, { color: colors.primary }]}>
+                  <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
                     Min. Investment: {item.minInvestment}
                   </ThemedText>
                 </View>
@@ -597,7 +597,7 @@ export default function Trades() {
                 </View> */}
 
                 <View style={styles.priceRow}>
-                  <ThemedText style={[styles.minInvestment, { color: colors.primary }]}>
+                  <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
                   Min. Investment: {item.minInvestment}
                   </ThemedText>
                 </View>

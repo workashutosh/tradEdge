@@ -1,26 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, SafeAreaView, useColorScheme } from 'react-native';
+import { ThemedView } from '@/components/ThemedView';
 
 export default function TabTwoScreen() {
-  const [ipoData, setIpoData] = useState({ upcoming: [], active: [], closed: [] });
+  interface IpoItem {
+    logo?: string;
+    name?: string;
+    additional_text?: string;
+  }
+
+  const [ipoData, setIpoData] = useState<{ upcoming: IpoItem[]; active: IpoItem[]; closed: IpoItem[] }>({ upcoming: [], active: [], closed: [] });
+  const [error, setError] = useState<string | null>(null);
   const isDarkMode = useColorScheme() === 'dark';
 
   useEffect(() => {
     const xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
+    
     xhr.addEventListener('readystatechange', function () {
       if (this.readyState === this.DONE) {
-        setIpoData(JSON.parse(this.responseText));
+        if (this.status === 200) {
+          try {
+            const data = JSON.parse(this.responseText);
+            // Ensure all required arrays exist, even if API doesn't provide them
+            setIpoData({
+              upcoming: data.upcoming || [],
+              active: data.active || [],
+              closed: data.closed || []
+            });
+          } catch (e) {
+            setError('Failed to parse API response');
+            setIpoData({ upcoming: [], active: [], closed: [] });
+          }
+        } else {
+          setError("Cant't fetch data");
+          setIpoData({ upcoming: [], active: [], closed: [] });
+        }
       }
     });
 
     xhr.open('GET', 'https://indian-stock-exchange-api2.p.rapidapi.com/ipo');
-    xhr.setRequestHeader('x-rapidapi-key', 'cd0ac0840bmshd6334a116996692p12ad12jsn5726d4d6525a');
+    xhr.setRequestHeader('x-rapidapi-key', 'bc620173a1msh189575d170e4385p16222fjsnfad95363999a');
     xhr.setRequestHeader('x-rapidapi-host', 'indian-stock-exchange-api2.p.rapidapi.com');
     xhr.send(null);
+
+    // Cleanup function
+    return () => {
+      xhr.abort();
+    };
   }, []);
 
-  const IpoSection = ({ title, data }: { title: string; data: { logo?: string; name: string; additional_text?: string }[] }) => (
+  const IpoSection: React.FC<{ title: string; data?: IpoItem[] }> = ({ title, data = [] }) => (  // Default empty array if data is undefined
     <View style={styles.sectionContainer}>
       <Text style={[styles.sectionTitle, isDarkMode && styles.textDark]}>
         {title} <Text style={styles.count}>({data.length})</Text>
@@ -42,7 +72,7 @@ export default function TabTwoScreen() {
             )}
             <View style={styles.cardContent}>
               <Text style={[styles.cardTitle, isDarkMode && styles.textDark]} numberOfLines={1}>
-                {item.name}
+                {item.name || 'Unknown'}
               </Text>
               <Text style={[styles.cardSubtitle, isDarkMode && styles.textDark]} numberOfLines={2}>
                 {item.additional_text || 'Bidding dates yet to be announced'}
@@ -60,13 +90,19 @@ export default function TabTwoScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, isDarkMode ? styles.backgroundDark : styles.backgroundLight]}>
-      <View style={[styles.header, isDarkMode ? styles.headerDark : styles.headerLight]}>
+      <View style={[styles.header]}>
         <Text style={[styles.headerTitle, isDarkMode && styles.textDark]}>IPO Listings</Text>
       </View>
+      {error && (
+        <Text style={[styles.errorText, isDarkMode && styles.textDark]}>
+          Error: {error}
+        </Text>
+      )}
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <IpoSection title="Open" data={ipoData.active} />
         <IpoSection title="Upcoming" data={ipoData.upcoming} />
         <IpoSection title="Closed" data={ipoData.closed} />
+        <ThemedView style={[{paddingBottom: 70, backgroundColor: isDarkMode ? '#121212' : '#f5f7fa'}]} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -84,15 +120,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerLight: {
-    backgroundColor: '#ffffff',
-    borderBottomColor: '#eef1f5',
-  },
-  headerDark: {
-    backgroundColor: '#1e1e1e',
-    borderBottomColor: '#2d2d2d',
   },
   headerTitle: {
     fontSize: 20,
@@ -177,5 +204,10 @@ const styles = StyleSheet.create({
   },
   textDark: {
     color: '#ffffff',
+  },
+  errorText: {
+    color: '#ff4444',
+    textAlign: 'center',
+    padding: 10,
   },
 });

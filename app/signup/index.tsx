@@ -78,7 +78,7 @@ const SignupScreen = () => {
           return 'WhatsApp number must be a 10-digit number';
         }
         break;
-        
+
       case 1: // Full Name
         if (value.length < 2) {
           return 'Full name must be at least 2 characters long';
@@ -129,31 +129,31 @@ const SignupScreen = () => {
         // Step 1: Signup API Request
         const response = await axios.put('http://gateway.twmresearchalert.com/kyc', payload);
         Alert.alert('Success', 'Account created successfully! Logging you in...');
-      
+
         // Step 2: Prepare Login Payload
         const loginPayload = {
           number: whatsAppNumber,
           password: password,
           platform: 'mobile',
         };
-      
+
         try {
           // Step 3: Login API Request
           const loginResponse = await axios.post(
             'https://kyclogin.twmresearchalert.com/session',
             loginPayload
           );
-      
+
           const loginData = loginResponse.data.data;
           // console.log('Login Successful:', loginData);
-      
+
           // Step 4: Store Tokens in AsyncStorage
           await AsyncStorage.setItem('access_token', loginData.access_token);
           await AsyncStorage.setItem('refresh_token', loginData.refresh_token);
           await AsyncStorage.setItem('user_id', loginData.user_id);
           await AsyncStorage.setItem('user_name', loginData.user_name);
-      
-      
+
+
           // Step 6: Navigate to home Page
           router.replace('/home');
         } catch (loginError) {
@@ -189,40 +189,39 @@ const SignupScreen = () => {
         }
       } finally {
         setLoading(false);
-      }      
+      }
 
     } else {
       setCurrentStep(currentStep + 1);
     }
   };
 
-    return (
-      <LinearGradient colors={['#306ee8', '#306ee8']} style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.innerContainer}>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
-              <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
-              <Text style={[styles.title, { fontFamily: 'San Francisco', color: '#306ee9', marginLeft: 10 }]}>
+  return (
+    <LinearGradient colors={['#306ee8', '#306ee8']} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.innerContainer}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+            <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
+            <Text style={[styles.title, { fontFamily: 'San Francisco', color: '#306ee9', marginLeft: 10 }]}>
               TradEdge
-              </Text>
-            </View>
-            
-            {/* Updated Title */}
-            <Text style={[styles.title, { fontFamily: 'San Francisco' }]}>
-              Join Now to Get <Text style={{ color: '#306ee9' }}>3 Free Trades</Text>
             </Text>
-            
-            {/* Moved "Equity | Futures | Options | Commodities" */}
-            <Text style={styles.subtitle}>
-              Equity | Futures | Options | Commodities
-            </Text>
-        
-            <Text style={styles.subtitle}>Create your account</Text>
-        
-            {/* Signup Form Fields */}
-            {currentStep === fields.length - 1 ? (
-              <View style={styles.passwordContainer}>
+          </View>
+
+          {/* Updated Title */}
+          <Text style={[styles.title, { fontFamily: 'San Francisco' }]}>
+            Join Now to Get <Text style={{ color: '#306ee9' }}>3 Free Trades</Text>
+          </Text>
+
+          {/* Moved "Equity | Futures | Options | Commodities" */}
+          <Text style={styles.subtitle}>
+            Equity | Futures | Options | Commodities
+          </Text>
+
+          <Text style={styles.subtitle}>Create your account</Text>
+
+          {/* Signup Form Fields */}
+          {currentStep === fields.length - 1 ? (
+            <View style={styles.passwordContainer}>
               <TextInput
                 style={[styles.input, styles.passwordInput, { fontFamily: 'San Francisco' }]}
                 placeholder={fields[currentStep].placeholder}
@@ -238,14 +237,14 @@ const SignupScreen = () => {
                 onPress={() => setShowPassword(!showPassword)}
               >
                 <MaterialIcons
-                name={showPassword ? 'visibility-off' : 'visibility'}
-                size={24}
-                color="#999"
+                  name={showPassword ? 'visibility-off' : 'visibility'}
+                  size={24}
+                  color="#999"
                 />
               </TouchableOpacity>
-              </View>
-            ) : (
-              <TextInput
+            </View>
+          ) : (
+            <TextInput
               style={[styles.input, { fontFamily: 'San Francisco' }]}
               placeholder={fields[currentStep].placeholder}
               placeholderTextColor="#999"
@@ -254,41 +253,41 @@ const SignupScreen = () => {
               maxLength={fields[currentStep].maxLength}
               keyboardType={fields[currentStep].keyboardType as KeyboardTypeOptions || 'default'}
               autoCapitalize={fields[currentStep].autoCapitalize as 'none' | 'sentences' | 'words' | 'characters' || 'sentences'}
-              />
-            )}
-        
-            {loading ? (
-              <ActivityIndicator size="large" color="#FFFFFF" />
-            ) : (
-              <TouchableOpacity style={styles.button} onPress={handleNext}>
+            />
+          )}
+
+          {loading ? (
+            <ActivityIndicator size="large" color="#FFFFFF" />
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleNext}>
               <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>
                 {currentStep === fields.length - 1 ? 'Register' : 'Next'}
               </Text>
-              </TouchableOpacity>
-            )}
-        
-            <Text style={styles.subtitle}>
-              Already have an account?{' '}
-              <Text style={styles.link} onPress={() => router.replace('/login')}>
+            </TouchableOpacity>
+          )}
+
+          <Text style={styles.subtitle}>
+            Already have an account?{' '}
+            <Text style={styles.link} onPress={() => router.replace('/login')}>
               Log In
-              </Text>
             </Text>
-        
-            {/* Moved Terms & Privacy Policy to the Bottom */}
-            <View style={styles.bottomContainer}>
-              <Text style={[styles.subtitle, { fontFamily: 'San Francisco', textAlign: 'center' }]}>
-              By continuing, you agree to  
-              <Text style={{ color: '#306ee9' }} onPress={() => Linking.openURL('https://yourwebsite.com/terms')}> Terms of Service </Text>  
-              and  
+          </Text>
+
+          {/* Moved Terms & Privacy Policy to the Bottom */}
+          <View style={styles.bottomContainer}>
+            <Text style={[styles.subtitle, { fontFamily: 'San Francisco', textAlign: 'center' }]}>
+              By continuing, you agree to
+              <Text style={{ color: '#306ee9' }} onPress={() => Linking.openURL('https://yourwebsite.com/terms')}> Terms of Service </Text>
+              and
               <Text style={{ color: '#306ee9' }} onPress={() => Linking.openURL('https://yourwebsite.com/privacy')}> Privacy Policy.{'\n'}</Text>
-              </Text>
-              <Text style={{ fontFamily: 'San Francisco', textAlign: 'center' }}>SEBI Reg. Research Analyst</Text>
-            </View>
-        
-            </View>
-        </ScrollView>
-      </LinearGradient>
-    );    
+            </Text>
+            <Text style={{ fontFamily: 'San Francisco', textAlign: 'center' }}>SEBI Reg. Research Analyst</Text>
+          </View>
+
+        </View>
+      </ScrollView>
+    </LinearGradient>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -347,7 +346,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 30,
     fontSize: 16,
     color: '#333',
   },

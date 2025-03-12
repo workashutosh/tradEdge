@@ -26,12 +26,8 @@ interface ServiceItem {
   minInvestment: string;
   icon: string;
   categoryTag: string;
-  additionalInfo: string[];
-}
-
-interface ServiceCategory {
   category: string;
-  items: ServiceItem[];
+  additionalInfo: string[];
 }
 
 export default function Trades() {
@@ -52,6 +48,7 @@ export default function Trades() {
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
     tagBackground: isDark ? '#333333' : '#ffffff',
     selectedTagBackground: '#3498db',
+    shadowColor: isDark ? 'white' : 'black',
   };
 
   const getTagStyle = (tag: string): { borderColor: string; icon: string } => {
@@ -66,234 +63,221 @@ export default function Trades() {
     return { borderColor: colors.primary, icon: 'info' };
   };
 
-  const services: ServiceCategory[] = [
+  const services: ServiceItem[] = [
     {
+      title: 'Cash Intraday',
+      desc: 'Intraday calls for cash market with daily recommendations.',
+      traders: '1-2 calls/day',
+      tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
+      credits: '₹9,500 / 45 Credits',
+      minInvestment: '₹25,000',
+      icon: 'trending-up',
+      categoryTag: 'Equity',
       category: 'Intraday Packages',
-      items: [
-        {
-          title: 'Cash Intraday',
-          desc: 'Intraday calls for cash market with daily recommendations.',
-          traders: '1-2 calls/day',
-          tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
-          credits: '₹9,500 / 45 Credits',
-          minInvestment: '₹25,000',
-          icon: 'trending-up',
-          categoryTag: 'Equity',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'Index Futures',
-          desc: 'NIFTY & BANKNIFTY futures with precise entries.',
-          traders: '1-2 calls/day',
-          tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
-          credits: '₹9,000 / 45 Credits',
-          minInvestment: '₹50,000',
-          icon: 'bar-chart',
-          categoryTag: 'Index Future',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
       ],
     },
     {
+      title: 'Index Futures',
+      desc: 'NIFTY & BANKNIFTY futures with precise entries.',
+      traders: '1-2 calls/day',
+      tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
+      credits: '₹9,000 / 45 Credits',
+      minInvestment: '₹50,000',
+      icon: 'bar-chart',
+      categoryTag: 'Index Future',
+      category: 'Intraday Packages',
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'Stock Options',
+      desc: 'High-accuracy options trading calls.',
+      traders: '1-2 calls/day',
+      tags: ['High Risk', 'Avg ₹3,524/trade'],
+      credits: '₹9,500 / 45 Credits',
+      minInvestment: '₹25,000',
+      icon: 'tune', // Replaced "options" with "tune"
+      categoryTag: 'Stock Option',
       category: 'Options Packages',
-      items: [
-        {
-          title: 'Stock Options',
-          desc: 'High-accuracy options trading calls.',
-          traders: '1-2 calls/day',
-          tags: ['High Risk', 'Avg ₹3,524/trade'],
-          credits: '₹9,500 / 45 Credits',
-          minInvestment: '₹25,000',
-          icon: 'tune', // Replaced "options" with "tune"
-          categoryTag: 'Stock Option',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'Index Options',
-          desc: 'Strategic trading for index options.',
-          traders: '1-2 calls/day',
-          tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
-          credits: '₹9,000 / 45 Credits',
-          minInvestment: '₹25,000',
-          icon: 'tune', // Replaced "options" with "tune"
-          categoryTag: 'Index Option',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
       ],
     },
     {
+      title: 'Index Options',
+      desc: 'Strategic trading for index options.',
+      traders: '1-2 calls/day',
+      tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
+      credits: '₹9,000 / 45 Credits',
+      minInvestment: '₹25,000',
+      icon: 'tune', // Replaced "options" with "tune"
+      categoryTag: 'Index Option',
+      category: 'Options Packages',
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'Premium Stocks',
+      desc: 'Short-term stock picks for consistent gains.',
+      traders: '1-2 calls/week',
+      tags: ['Low Risk', 'Avg ₹2,652/trade'],
+      credits: '₹56,700 / 500 Credits',
+      minInvestment: '₹1,00,000',
+      icon: 'attach-money',
+      categoryTag: 'Equity',
       category: 'Investment Packages',
-      items: [
-        {
-          title: 'Premium Stocks',
-          desc: 'Short-term stock picks for consistent gains.',
-          traders: '1-2 calls/week',
-          tags: ['Low Risk', 'Avg ₹2,652/trade'],
-          credits: '₹56,700 / 500 Credits',
-          minInvestment: '₹1,00,000',
-          icon: 'attach-money',
-          categoryTag: 'Equity',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'Multibagger Stocks',
-          desc: 'High-potential stocks for long-term growth.',
-          traders: '10-15 calls/year',
-          tags: ['High Risk', 'Avg 100%+'],
-          credits: '₹25,000 / Annual',
-          minInvestment: '₹1,00,000',
-          icon: 'rocket',
-          categoryTag: 'Equity',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
       ],
     },
     {
+      title: 'Multibagger Stocks',
+      desc: 'High-potential stocks for long-term growth.',
+      traders: '10-15 calls/year',
+      tags: ['High Risk', 'Avg 100%+'],
+      credits: '₹25,000 / Annual',
+      minInvestment: '₹1,00,000',
+      icon: 'rocket',
+      categoryTag: 'Equity',
+      category: 'Investment Packages',
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'Bullion Trading',
+      desc: 'Gold & Silver trading with low-risk strategies.',
+      traders: '1-2 calls/day',
+      tags: ['Low Risk', 'Avg ₹4,500/trade'],
+      credits: '₹9,500 / 45 Credits',
+      minInvestment: '₹50,000',
+      icon: 'diamond',
+      categoryTag: 'MCX Commodities',
       category: 'Commodity Packages',
-      items: [
-        {
-          title: 'Bullion Trading',
-          desc: 'Gold & Silver trading with low-risk strategies.',
-          traders: '1-2 calls/day',
-          tags: ['Low Risk', 'Avg ₹4,500/trade'],
-          credits: '₹9,500 / 45 Credits',
-          minInvestment: '₹50,000',
-          icon: 'diamond',
-          categoryTag: 'MCX Commodities',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'Energy Trading',
-          desc: 'Crude Oil & Natural Gas market calls.',
-          traders: '1-2 calls/day',
-          tags: ['High Risk', 'Avg ₹6,000/trade'],
-          credits: '₹9,500 / 45 Credits',
-          minInvestment: '₹50,000',
-          icon: 'oil-barrel',
-          categoryTag: 'MCX Commodities',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
       ],
     },
     {
+      title: 'Energy Trading',
+      desc: 'Crude Oil & Natural Gas market calls.',
+      traders: '1-2 calls/day',
+      tags: ['High Risk', 'Avg ₹6,000/trade'],
+      credits: '₹9,500 / 45 Credits',
+      minInvestment: '₹50,000',
+      icon: 'oil-barrel',
+      categoryTag: 'MCX Commodities',
+      category: 'Commodity Packages',
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'Swing Trading Package',
+      desc: 'Short to medium-term swing trading strategies.',
+      traders: '2-3 calls/week',
+      tags: ['Moderate Risk', 'Avg 15-20%'],
+      credits: '₹15,000 / Quarterly',
+      minInvestment: '₹50,000',
+      icon: 'trending-up',
+      categoryTag: 'Swing Trading',
       category: 'Specialized Services',
-      items: [
-        {
-          title: 'Swing Trading Package',
-          desc: 'Short to medium-term swing trading strategies.',
-          traders: '2-3 calls/week',
-          tags: ['Moderate Risk', 'Avg 15-20%'],
-          credits: '₹15,000 / Quarterly',
-          minInvestment: '₹50,000',
-          icon: 'trending-up',
-          categoryTag: 'Swing Trading',
-          additionalInfo: [
-            'Get 2-3 Tips per week',
-            'Profit approx. 15-20% per trade',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'TWM Special Package',
-          desc: 'Exclusive trading calls across all segments.',
-          traders: '5-10 calls/month',
-          tags: ['High Risk', 'Avg 50%+'],
-          credits: '₹30,000 / Annual',
-          minInvestment: '₹1,00,000',
-          icon: 'star',
-          categoryTag: 'TWM Package',
-          additionalInfo: [
-            'Get 5-10 Tips per month',
-            'Profit approx. 50%+ per trade',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'Forex Trading',
-          desc: 'Currency pair trading with daily insights.',
-          traders: '1-2 calls/day',
-          tags: ['High Risk', 'Avg 2-3%'],
-          credits: '₹12,000 / Monthly',
-          minInvestment: '₹50,000',
-          icon: 'currency-exchange',
-          categoryTag: 'Forex',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. 2-3% per trade',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
-        {
-          title: 'International Club Commodities',
-          desc: 'Global commodity trading strategies.',
-          traders: '1-2 calls/day',
-          tags: ['Moderate Risk', 'Avg 3-5%'],
-          credits: '₹20,000 / Quarterly',
-          minInvestment: '₹75,000',
-          icon: 'public', // Replaced "globe" with "public"
-          categoryTag: 'International Club Commodities',
-          additionalInfo: [
-            'Get 1 Tip per day',
-            'Profit approx. 3-5% per trade',
-            'Customer Service Support from 9 AM to 6 PM',
-            'Tips with Proper Stop Loss & Target',
-            'Trading calls via WhatsApp, SMS, and emails',
-          ],
-        },
+      additionalInfo: [
+        'Get 2-3 Tips per week',
+        'Profit approx. 15-20% per trade',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'TWM Special Package',
+      desc: 'Exclusive trading calls across all segments.',
+      traders: '5-10 calls/month',
+      tags: ['High Risk', 'Avg 50%+'],
+      credits: '₹30,000 / Annual',
+      minInvestment: '₹1,00,000',
+      icon: 'star',
+      categoryTag: 'TWM Package',
+      category: 'Specialized Services',
+      additionalInfo: [
+        'Get 5-10 Tips per month',
+        'Profit approx. 50%+ per trade',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'Forex Trading',
+      desc: 'Currency pair trading with daily insights.',
+      traders: '1-2 calls/day',
+      tags: ['High Risk', 'Avg 2-3%'],
+      credits: '₹12,000 / Monthly',
+      minInvestment: '₹50,000',
+      icon: 'currency-exchange',
+      categoryTag: 'Forex',
+      category: 'Specialized Services',
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. 2-3% per trade',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
+    },
+    {
+      title: 'International Club Commodities',
+      desc: 'Global commodity trading strategies.',
+      traders: '1-2 calls/day',
+      tags: ['Moderate Risk', 'Avg 3-5%'],
+      credits: '₹20,000 / Quarterly',
+      minInvestment: '₹75,000',
+      icon: 'public', // Replaced "globe" with "public"
+      categoryTag: 'International Club Commodities',
+      category: 'Specialized Services',
+      additionalInfo: [
+        'Get 1 Tip per day',
+        'Profit approx. 3-5% per trade',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
       ],
     },
   ];
@@ -335,17 +319,17 @@ export default function Trades() {
   };
 
   const filteredTradingPackages = services
-    .filter((category) => category.category !== 'Specialized Services')
-    .flatMap((category) => category.items)
+    .filter((item) => item.category !== 'Specialized Services')
+    .flatMap((item) => item)
     .filter((item) => item.categoryTag === selectedTradingTag);
 
   const filteredSpecializedServices = services
-    .flatMap((category) => category.items)
+    .flatMap((item) =>item)
     .filter((item) => item.categoryTag === selectedSpecializedTag);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, isDark ? styles.headerDark : styles.headerLight]}>
+      <View style={[styles.header, {backgroundColor: colors.background}]}>
         <Text style={[styles.headerTitle, isDark && styles.textDark]}>Trades</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -393,92 +377,75 @@ export default function Trades() {
         {/* Trading Packages Content */}
         {filteredTradingPackages.length > 0 ? (
           filteredTradingPackages.map((item, idx) => (
-            <TouchableOpacity
-              key={idx}
-              onPress={() =>
-                handleTradePress(
-                  item,
-                  services.find((category) =>
-                    category.items.some((i) => i.title === item.title)
-                  )?.category || ''
-                )
-              }
-              style={styles.cardContainer}
-            >
-              <View
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: colors.card,
-                    // borderColor: colors.buttonPrimary,
-                  },
-                ]}
+            <ThemedView key={idx} style={[styles.cardContainer, {shadowColor: colors.shadowColor}]}>
+              <TouchableOpacity
+                onPress={() =>
+                  handleTradePress(
+                    item,
+                    services.find((service) =>
+                      service.title === item.title
+                    )?.category || ''
+                  )
+                }
               >
-                <View style={styles.cardHeader}>
-                  <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} />
-                  <ThemedText style={[styles.cardTitle, { color: colors.text }]}>
-                    {item.title}
-                  </ThemedText>
-                </View>
-                <View style={styles.tagsContainer}>
-                  {item.tags.map((tag, tagIdx) => {
-                    const { borderColor, icon } = getTagStyle(tag);
-                    return (
-                      <View
-                        key={tagIdx}
-                        style={[styles.tagContainer, { borderColor: borderColor }]}
-                      >
-                        <MaterialIcons name={icon} size={14} color={borderColor} />
-                        <ThemedText style={[styles.tagText, { color: borderColor }]}>
-                          {tag}
-                        </ThemedText>
-                      </View>
-                    );
-                  })}
-                </View>
-                <ThemedText style={[styles.cardDesc, { color: colors.text }]}>
-                  {item.desc}
-                </ThemedText>
-                <ThemedText style={[styles.traders, { color: colors.text }]}>
-                  {item.traders}
-                </ThemedText>
-                {/* Additional Info Section */}
-                {/* <View style={styles.additionalInfoContainer}>
-                  {item.additionalInfo.map((info, infoIdx) => (
-                    <View key={infoIdx} style={styles.additionalInfoItem}>
-                      <MaterialIcons
-                        name="check"
-                        size={16}
-                        color={colors.success}
-                        style={styles.checkIcon}
-                      />
-                      <ThemedText style={[styles.additionalInfoText, { color: colors.text }]}>
-                        {info}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </View> */}
-
-                <View style={styles.priceRow}>
-                  <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
-                    Min. Investment: {item.minInvestment}
-                  </ThemedText>
-                </View>
-                <TouchableOpacity
-                  style={[styles.exploreButton, { backgroundColor: colors.buttonPrimary }]}
-                  onPress={() =>
-                    handleTradePress(
-                      item,
-                      services.find((category) =>
-                        category.items.some((i) => i.title === item.title)
-                      )?.category || ''
-                    )
-                  }
+                <View
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: colors.card,
+                    },
+                  ]}
                 >
-                  <ThemedText style={styles.exploreButtonText}>Explore</ThemedText>
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
+                  <View style={styles.cardHeader}>
+                    <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} />
+                    <ThemedText style={[styles.cardTitle, { color: colors.text }]}>
+                      {item.title}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.tagsContainer}>
+                    {item.tags.map((tag, tagIdx) => {
+                      const { borderColor, icon } = getTagStyle(tag);
+                      return (
+                        <View
+                          key={tagIdx}
+                          style={[styles.tagContainer, { borderColor: borderColor }]}
+                        >
+                          <MaterialIcons name={icon} size={14} color={borderColor} />
+                          <ThemedText style={[styles.tagText, { color: borderColor }]}>
+                            {tag}
+                          </ThemedText>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  <ThemedText style={[styles.cardDesc, { color: colors.text }]}>
+                    {item.desc}
+                  </ThemedText>
+                  <ThemedText style={[styles.traders, { color: colors.text }]}>
+                    {item.traders}
+                  </ThemedText>
+
+                  <View style={styles.priceRow}>
+                    <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
+                      Min. Investment: {item.minInvestment}
+                    </ThemedText>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.exploreButton, { backgroundColor: colors.buttonPrimary, shadowColor: colors.shadowColor }]}
+                    onPress={() =>
+                      handleTradePress(
+                        item,
+                        services.find((category) =>
+                          services.some((i) => i.title === item.title)
+                        )?.category || ''
+                      )
+                    }
+                  >
+                      <ThemedText style={[styles.exploreButtonText]}>Proceed to pay</ThemedText>
+                      </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </ThemedView>
           ))
         ) : (
           <ThemedText style={[styles.noItemsText, { color: colors.text }]}>
@@ -530,98 +497,81 @@ export default function Trades() {
         {/* Specialized Services Content */}
         {filteredSpecializedServices.length > 0 ? (
           filteredSpecializedServices.map((item, idx) => (
-            <TouchableOpacity
-              key={idx}
-              onPress={() =>
-                handleTradePress(
-                  item,
-                  services.find((category) =>
-                    category.items.some((i) => i.title === item.title)
-                  )?.category || ''
-                )
-              }
-              style={styles.cardContainer}
-            >
-              <View
-                style={[
-                  styles.card,
-                  {
-                    backgroundColor: colors.card,
-                    // borderColor: colors.buttonPrimary,
-                  },
-                ]}
+            <ThemedView key={idx} style={[styles.cardContainer, {shadowColor: colors.shadowColor}]}>
+              <TouchableOpacity
+                onPress={() =>
+                  handleTradePress(
+                    item,
+                    services.find((service) => service.title === item.title)?.category || ''
+                  )
+                }
               >
-                <View style={styles.cardHeader}>
-                  <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} />
-                  <ThemedText style={[styles.cardTitle, { color: colors.text }]}>
-                    {item.title}
+                <View
+                  style={[
+                    styles.card,
+                    {
+                      backgroundColor: colors.card,
+                      // borderColor: colors.buttonPrimary,
+                    },
+                  ]}
+                >
+                  <View style={styles.cardHeader}>
+                    <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} />
+                    <ThemedText style={[styles.cardTitle, { color: colors.text }]}>
+                      {item.title}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.tagsContainer}>
+                    {item.tags.map((tag, tagIdx) => {
+                      const { borderColor, icon } = getTagStyle(tag);
+                      return (
+                        <View
+                          key={tagIdx}
+                          style={[styles.tagContainer, { borderColor: borderColor }]}
+                        >
+                          <MaterialIcons name={icon} size={14} color={borderColor} />
+                          <ThemedText style={[styles.tagText, { color: borderColor }]}>
+                            {tag}
+                          </ThemedText>
+                        </View>
+                      );
+                    })}
+                  </View>
+                  <ThemedText style={[styles.cardDesc, { color: colors.text }]}>
+                    {item.desc}
                   </ThemedText>
-                </View>
-                <View style={styles.tagsContainer}>
-                  {item.tags.map((tag, tagIdx) => {
-                    const { borderColor, icon } = getTagStyle(tag);
-                    return (
-                      <View
-                        key={tagIdx}
-                        style={[styles.tagContainer, { borderColor: borderColor }]}
-                      >
-                        <MaterialIcons name={icon} size={14} color={borderColor} />
-                        <ThemedText style={[styles.tagText, { color: borderColor }]}>
-                          {tag}
-                        </ThemedText>
-                      </View>
-                    );
-                  })}
-                </View>
-                <ThemedText style={[styles.cardDesc, { color: colors.text }]}>
-                  {item.desc}
-                </ThemedText>
-                <ThemedText style={[styles.traders, { color: colors.text }]}>
-                  {item.traders}
-                </ThemedText>
-                {/* Additional Info Section */}
-                {/* <View style={styles.additionalInfoContainer}>
-                  {item.additionalInfo.map((info, infoIdx) => (
-                    <View key={infoIdx} style={styles.additionalInfoItem}>
-                      <MaterialIcons
-                        name="check"
-                        size={16}
-                        color={colors.success}
-                        style={styles.checkIcon}
-                      />
-                      <ThemedText style={[styles.additionalInfoText, { color: colors.text }]}>
-                        {info}
-                      </ThemedText>
-                    </View>
-                  ))}
-                </View> */}
+                  <ThemedText style={[styles.traders, { color: colors.text }]}>
+                    {item.traders}
+                  </ThemedText>
 
-                <View style={styles.priceRow}>
-                  <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
-                  Min. Investment: {item.minInvestment}
-                  </ThemedText>
-                </View>
-                  <TouchableOpacity
-                    style={[styles.exploreButton, { backgroundColor: colors.buttonPrimary }]}
+                  <View style={styles.priceRow}>
+                    <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
+                    Min. Investment: {item.minInvestment}
+                    </ThemedText>
+                  </View>
+                    <TouchableOpacity
+                    style={[styles.exploreButton, { backgroundColor: colors.buttonPrimary, shadowColor: colors.shadowColor }]}
                     onPress={() =>
-                      handleTradePress(
-                        item,
-                        services.find((category) =>
-                          category.items.some((i) => i.title === item.title)
-                        )?.category || ''
-                      )
-                    }
-                  >
-                    <ThemedText style={styles.exploreButtonText}>Explore</ThemedText>
-                  </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
+                        handleTradePress(
+                          item,
+                          services.find((service) => service.title === item.title)?.category || ''
+                        )
+                      }
+                    >
+                      <ThemedText style={[styles.exploreButtonText, {}]}>Proceed to pay</ThemedText>
+                    </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </ThemedView>
           ))
         ) : (
           <ThemedText style={[styles.noItemsText, { color: colors.text }]}>
             No services available for this category.
           </ThemedText>
         )}
+        <ThemedView style={[{paddingBottom: 70, backgroundColor: colors.background}]}>
+            
+        </ThemedView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -629,19 +579,11 @@ export default function Trades() {
 
 const styles = StyleSheet.create({
   container: {
+    backgroundColor: 'red',
     flex: 1,
   },
   header: {
     paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerLight: {
-    backgroundColor: '#ffffff',
-    borderBottomColor: '#eef1f5',
-  },
-  headerDark: {
-    backgroundColor: '#1e1e1e',
-    borderBottomColor: '#2d2d2d',
   },
   headerTitle: {
     fontSize: 20,
@@ -653,6 +595,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   scrollContent: {
+    // backgroundColor: 'red',
     padding: 16,
   },
   tagSection: {
@@ -679,17 +622,19 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     marginBottom: 16,
-  },
-  card: {
-    padding: 20,
-    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#3498db',
-    boxShadow: '0 0 6px #3498db',
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
+    borderRadius: 12,
+    // shadowColor: 'black',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  card: {
+    borderRadius: 12,
+    padding: 20,
+    // boxShadow: '0 0 6px #3498db',
   },
   cardHeader: {
     flexDirection: 'row',

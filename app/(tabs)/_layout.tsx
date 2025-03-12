@@ -17,7 +17,6 @@ export default function TabLayout() {
     return <Redirect href="/signup" />;
   }
 
-  // Removed the else clause with redirect to /home to allow Tabs to render
 
   const backgroundColor = colorScheme === 'dark' ? Colors.dark.background : Colors.light.background;
 
@@ -26,15 +25,15 @@ export default function TabLayout() {
       backgroundColor,
       ...Platform.select({
         ios: {
-          position: 'absolute',
-          bottom: 30,
+          // position: 'absolute',
+          // bottom: 25,
           left: 20,
           right: 20,
           elevation: 0,
-          height: 64,
+          height: 90,
         },
         default: {
-          height: 50,
+          height: 60,
           paddingBottom: 2,
           paddingTop: 5,
           elevation: 8, // Shadow for Android
@@ -84,8 +83,14 @@ export default function TabLayout() {
         name="trades"
         options={{
           title: 'Trades',
+          tabBarLabelStyle: {
+            fontWeight: '500',
+            fontSize: 12,
+            marginTop: 3,
+            color: '#ffab00' 
+          },
           tabBarIcon: ({ color }) => (
-            <Crown size={24} fill="rgb(255, 221, 0)" color="rgb(255, 221, 0)" strokeWidth={2.5} />
+            <Crown size={24} fill="#ffab00" color="#ffab00" strokeWidth={2.5} />
           ),
         }}
       />

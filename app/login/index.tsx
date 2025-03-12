@@ -36,7 +36,9 @@ const LoginScreen = () => {
       await AsyncStorage.setItem('user_name', response.data.data.user_name);
 
       // Redirect to the main screen
-      router.replace('/home');
+      setTimeout(() => {
+        router.replace('/home');
+      }, 1000);
     } catch (error: any) {
       Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
     } finally {
@@ -148,7 +150,7 @@ export const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
-    elevation: 5,
+    elevation: 20,
     fontSize: 16,
     color: '#333',
   },

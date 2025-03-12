@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider } from '../context/AuthContext';
+import { StockProvider } from '@/context/StockContext';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
@@ -35,15 +37,19 @@ export default function RootLayout() {
   }
 
   return (
-    <AuthProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="signup/index" options={{ headerShown: false }} /> {/* Match signup/index */}
-        <Stack.Screen name="login/index" options={{ headerShown: false }} />  {/* Add login/index */}
-      </Stack>
-      {/* Redirect based on login status */}
-      {!isLoggedIn && <Redirect href="/signup" />}
-      {isLoggedIn && <Redirect href="/(tabs)/home" />}
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <StockProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="signup/index" options={{ headerShown: false }} /> {/* Match signup/index */}
+            <Stack.Screen name="login/index" options={{ headerShown: false }} />  {/* Add login/index */}
+          </Stack>
+          {/* Redirect based on login status */}
+          {!isLoggedIn && <Redirect href="/signup" />}
+          {isLoggedIn && <Redirect href="/(tabs)/home" />}
+        </StockProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

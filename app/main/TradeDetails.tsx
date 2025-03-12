@@ -92,7 +92,7 @@ export default function TradeDetails() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, isDark ? styles.headerDark : styles.headerLight]}>
+      <View style={[styles.header]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
@@ -119,7 +119,7 @@ export default function TradeDetails() {
 
 // Component Definitions (unchanged except SubscribeButton)
 const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
-  <View style={styles.cardHeader}>
+  <View style={[styles.cardHeader, {backgroundColor: colors.background}]}>
     <ThemedText style={[styles.title, { color: colors.text }]}>{trade.title}</ThemedText>
     <MaterialIcons name={trade.icon} size={24} color={colors.text} />
   </View>

@@ -9,16 +9,22 @@ import {
   SafeAreaView,
   TouchableOpacity,
   useColorScheme,
+  FlatList,
   Image,
   Dimensions
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { useStockContext } from '@/context/StockContext';
 
 const { width } = Dimensions.get('window');
 
 export default function Stocks() {
   const [searchQuery, setSearchQuery] = useState('');
+  const { NSEData, BSEData, marketIndices, updateNSEData, updateBSEData, updateMarketIndices } = useStockContext();
+  
   interface StockData {
     companyName: string;
     industry: string;
@@ -51,6 +57,7 @@ export default function Stocks() {
     primary: '#6200ee',
     success: '#00c853',
     warning: '#ffab00',
+    shadowColor: isDark ?"rgb(128, 128, 128)" :"rgb(0, 0, 0)",
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7'
   };
@@ -70,24 +77,62 @@ export default function Stocks() {
         {
           method: 'GET',
           headers: {
-            'x-rapidapi-key': 'cd0ac0840bmshd6334a116996692p12ad12jsn5726d4d6525a',
+            'x-rapidapi-key': 'bc620173a1msh189575d170e4385p16222fjsnfad95363999a',
             'x-rapidapi-host': 'indian-stock-exchange-api2.p.rapidapi.com',
           },
         }
       );
 
+      if(response.status===429){
+        // console.log("API quota exceeded");
+        throw new Error("API quota exceeded");
+      }
+
       const data = await response.json();
+      console.log(response.status);
       if (data.error) {
         setError('Stock not found');
+        console.log(data.error);
       } else {
         setStockData(data);
       }
     } catch (err) {
       setError('Failed to fetch stock data');
+      console.log(err);
     } finally {
       setLoading(false);
     }
   };
+
+  const NSEBSECard = ({ item }: { item: { ticker: string; price: number; netChange: number; percentChange: number; high: number; low: number; } }) => {
+      const isGain = item.netChange > 0;
+      
+      return (
+        <ThemedView style={[styles.NSEBSECard, {borderColor: isGain?"green":"red" , backgroundColor: colors.card, shadowColor: colors.shadowColor }]}>
+          <ThemedText style={[styles.cardTitle, { 
+            color: isGain?'green':'red', // Green for gain, default color otherwise
+            fontSize: 15 
+          }]}>
+            {item.ticker}
+            {isGain && '  ▲'}  {/* Up triangle for gain */}
+            {!isGain && '▼'} {/* Down triangle for loss */}
+            {item.percentChange}%
+          </ThemedText>
+          <ThemedView style={[{backgroundColor: 'transparent'}]}>
+            <ThemedText style={[styles.cardDescription, { 
+              color: isDark ? '#bbbbbb' : '#666' 
+            }]}>
+              {item.price}
+            </ThemedText>
+            <ThemedText style={[styles.cardDescription, { 
+              color: isDark ? '#bbbbbb' : '#666' 
+            }]}>
+              H: {item.high} L: {item.low}
+            </ThemedText>
+          </ThemedView>
+        </ThemedView>
+      );
+    };
 
   const renderStockOverview = () => {
     if (!stockData) return null;
@@ -169,7 +214,7 @@ export default function Stocks() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, isDark ? styles.headerDark : styles.headerLight]}>
+      <View style={[styles.header]}>
         <Text style={[styles.headerTitle, isDark && styles.textDark]}>Stock Search</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -214,6 +259,52 @@ export default function Stocks() {
             {renderTechnicalData()}
           </>
         )}
+
+        {/* NSE cards Section */}
+        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
+            NSE Most Active
+          </ThemedText>
+          {
+            (NSEData.length === 0) ? (
+              <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>
+                No NSE data Available
+              </ThemedText>
+            ) : (
+              <FlatList
+                data={NSEData}
+                renderItem={NSEBSECard}
+                keyExtractor={(item) => item.ticker}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cardList}
+              />
+            )
+          }
+        </ThemedView>
+
+        {/* BSE cards Section */}
+        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
+            BSE Most Active
+          </ThemedText>
+          {
+            (BSEData.length === 0) ? (
+              <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>
+                No BSE data available
+              </ThemedText>
+            ) : (
+              <FlatList
+                data={BSEData}
+                renderItem={NSEBSECard}
+                keyExtractor={(item) => item.ticker}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.cardList}
+              />
+            )
+          }
+        </ThemedView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -225,15 +316,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingVertical: 12,
-    borderBottomWidth: 1,
-  },
-  headerLight: {
-    backgroundColor: '#ffffff',
-    borderBottomColor: '#eef1f5',
-  },
-  headerDark: {
-    backgroundColor: '#1e1e1e',
-    borderBottomColor: '#2d2d2d',
   },
   headerTitle: {
     fontSize: 20,
@@ -245,7 +327,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   scrollContent: {
-    padding: 16,
+    padding: 4,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -366,5 +448,35 @@ const styles = StyleSheet.create({
   maPrice: {
     fontSize: 16,
     marginBottom: 4,
-  }
+  },
+  sectionContainer: {
+    paddingTop: 5,
+    paddingHorizontal: 8,
+
+  },
+  sectionHeader: {
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 10,
+    marginLeft: 8,
+  },
+  NSEBSECard: {
+    borderWidth: 1,
+    width: 200,
+    borderRadius: 10,
+    padding: 15,
+    marginRight: 10,
+    marginBottom: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  cardDescription: {
+    fontSize: 14,
+    textAlign: 'left',
+  },
+  cardList: {
+    paddingBottom: 10,
+  },
 });

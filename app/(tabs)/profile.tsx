@@ -5,6 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import axios from 'axios';
 import KycComponent from '../../components/KycComponent'; // Import the component
+import { ThemedView } from '@/components/ThemedView';
 
 export default function Profile() {
   const colorScheme = useColorScheme();
@@ -53,7 +54,7 @@ export default function Profile() {
 
   return (
     <SafeAreaView style={[styles.safeArea, isDark ? styles.backgroundDark : styles.backgroundLight]}>
-      <View style={[styles.header, isDark ? styles.headerDark : styles.headerLight]}>
+      <View style={[styles.header]}>
         <Text style={[styles.headerTitle, isDark && styles.textDark]}>Profile</Text>
         <TouchableOpacity
           style={[styles.logoutButton, { backgroundColor: colors.primary }]}
@@ -66,6 +67,9 @@ export default function Profile() {
         {/* Other profile content can go here */}
         <KycComponent isKycDone={isKycDone} onKycComplete={handleKycComplete} />
         <Text>Hello</Text>
+        <ThemedView style={[{paddingBottom: 70, backgroundColor: colors.background}]}>
+          
+        </ThemedView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -87,15 +91,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderBottomWidth: 1,
-  },
-  headerLight: {
-    backgroundColor: '#ffffff',
-    borderBottomColor: '#eef1f5',
-  },
-  headerDark: {
-    backgroundColor: '#1e1e1e',
-    borderBottomColor: '#2d2d2d',
   },
   headerTitle: {
     fontSize: 20,

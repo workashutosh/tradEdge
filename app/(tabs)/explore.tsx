@@ -102,6 +102,7 @@ export default function TabTwoScreen() {
         <IpoSection title="Open" data={ipoData.active} />
         <IpoSection title="Upcoming" data={ipoData.upcoming} />
         <IpoSection title="Closed" data={ipoData.closed} />
+        {/* Extra padding at the bottom */}
         <ThemedView style={[{paddingBottom: 70, backgroundColor: isDarkMode ? '#121212' : '#f5f7fa'}]} />
       </ScrollView>
     </SafeAreaView>

@@ -12,35 +12,54 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const handleLogin = async () => {
     if (!whatsAppNumber || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setErrorMessage('Please fill in all fields');
+      setTimeout(() => setErrorMessage(''), 3000);
+      // Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await axios.post('https://kyclogin.twmresearchalert.com/session', {
+      const loginUrl = process.env.EXPO_PUBLIC_LOGIN_URL;
+      if (!loginUrl) {
+        setErrorMessage('Login URL is not defined');
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.post(loginUrl, {
         number: whatsAppNumber,
         password: password,
         platform: 'mobile', // Add platform if required by your backend
       });
 
+      const userId = response.data.data.user_id.replace('LNUSR', '');
+
       // Save tokens and user data to AsyncStorage
       await AsyncStorage.setItem('access_token', response.data.data.access_token);
       await AsyncStorage.setItem('refresh_token', response.data.data.refresh_token);
-      await AsyncStorage.setItem('user_id', response.data.data.user_id);
+      await AsyncStorage.setItem('user_id', userId);
       await AsyncStorage.setItem('user_name', response.data.data.user_name);
 
       // Redirect to the main screen
       setTimeout(() => {
-        router.replace('/home');
-      }, 1000);
+        router.replace('/(tabs)/home');
+      }, 2000);
     } catch (error: any) {
-      Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
+      if(error.response?.data?.messages[0]==="Too Many Incorrect Password Attempts"){
+        setErrorMessage('Too Many Incorrect Password Attempts! Try after 30 minutes');
+        setTimeout(() => setErrorMessage(''), 3000);
+      }else{
+        setErrorMessage('Invalid Credentials');
+        setTimeout(() => setErrorMessage(''), 3000);
+        // Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -58,7 +77,7 @@ const LoginScreen = () => {
 
         <TextInput
           style={[styles.input, { fontFamily: 'San Francisco' }]}
-          placeholder="Username"
+          placeholder="Phone Number"
           placeholderTextColor="#999"
           value={whatsAppNumber}
           onChangeText={setWhatsAppNumber}
@@ -84,6 +103,11 @@ const LoginScreen = () => {
             />
           </TouchableOpacity>
         </View>
+
+        {/* Error Message Display */}
+        {errorMessage ? (
+          <Text style={styles.errorText}>{errorMessage}</Text>
+        ) : null}
 
         {loading ? (
           <ActivityIndicator size="large" color="#FFFFFF" />
@@ -194,6 +218,13 @@ export const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
     textDecorationLine: 'underline',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#FF4444',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontFamily: 'San Francisco',
   },
 });
 

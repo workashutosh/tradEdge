@@ -23,8 +23,10 @@ export default function Profile() {
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
   };
 
+  // kys status
   const [isKycDone, setIsKycDone] = useState(false);
 
+  // check kyc status
   useEffect(() => {
     const checkKycStatus = async () => {
       try {
@@ -37,6 +39,7 @@ export default function Profile() {
     checkKycStatus();
   }, []);
 
+  // handle logout
   const handleLogout = async () => {
     try {
       await AsyncStorage.clear();

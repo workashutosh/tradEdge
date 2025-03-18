@@ -9,12 +9,10 @@ interface StockData {
   high: number;
   low: number;
 }
-
 interface MarketIndicesData {
   ticker: string;
   percentChange: number;
 }
-
 interface StockContextType {
   NSEData: StockData[];
   BSEData: StockData[];

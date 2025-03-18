@@ -1,8 +1,8 @@
-// app/components/KycComponent.tsx
-import { View, Text, StyleSheet, TouchableOpacity, Alert, useColorScheme } from 'react-native';
-import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import React, { useState, useEffect } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface KycComponentProps {
   isKycDone?: boolean;
@@ -27,10 +27,54 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
   };
 
   const [isKycDone, setIsKycDone] = useState(initialKycDone);
+  const [uploading, setUploading] = useState(false);
   const [isKycExpanded, setIsKycExpanded] = useState(false);
   const [aadhaarFile, setAadhaarFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [panFile, setPanFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false); // New state for processing
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  // Check KYC status on every mount
+  useEffect(() => {
+    const checkKycStatus = async () => {
+      const userId = await AsyncStorage.getItem("user_id");
+      if (userId) {
+        try {
+          const response = await fetch(`https://gateway.twmresearchalert.com/kyc?user_id=${userId}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+
+          const data = await response.json();
+          console.log(data);
+          const { aadhar_name, auth, pan_name } = data.data;
+
+          setKycStatus(auth);
+        } catch (error) {
+          // console.log('Error checking KYC status:', error);
+        }
+      }
+    };
+
+    checkKycStatus();
+  }, []);
+
+  // Display messages to user
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
 
   const pickAadhaar = async () => {
     try {
@@ -42,8 +86,8 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
         setAadhaarFile(result);
       }
     } catch (err) {
-      console.log('Error picking Aadhaar:', err);
-      Alert.alert('Error', 'Failed to pick Aadhaar image');
+      // console.log('Error picking Aadhaar:', err);
+      setMessage('Failed to pick Aadhaar image');
     }
   };
 
@@ -57,41 +101,79 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
         setPanFile(result);
       }
     } catch (err) {
-      console.log('Error picking PAN:', err);
-      Alert.alert('Error', 'Failed to pick PAN image');
+      // console.log('Error picking PAN:', err);
+      setMessage('Failed to pick PAN image');
     }
   };
 
+  // handle submit
   const handleKycSubmit = async () => {
     if (!aadhaarFile || aadhaarFile.canceled || !panFile || panFile.canceled) {
-      Alert.alert('Missing Files', 'Please upload both Aadhaar and PAN images.');
+      setMessage('Please upload both Aadhaar and PAN images.');
       return;
     }
-    try {
-      // Placeholder for API call to submit documents
-      // const formData = new FormData();
-      // formData.append('aadhaar', { uri: aadhaarFile.assets[0].uri, name: aadhaarFile.assets[0].name, type: aadhaarFile.assets[0].mimeType || 'image/jpeg' } as any);
-      // formData.append('pan', { uri: panFile.assets[0].uri, name: panFile.assets[0].name, type: panFile.assets[0].mimeType || 'image/jpeg' } as any);
-      // await axios.post('YOUR_API_ENDPOINT', formData);
 
-      Alert.alert('Success', 'Documents submitted for review!');
-      setIsProcessing(true); // Set processing state
+    try {
+      // get userId and access token
+      const userId = await AsyncStorage.getItem("user_id");
+      const accessToken = await AsyncStorage.getItem("access_token");
+
+      if (!userId || !accessToken) {
+        throw new Error('User ID or access token is missing');
+      }
+
+      // create new form data and append aadhaar, pan image along with userid
+      const formData = new FormData();
+      formData.append('aadhar', {
+        uri: aadhaarFile.assets[0].uri,
+        type: aadhaarFile.assets[0].mimeType || 'image/jpeg',
+        name: aadhaarFile.assets[0].name || 'aadhaar.jpg',
+      } as any); // TypeScript workaround
+
+      formData.append('pan', {
+        uri: panFile.assets[0].uri,
+        type: panFile.assets[0].mimeType || 'image/jpeg',
+        name: panFile.assets[0].name || 'pan.jpg',
+      } as any); // TypeScript workaround
+
+      formData.append('user_id', userId);
+
+      // console.log('User ID:', userId);
+
+      setUploading(true);
+      const response = await fetch('https://gateway.twmresearchalert.com/kyc', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        // console.log('Error Response:', errorText);
+        throw new Error(`HTTP error! Status: ${response.status}, Response: ${errorText}`);
+      }
+
+      const result: any = await response.json();
+      // console.log('KYC Submit response:', result);
+
+      setMessage('Documents submitted for review!');
+      setIsProcessing(true);
       setIsKycExpanded(false);
       setAadhaarFile(null);
       setPanFile(null);
-
-      // Simulate staff authorization (replace with actual API polling or callback)
-      // For demo, we'll assume it takes some time and then completes
-      setTimeout(() => {
-        setIsProcessing(false);
-        setIsKycDone(true);
-        if (onKycComplete) onKycComplete();
-        Alert.alert('Success', 'KYC has been authorized!');
-      }, 10000); // Simulated 5-second delay
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit KYC');
-      console.log('KYC Submit error:', error);
-      setIsProcessing(false); // Reset on error
+    } catch (error: unknown) {
+      // console.log('KYC Submit error:', error);
+      let errorMessage = 'Failed to submit KYC';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      setMessage(errorMessage);
+      // console.log('Error', error);
+      setIsProcessing(false);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -99,11 +181,28 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
     setIsKycExpanded(false);
   };
 
-  if (isKycDone) return null;
+  // Verified user 
+  if (kycStatus === "Y") {
+    return (
+      <View style={[styles.kycContainer, { backgroundColor: colors.success, borderColor: colors.success }]}>
+        <Text style={[styles.kycStatusText, { color: colors.text }]}>User Verified</Text>
+      </View>
+    );
+  }
+  
+  // Unverified user 
+  if (kycStatus === "N") {
+    return (
+      <View style={[styles.kycContainer, { backgroundColor: colors.error, borderColor: colors.error }]}>
+        <Text style={[styles.kycStatusText, { color: colors.text }]}>Unverified contact support center</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder }]}>
       {!isKycExpanded ? (
+        // KYC section collapsed
         <View style={styles.kycHeader}>
           <Text style={[styles.kycStatusText, { color: colors.warning }]}>
             {isProcessing ? 'Processing Docs...' : 'KYC Incomplete'}
@@ -118,6 +217,7 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
           )}
         </View>
       ) : (
+        // KYC section expanded
         <View style={[styles.kycExpanded, isDark ? styles.cardDark : styles.cardLight]}>
           <View style={styles.header}>
             <TouchableOpacity onPress={handleCollapse} style={styles.backButton}>
@@ -127,6 +227,7 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
             <View style={{ width: 24 }} />
           </View>
 
+          {/* Aadhaar Card */}
           <View style={styles.fileSection}>
             <Text style={[styles.fileLabel, { color: colors.text }]}>Aadhaar Card</Text>
             <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickAadhaar}>
@@ -142,6 +243,7 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
             )}
           </View>
 
+          {/* Pan Card */}
           <View style={styles.fileSection}>
             <Text style={[styles.fileLabel, { color: colors.text }]}>PAN Card</Text>
             <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickPan}>
@@ -157,10 +259,14 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
             )}
           </View>
 
-          <TouchableOpacity style={[styles.submitButton, { backgroundColor: colors.success }]} onPress={handleKycSubmit}>
-            <Text style={[styles.submitButtonText, { color: colors.text }]}>Submit KYC</Text>
+          {/* Submit Button */}
+          <TouchableOpacity style={[styles.submitButton, { opacity: uploading ? 0.5 : 1, backgroundColor: colors.success }]} onPress={handleKycSubmit} disabled={uploading}>
+            <Text style={[styles.submitButtonText, { color: colors.text }]}>{uploading ? "Uploading" : "Submit KYC"}</Text>
           </TouchableOpacity>
         </View>
+      )}
+      {message && (
+        <Text style={[styles.message, { color: colors.text }]}>{message}</Text>
       )}
     </View>
   );
@@ -252,6 +358,11 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  message: {
+    marginTop: 10,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 

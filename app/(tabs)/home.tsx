@@ -1,12 +1,11 @@
-import { Image, StyleSheet, Animated, Platform, TouchableOpacity, useColorScheme, SafeAreaView, View, FlatList, ScrollView, Linking, Touchable, Dimensions } from 'react-native';
-import { HelloWave } from '@/components/HelloWave';
+import { Image, StyleSheet, Animated, Platform, TouchableOpacity, useColorScheme, SafeAreaView, View, FlatList, ScrollView, Linking, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRightIcon, Sparkles } from 'lucide-react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Link, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStockContext } from '@/context/StockContext';
 import { Modal } from 'react-native';
@@ -16,17 +15,13 @@ export default function HomeScreen() {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
 
-  
-  // const [NSEData, setNSEData] = useState<StockData[]>([]);
-  // const [BSEData, setBSEData] = useState<StockData[]>([]);
-  // const [marketIndices, setMarketIndices] = useState<MarketIndicesData[]>([]);
   const { NSEData, BSEData, marketIndices, updateNSEData, updateBSEData, updateMarketIndices } = useStockContext();
-  const stocks=["nifty 200", "nifty 50", "nifty auto", "nifty bank", "sensex", "nifty infra", "nifty it", "nifty metal", "nifty pharma", "nifty psu bank"]
+  const stocks = ["nifty 200", "nifty 50", "nifty auto", "nifty bank", "sensex", "nifty infra", "nifty it", "nifty metal", "nifty pharma", "nifty psu bank"];
 
   const insets = useSafeAreaInsets();
-  
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
   const colors = {
     background: isDark ? '#121212' : '#f5f7fa',
     headerBackground: isDark ? '#1e1e1e' : '#ffffff',
@@ -41,14 +36,14 @@ export default function HomeScreen() {
     warning: '#ffab00',
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
-    shadowColor: isDark ?"rgb(128, 128, 128)" :"rgb(0, 0, 0)",
+    shadowColor: isDark ? "rgb(128, 128, 128)" : "rgb(0, 0, 0)",
   };
-  
+
   interface MarketIndicesData {
     ticker: string;
     percentChange: number;
   }
-  
+
   interface StockData {
     ticker: string;
     price: number;
@@ -57,32 +52,25 @@ export default function HomeScreen() {
     high: number;
     low: number;
   }
-  
+
   interface TradeCards {
     title: string;
-    desc: string;
-    traders: string;
-    tags: string[];
-    credits: string;
-    minInvestment: string;
-    icon: string;
+    price: string;
+    details: string[];
     categoryTag: string;
-    additionalInfo: string[];
+    icon: string;
+    tags: string[];
     color: string;
   }
 
   interface ServiceItem {
     isShowMore?: boolean;
     title: string;
-    desc: string;
-    traders: string;
-    tags: string[];
-    credits: string;
-    minInvestment: string;
-    icon: string;
+    price: string;
+    details: string[];
     categoryTag: string;
-    category: string;
-    additionalInfo: string[];
+    icon: string;
+    tags: string[];
     color: string;
   }
 
@@ -98,249 +86,206 @@ export default function HomeScreen() {
     loadUsername();
   }, []);
 
-
   const getMarketIndices = async () => {
     try {
       const results: MarketIndicesData[] = [];
-
-      // Loop through each stock symbol
       for (const st of stocks) {
         const response = await fetch(
           `https://indian-stock-exchange-api2.p.rapidapi.com/stock?name=${st}`,
           {
             method: 'GET',
             headers: {
-              'x-rapidapi-key': 'bc620173a1msh189575d170e4385p16222fjsnfad95363999a',
-              'x-rapidapi-host': 'indian-stock-exchange-api2.p.rapidapi.com',
+              'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
+              'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
             },
           }
         );
 
-        // Check if response is ok
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const data = await response.json();
-
         if (data.error) {
           console.error(`Stock not found: ${st}`);
-          continue; // Skip to next stock if current one has error
+          continue;
         }
 
-        // Create object matching the interface
         const stockData: MarketIndicesData = {
           ticker: st.toUpperCase(),
-          percentChange: data.percentChange
+          percentChange: data.percentChange,
         };
-
         results.push(stockData);
       }
-
-      // Update state with all collected data
       updateMarketIndices(results);
-
     } catch (error) {
       console.error('Error fetching market indices:', error);
-      // setError(error.message || 'An error occurred while fetching data');
     }
   };
 
   const getNSEBSEStocks = async (stock: string) => {
-    // setLoading(true);
     try {
       const response = await fetch(
         `https://indian-stock-exchange-api2.p.rapidapi.com/${stock}_most_active`,
         {
           method: 'GET',
           headers: {
-            'x-rapidapi-key': 'bc620173a1msh189575d170e4385p16222fjsnfad95363999a',
-            'x-rapidapi-host': 'indian-stock-exchange-api2.p.rapidapi.com',
+            'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
+            'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
           },
         }
       );
 
       const data = await response.json();
       if (data.error) {
-        // setError('Error fetching most active stocks');
         console.error('Error fetching most active stocks');
       } else {
-        // Map API data to ticker format
-
         const formattedData: StockData[] = data.map((stock: any) => ({
-          ticker: stock.ticker, // Adjust based on API response
+          ticker: stock.ticker,
           price: stock.price,
           netChange: stock.net_change,
           percentChange: stock.percent_change,
           high: stock.high,
           low: stock.low,
         }));
-        if(stock==="NSE")updateNSEData(formattedData);
-        if(stock==="BSE")updateBSEData(formattedData);
+        if (stock === "NSE") updateNSEData(formattedData);
+        if (stock === "BSE") updateBSEData(formattedData);
       }
     } catch (err) {
-      // setError('Failed to fetch stock data');
       console.error(`Failed to fetch ${stock} data`);
-      // console.error(err);
-    } finally {
-      // setLoading(false);
     }
   };
 
   const ourServices: ServiceItem[] = [
     {
       title: 'Cash Intraday',
-      desc: 'Intraday calls for cash market with daily recommendations.',
-      traders: '1-2 calls/day',
-      tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
-      credits: '₹9,500 / 45 Credits',
-      minInvestment: '₹25,000',
-      icon: 'trending-up',
-      categoryTag: 'Equity',
-      category: 'Intraday Packages',
-      additionalInfo: [
+      price: '₹9,500',
+      details: [
+        'Intraday calls for cash market with daily recommendations.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Equity',
+      icon: 'trending-up',
+      tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
       color: colors.primary,
     },
     {
       title: 'Index Futures',
-      desc: 'NIFTY & BANKNIFTY futures with precise entries.',
-      traders: '1-2 calls/day',
-      tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
-      credits: '₹9,000 / 45 Credits',
-      minInvestment: '₹50,000',
-      icon: 'bar-chart',
-      categoryTag: 'Index Future',
-      category: 'Intraday Packages',
-      additionalInfo: [
+      price: '₹9,000',
+      details: [
+        'NIFTY & BANKNIFTY futures with precise entries.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Index Future',
+      icon: 'bar-chart',
+      tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
       color: colors.warning,
     },
     {
       title: 'Stock Options',
-      desc: 'High-accuracy options trading calls.',
-      traders: '1-2 calls/day',
-      tags: ['High Risk', 'Avg ₹3,524/trade'],
-      credits: '₹9,500 / 45 Credits',
-      minInvestment: '₹25,000',
-      icon: 'tune', // Replaced "options" with "tune"
-      categoryTag: 'Stock Option',
-      category: 'Options Packages',
-      additionalInfo: [
+      price: '₹9,500',
+      details: [
+        'High-accuracy options trading calls.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Stock Option',
+      icon: 'tune',
+      tags: ['High Risk', 'Avg ₹3,524/trade'],
       color: colors.buttonPrimary,
     },
     {
       title: 'Index Options',
-      desc: 'Strategic trading for index options.',
-      traders: '1-2 calls/day',
-      tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
-      credits: '₹9,000 / 45 Credits',
-      minInvestment: '₹25,000',
-      icon: 'tune', // Replaced "options" with "tune"
+      price: '₹9,000',
+      details: [
+        'Strategic trading for index options.',
+        'Get 1 Tip per day',
+        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
+        'Customer Service Support from 9 AM to 6 PM',
+        'Tips with Proper Stop Loss & Target',
+        'Trading calls via WhatsApp, SMS, and emails',
+      ],
       categoryTag: 'Index Option',
-      category: 'Options Packages',
-      additionalInfo: [
-        'Get 1 Tip per day',
-        'Profit approx. ₹5,000 to ₹9,000 Per Lot',
-        'Customer Service Support from 9 AM to 6 PM',
-        'Tips with Proper Stop Loss & Target',
-        'Trading calls via WhatsApp, SMS, and emails',
-      ],
-      color: colors.error
+      icon: 'tune',
+      tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
+      color: colors.error,
     },
-  ]
+  ];
 
-  const tradesCards = [
+  const tradesCards: TradeCards[] = [
     {
-      id: '1',
       title: 'Cash Intraday',
-      desc: 'Intraday calls for cash market with daily recommendations.',
-      traders: '1-2 calls/day',
-      tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
-      credits: '₹9,500 / 45 Credits',
-      minInvestment: '₹25,000',
-      icon: 'trending-up',
-      categoryTag: 'Equity',
-      additionalInfo: [
+      price: '₹9,500',
+      details: [
+        'Intraday calls for cash market with daily recommendations.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Equity',
+      icon: 'trending-up',
+      tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
       color: colors.primary,
     },
     {
-      id: '2',
       title: 'Index Futures',
-      desc: 'NIFTY & BANKNIFTY futures with precise entries.',
-      traders: '1-2 calls/day',
-      tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
-      credits: '₹9,000 / 45 Credits',
-      minInvestment: '₹50,000',
-      icon: 'bar-chart',
-      categoryTag: 'Index Future',
-      additionalInfo: [
+      price: '₹9,000',
+      details: [
+        'NIFTY & BANKNIFTY futures with precise entries.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Index Future',
+      icon: 'bar-chart',
+      tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
       color: colors.success,
     },
     {
-      id: '3',
       title: 'Index Options',
-      desc: 'Strategic trading for index options.',
-      traders: '1-2 calls/day',
-      tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
-      credits: '₹9,000 / 45 Credits',
-      minInvestment: '₹25,000',
-      icon: 'tune', // Replaced "options" with "tune"
-      categoryTag: 'Index Option',
-      additionalInfo: [
+      price: '₹9,000',
+      details: [
+        'Strategic trading for index options.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Index Option',
+      icon: 'tune',
+      tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
       color: colors.warning,
     },
     {
-      id: '4',
       title: 'Stock Options',
-      desc: 'High-accuracy options trading calls.',
-      traders: '1-2 calls/day',
-      tags: ['High Risk', 'Avg ₹3,524/trade'],
-      credits: '₹9,500 / 45 Credits',
-      minInvestment: '₹25,000',
-      icon: 'tune', // Replaced "options" with "tune"
-      categoryTag: 'Stock Option',
-      additionalInfo: [
+      price: '₹9,500',
+      details: [
+        'High-accuracy options trading calls.',
         'Get 1 Tip per day',
         'Profit approx. ₹5,000 to ₹9,000 Per Lot',
         'Customer Service Support from 9 AM to 6 PM',
         'Tips with Proper Stop Loss & Target',
         'Trading calls via WhatsApp, SMS, and emails',
       ],
+      categoryTag: 'Stock Option',
+      icon: 'tune',
+      tags: ['High Risk', 'Avg ₹3,524/trade'],
       color: colors.error,
     },
   ];
@@ -348,7 +293,6 @@ export default function HomeScreen() {
   const scaleValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    // Trigger the scale animation in a loop
     const pulse = () => {
       Animated.sequence([
         Animated.timing(scaleValue, {
@@ -361,60 +305,50 @@ export default function HomeScreen() {
           duration: 600,
           useNativeDriver: true,
         }),
-      ]).start(() => pulse()); // Restart the animation when it ends
+      ]).start(() => pulse());
     };
-
-    pulse(); // Start the animation
-
-    // Cleanup function (optional)
+    pulse();
     return () => scaleValue.stopAnimation();
-  }, [scaleValue]);  
+  }, [scaleValue]);
 
-
-  const handleTradePress = (item: TradeCards, category: string) => {
-      router.push({
-        pathname: '/main/TradeDetails',
-        params: {
-          title: item.title,
-          desc: item.desc,
-          traders: item.traders,
-          tags: JSON.stringify(item.tags),
-          credits: item.credits,
-          minInvestment: item.minInvestment,
-          icon: item.icon,
-          category: category,
-          additionalInfo: JSON.stringify(item.additionalInfo),
-        },
-      });
-    };
+  const handleTradePress = (item: TradeCards) => {
+    router.push({
+      pathname: '/main/TradeDetails',
+      params: {
+        title: item.title,
+        price: item.price,
+        details: JSON.stringify(item.details),
+        categoryTag: item.categoryTag,
+        icon: item.icon,
+        tags: JSON.stringify(item.tags),
+      },
+    });
+  };
 
   const renderMarketIndex = ({ ticker, percentChange }: MarketIndicesData) => {
-      const isNegative = percentChange < 0;
-      return (
-        <ThemedView style={[styles.marketIndexItem, {}]}>
-          <ThemedText style={[styles.indexText, { color: 'white' }]}>
-            {ticker} {' '}
-            <ThemedText style={{ color: isNegative ? colors.error : colors.success }}>
-              {isNegative ? '▼' : '▲'} {percentChange}% {' '}
-            </ThemedText>
+    const isNegative = percentChange < 0;
+    return (
+      <ThemedView style={[styles.marketIndexItem]}>
+        <ThemedText style={[styles.indexText, { color: 'white' }]}>
+          {ticker} {' '}
+          <ThemedText style={{ color: isNegative ? colors.error : colors.success }}>
+            {isNegative ? '▼' : '▲'} {percentChange}% {' '}
           </ThemedText>
-        </ThemedView>
-      );
-    };
+        </ThemedText>
+      </ThemedView>
+    );
+  };
 
   const renderOurServicesItem = ({ item }: { item: ServiceItem }) => (
-    <ThemedView style={[styles.ourServicesCardContainer, { borderLeftColor: item.color, shadowColor: colors.shadowColor}]}>
-      <TouchableOpacity onPress={() => handleTradePress(item, item.category)}>
-        <View style={[styles.ourServicesCard, { backgroundColor: colors.card,}]}>
+    <ThemedView style={[styles.ourServicesCardContainer, { borderLeftColor: item.color, shadowColor: colors.shadowColor }]}>
+      <TouchableOpacity onPress={() => handleTradePress(item)}>
+        <View style={[styles.ourServicesCard, { backgroundColor: colors.card }]}>
           <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
           <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>
-            {item.desc}
+            {item.details[0]}
           </ThemedText>
           <ThemedText style={[styles.cardDescription, { color: colors.text, fontWeight: "600" }]}>
-            Min Investment: {item.minInvestment}
-          </ThemedText>
-          <ThemedText style={[styles.cardDescription, { color: colors.text, fontWeight: "600" }]}>
-            Traders: {item.traders}
+            Price: {item.price}
           </ThemedText>
         </View>
       </TouchableOpacity>
@@ -422,43 +356,28 @@ export default function HomeScreen() {
   );
 
   const rendertradesCard = ({ item }: { item: TradeCards }) => (
-    <ThemedView style={[styles.bestTradesCardContainer, { borderLeftColor: item.color, shadowColor: colors.shadowColor}]}>
-      <TouchableOpacity onPress={() => handleTradePress(item,"Top Trade")}>
-        <View style={[styles.bestTradesCard, { backgroundColor: colors.card,}]}>
+    <ThemedView style={[styles.bestTradesCardContainer, { borderLeftColor: item.color, shadowColor: colors.shadowColor }]}>
+      <TouchableOpacity onPress={() => handleTradePress(item)}>
+        <View style={[styles.bestTradesCard, { backgroundColor: colors.card }]}>
           <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
           <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>
-            {item.desc}
+            {item.details[0]}
           </ThemedText>
         </View>
       </TouchableOpacity>
     </ThemedView>
   );
 
-  const NSEBSECard = ({ item }: { item: { ticker: string; price: number; netChange: number; percentChange: number; high: number; low: number; } }) => {
+  const NSEBSECard = ({ item }: { item: StockData }) => {
     const isGain = item.netChange > 0;
-    
     return (
-      <ThemedView style={[styles.NSEBSECard, {borderColor: isGain?"green":"red" , backgroundColor: colors.card, shadowColor: colors.shadowColor }]}>
-        <ThemedText style={[styles.cardTitle, { 
-          color: isGain?'green':'red', // Green for gain, default color otherwise
-          fontSize: 15 
-        }]}>
-          {item.ticker}
-          {isGain && '  ▲'}  {/* Up triangle for gain */}
-          {!isGain && '▼'} {/* Down triangle for loss */}
-          {item.percentChange}%
+      <ThemedView style={[styles.NSEBSECard, { borderColor: isGain ? "green" : "red", backgroundColor: colors.card, shadowColor: colors.shadowColor }]}>
+        <ThemedText style={[styles.cardTitle, { color: isGain ? 'green' : 'red', fontSize: 15 }]}>
+          {item.ticker} {isGain ? '▲' : '▼'} {item.percentChange}%
         </ThemedText>
-        <ThemedView style={[{backgroundColor: 'transparent'}]}>
-          <ThemedText style={[styles.cardDescription, { 
-            color: isDark ? '#bbbbbb' : '#666' 
-          }]}>
-            {item.price}
-          </ThemedText>
-          <ThemedText style={[styles.cardDescription, { 
-            color: isDark ? '#bbbbbb' : '#666' 
-          }]}>
-            H: {item.high} L: {item.low}
-          </ThemedText>
+        <ThemedView style={[{ backgroundColor: 'transparent' }]}>
+          <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>{item.price}</ThemedText>
+          <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>H: {item.high} L: {item.low}</ThemedText>
         </ThemedView>
       </ThemedView>
     );
@@ -467,24 +386,22 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
       {overlayVisible && (
-        <View style={[styles.overlay, {zIndex: overlayVisible?10:-1}]}>
-          <View style={[{}]}>
+        <View style={[styles.overlay, { zIndex: overlayVisible ? 10 : -1 }]}>
+          <View style={[{ }]}>
           </View>
         </View>
       )}
-      {/* Fixed Header */}
 
       <View style={[styles.header]}>
         <ThemedView style={[styles.profileContainer, { backgroundColor: colors.background }]}>
           <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')}>
             <FontAwesome name="user-circle-o" size={28} color={colors.text} />
           </TouchableOpacity>
-          
           <ThemedText style={[styles.greetingText, { color: colors.text }]}>
             Hi, {username}
           </ThemedText>
         </ThemedView>
-        <ThemedView style={[styles.buyProButtonContainer, {shadowColor: colors.shadowColor}]}>
+        <ThemedView style={[styles.buyProButtonContainer, { shadowColor: colors.shadowColor }]}>
           <TouchableOpacity
             style={[styles.buyProButton, { backgroundColor: colors.primary, borderColor: colors.warning }]}
             onPress={() => {
@@ -495,74 +412,55 @@ export default function HomeScreen() {
             <Animated.View style={[styles.starContainer, { transform: [{ scale: scaleValue }] }]}>
               <Sparkles size={16} color={colors.warning} fill={colors.warning} style={styles.starIcon} />
             </Animated.View>
-            <ThemedText style={[styles.buyProButtonText, {color: colors.warning}]}>Buy Pro</ThemedText>
+            <ThemedText style={[styles.buyProButtonText, { color: colors.warning }]}>Buy Pro</ThemedText>
           </TouchableOpacity>
         </ThemedView>
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Market Indices Horizontal Scroll */}
-        {
-          (marketIndices.length===0)?(
-            <ThemedText style={[{color: colors.text}]}>
-              
-            </ThemedText>
-          ):(
-            <ScrollView 
-              horizontal 
-              // showsHorizontalScrollIndicator={false}
-              style={styles.marketIndicesContainer}
-              contentContainerStyle={styles.marketIndicesContent}
-            >
-              {marketIndices.map((index: MarketIndicesData, idx: number) => (
-              <React.Fragment key={idx}>
-                {renderMarketIndex(index)}
-              </React.Fragment>
-              ))}
-            </ScrollView>
-          )
-        }
+        {marketIndices.length === 0 ? (
+          <ThemedText style={[{ color: colors.text }]}></ThemedText>
+        ) : (
+          <ScrollView
+            horizontal
+            style={styles.marketIndicesContainer}
+            contentContainerStyle={styles.marketIndicesContent}
+          >
+            {marketIndices.map((index: MarketIndicesData, idx: number) => (
+              <React.Fragment key={idx}>{renderMarketIndex(index)}</React.Fragment>
+            ))}
+          </ScrollView>
+        )}
 
-        {/* Website redirect section */}
-          <ThemedView style={[styles.websiteRedirectContainer, {shadowColor: colors.shadowColor}]}>
-            <ThemedText style={{ fontSize: 15, color: "black" }}>
-              Your Trusted Research Analyst
-            </ThemedText>
-            <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: "black" }}>
-              Pay for Successful Research Calls
-            </ThemedText>
-            <ThemedText style={{ fontSize: 15, color: "black" }}>
-              Start your wealth creation journey!
-            </ThemedText>
-            <ThemedView style={styles.websiteRedirectContainerBottom}>
-              <TouchableOpacity
-                onPress={() => Linking.openURL('https://twmresearchalert.com')}
-                style={[styles.redirectionButton, { backgroundColor: colors.primary }]}
-              >
-                <ThemedText style={{ color: '#ffffff' }}>Know More</ThemedText>
-              </TouchableOpacity>
-              <Image style={styles.tradedgeLogo} source={require('@/assets/images/logo.png')} />
-            </ThemedView>
-          </ThemedView>
-        
-        {/* Our services Section */}
-        <ThemedView style={[styles.tradesContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
-            Our Services
+        <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor }]}>
+          <ThemedText style={{ fontSize: 15, color: "black" }}>Your Trusted Research Analyst</ThemedText>
+          <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: "black" }}>
+            Pay for Successful Research Calls
           </ThemedText>
+          <ThemedText style={{ fontSize: 15, color: "black" }}>Start your wealth creation journey!</ThemedText>
+          <ThemedView style={styles.websiteRedirectContainerBottom}>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('https://twmresearchalert.com')}
+              style={[styles.redirectionButton, { backgroundColor: colors.primary }]}
+            >
+              <ThemedText style={{ color: '#ffffff' }}>Know More</ThemedText>
+            </TouchableOpacity>
+            <Image style={styles.tradedgeLogo} source={require('@/assets/images/logo.png')} />
+          </ThemedView>
+        </ThemedView>
+
+        <ThemedView style={[styles.tradesContainer, { backgroundColor: colors.background }]}>
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Our Services</ThemedText>
           <FlatList
-            data={[...ourServices, { isShowMore: true }]} // Add a show more item
+            data={[...ourServices, { isShowMore: true }]}
             renderItem={({ item }) => {
               if (item.isShowMore) {
                 return (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.showMoreContainer}
                     onPress={() => router.replace('/(tabs)/trades')}
                   >
-                    <ThemedText style={{ color: colors.text }}>
-                      See More
-                    </ThemedText>
+                    <ThemedText style={{ color: colors.text }}>See More</ThemedText>
                     <ArrowRightIcon size={16} color={colors.warning} fill={colors.warning} />
                   </TouchableOpacity>
                 );
@@ -572,64 +470,47 @@ export default function HomeScreen() {
               }
               return null;
             }}
-            // keyExtractor={(item) => item.title || `show-more-${index}`}
+            keyExtractor={(item, index) => 'title' in item ? item.title : `show-more-${index}`}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.cardList}
           />
         </ThemedView>
 
-        {/* NSE cards Section */}
         <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
-            NSE Most Active
-          </ThemedText>
-          {
-            (NSEData.length===0)?(
-              <ThemedText style={[{color: colors.text, alignSelf: "center"}]}>
-                No NSE data Available
-              </ThemedText>
-            ):(
-              <FlatList
-                data={NSEData}
-                renderItem={NSEBSECard}
-                keyExtractor={(item) => item.ticker}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.cardList}
-              />
-            )
-          }
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>NSE Most Active</ThemedText>
+          {NSEData.length === 0 ? (
+            <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>No NSE data Available</ThemedText>
+          ) : (
+            <FlatList
+              data={NSEData}
+              renderItem={NSEBSECard}
+              keyExtractor={(item) => item.ticker}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardList}
+            />
+          )}
         </ThemedView>
 
-        {/* BSE cards Section */}
         <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
-            BSE Most Active
-          </ThemedText>
-          {
-            (BSEData.length === 0)?(
-              <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>
-                No BSE data available
-              </ThemedText>
-            ):(
-              <FlatList
-                data={BSEData}
-                renderItem={NSEBSECard}
-                keyExtractor={(item) => item.ticker}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.cardList}
-              />
-            )
-          }
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>BSE Most Active</ThemedText>
+          {BSEData.length === 0 ? (
+            <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>No BSE data available</ThemedText>
+          ) : (
+            <FlatList
+              data={BSEData}
+              renderItem={NSEBSECard}
+              keyExtractor={(item) => item.ticker}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardList}
+            />
+          )}
         </ThemedView>
 
-         {/* Top Trades Section (2x2 Grid) */}
-         <ThemedView style={[styles.tradesContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
-            Best Trades
-          </ThemedText>
+        <ThemedView style={[styles.tradesContainer, { backgroundColor: colors.background }]}>
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Best Trades</ThemedText>
           <View style={styles.gridContainer}>
             <View style={styles.gridRow}>
               {rendertradesCard({ item: tradesCards[0] })}
@@ -643,18 +524,17 @@ export default function HomeScreen() {
         </ThemedView>
 
         <TouchableOpacity
-        onPress={()=>{
-          getNSEBSEStocks("NSE");
-          getNSEBSEStocks("BSE");
-          // getMarketIndices();
-        }}><ThemedText>Get data</ThemedText></TouchableOpacity>
+          onPress={() => {
+            getNSEBSEStocks("NSE");
+            getNSEBSEStocks("BSE");
+          }}
+        >
+          <ThemedText>Get data</ThemedText>
+        </TouchableOpacity>
 
-        <ThemedView style={[{backgroundColor: colors.background, paddingBottom: 70}]}>
-
-        </ThemedView>
+        <ThemedView style={[{ backgroundColor: colors.background, paddingBottom: 70 }]}></ThemedView>
       </ScrollView>
 
-      {/* Buy Pro Popup */}
       <Modal
         visible={isPopupVisible}
         onRequestClose={() => {
@@ -662,21 +542,10 @@ export default function HomeScreen() {
           setOverlayVisible(!overlayVisible);
         }}
         animationType='slide'
-        transparent={true}  // Important: allows the background to show through
+        transparent={true}
       >
-        <View
-          style={{
-            flex: 1,
-            // backgroundColor: "rgba(0, 0, 0, 0.43)",
-            justifyContent: 'flex-end',  // Aligns content to bottom
-          }}
-          >
-          <View
-            style={{
-              height: Dimensions.get('window').height * 0.7,  // 70% height
-              width: '100%',
-            }}
-          >
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+          <View style={{ height: Dimensions.get('window').height * 0.7, width: '100%' }}>
             <ThemedView style={{ flex: 1, borderRadius: 20, padding: 20 }}>
               <ThemedText>Modal</ThemedText>
               <TouchableOpacity
@@ -684,9 +553,9 @@ export default function HomeScreen() {
                   setIsPopupVisible(false);
                   setOverlayVisible(!overlayVisible);
                 }}
-                style={[{backgroundColor: colors.buttonPrimary, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5,}]}
+                style={[{ backgroundColor: colors.buttonPrimary, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 }]}
               >
-                <ThemedText style={[{color: "white", fontSize: 20,}]}>Close</ThemedText>
+                <ThemedText style={[{ color: "white", fontSize: 20 }]}>Close</ThemedText>
               </TouchableOpacity>
             </ThemedView>
           </View>
@@ -709,12 +578,6 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-  },
-  backgroundLight: {
-    backgroundColor: '#f5f7fa',
-  },
-  backgroundDark: {
-    backgroundColor: '#121212',
   },
   header: {
     flexDirection: 'row',
@@ -749,7 +612,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 7,
-    // paddingVertical: 4,
     borderRadius: 5,
     borderWidth: 1,
     justifyContent: 'center',
@@ -772,7 +634,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 0,
   },
-  // Market Indices Styles
   marketIndicesContainer: {
     marginBottom: 12,
   },
@@ -788,7 +649,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
-  // Website Redirect Styles
   websiteRedirectContainer: {
     marginHorizontal: 8,
     marginTop: 0,
@@ -797,7 +657,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
     backgroundColor: "rgb(88, 233, 252)",
-    // backgroundColor: 'white',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -830,11 +689,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  // Why Choose Section
   sectionContainer: {
     paddingTop: 5,
     paddingHorizontal: 8,
-
   },
   sectionHeader: {
     fontSize: 20,
@@ -853,28 +710,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 6,
-    
   },
   cardList: {
     paddingBottom: 10,
-  },
-  card: {
-    width: 250,
-    borderRadius: 10,
-    padding: 15,
-    marginHorizontal: 6,
-    marginBottom: 5,
-    borderLeftWidth: 5,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  cardImage: {
-    width: 50,
-    height: 50,
-    marginBottom: 10,
-    alignSelf: 'center',
   },
   cardTitle: {
     fontSize: 18,
@@ -886,7 +724,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'left',
   },
-  // Trades Section (2x2 Grid)
   tradesContainer: {
     paddingVertical: 10,
     paddingHorizontal: 8,
@@ -901,7 +738,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   ourServicesCardContainer: {
-    width: 250, // Fixed width for all cards
+    width: 250,
     borderRadius: 10,
     borderLeftWidth: 5,
     marginBottom: 5,
@@ -919,13 +756,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 100, // Fixed width for show more button
-    height: '100%', // Match card height
+    width: 100,
+    height: '100%',
     marginRight: 10,
-    // backgroundColor: 'red',
     gap: 5,
   },
-  bestTradesCardContainer:{
+  bestTradesCardContainer: {
     flex: 1,
     borderRadius: 10,
     borderLeftWidth: 5,
@@ -938,19 +774,5 @@ const styles = StyleSheet.create({
   bestTradesCard: {
     borderRadius: 10,
     padding: 15,
-    // borderLeftWidth: 5,
-  },
-  exploreButton: {
-    marginTop: 2,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 6,
-    alignSelf: 'stretch',
-    alignItems: 'center',
-  },
-  exploreButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
   },
 });

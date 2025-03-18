@@ -23,6 +23,7 @@ const { width } = Dimensions.get('window');
 
 export default function Stocks() {
   const [searchQuery, setSearchQuery] = useState('');
+  // get data from stock context
   const { NSEData, BSEData, marketIndices, updateNSEData, updateBSEData, updateMarketIndices } = useStockContext();
   
   interface StockData {
@@ -63,46 +64,57 @@ export default function Stocks() {
   };
 
   const searchStock = async () => {
-    if (!searchQuery.trim()) {
-      setError('Please enter a stock name');
+    const clearErrorAfterDelay = (message: string) => {
+      setError(message);
+      setTimeout(() => setError(''), 3000);
+    };
+
+    if (!searchQuery?.trim()) {
+      clearErrorAfterDelay('Please enter a stock name');
       return;
     }
 
     setLoading(true);
-    setError('');
-    
+
     try {
       const response = await fetch(
         `https://indian-stock-exchange-api2.p.rapidapi.com/stock?name=${searchQuery.toLowerCase()}`,
         {
           method: 'GET',
           headers: {
-            'x-rapidapi-key': 'bc620173a1msh189575d170e4385p16222fjsnfad95363999a',
-            'x-rapidapi-host': 'indian-stock-exchange-api2.p.rapidapi.com',
+            'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
+            'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
           },
         }
       );
 
-      if(response.status===429){
-        // console.log("API quota exceeded");
-        throw new Error("API quota exceeded");
+      if (!response.ok) {
+        if (response.status === 429) {
+          throw new Error('API quota exceeded. Please try again later.');
+        }
+        throw new Error('Stock not found');
       }
 
       const data = await response.json();
-      console.log(response.status);
+
       if (data.error) {
-        setError('Stock not found');
-        console.log(data.error);
-      } else {
-        setStockData(data);
+        throw new Error('Stock not found');
       }
+
+      // update stock data globally
+      setStockData(data);
+
     } catch (err) {
-      setError('Failed to fetch stock data');
-      console.log(err);
+      if (err instanceof Error) {
+        clearErrorAfterDelay(err.message || 'Failed to fetch stock data');
+      } else {
+        clearErrorAfterDelay('Failed to fetch stock data');
+      }
     } finally {
       setLoading(false);
     }
   };
+
 
   const NSEBSECard = ({ item }: { item: { ticker: string; price: number; netChange: number; percentChange: number; high: number; low: number; } }) => {
       const isGain = item.netChange > 0;

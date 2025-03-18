@@ -5,19 +5,19 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   Image,
   ScrollView,
   Linking,
   KeyboardTypeOptions,
+  Alert,
 } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { Pressable } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// import { LOGIN_API_URL, SIGNUP_API_URL } from '@env';
 
 const SignupScreen = () => {
   const [fullName, setFullName] = useState('');
@@ -27,6 +27,7 @@ const SignupScreen = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const fields = [
@@ -42,7 +43,7 @@ const SignupScreen = () => {
       placeholder: 'Full Name',
       value: fullName,
       setValue: setFullName,
-      required: true
+      required: true,
     },
     {
       placeholder: 'Email',
@@ -66,31 +67,26 @@ const SignupScreen = () => {
     const field = fields[step];
     const value = field.value.trim();
 
-    // Required field check
     if (field.required && !value) {
       return `Please enter ${field.placeholder.toLowerCase()}`;
     }
 
-    // Specific validation per field
     switch (step) {
       case 0: // WhatsApp Number
         if (!/^\d{10}$/.test(value)) {
           return 'WhatsApp number must be a 10-digit number';
         }
         break;
-
       case 1: // Full Name
         if (value.length < 2) {
           return 'Full name must be at least 2 characters long';
         }
         break;
-
       case 2: // Email
         if (!/^\S+@\S+\.\S+$/.test(value)) {
           return 'Please enter a valid email address';
         }
         break;
-
       case 3: // Password
         if (value.length < 8) {
           return 'Password must be at least 8 characters long';
@@ -99,26 +95,27 @@ const SignupScreen = () => {
           return 'Password must contain at least one number';
         }
         break;
-
       default:
         return null;
     }
-    return null; // No errors
+    return null;
   };
 
   const handleNext = async () => {
-    const errorMessage = validateInput(currentStep);
-    if (errorMessage) {
-      Alert.alert('Error', errorMessage);
+    const validationError = validateInput(currentStep);
+    if (validationError) {
+      setErrorMessage(validationError);
+      setTimeout(() => setErrorMessage(''), 3000); // Clear error after 3 seconds
       return;
     }
 
     if (currentStep === fields.length - 1) {
       setLoading(true);
+      setErrorMessage('');
       const payload = {
         user_full_name: fullName,
         user_whatsapp_number: whatsAppNumber,
-        user_alternate_number: whatsAppNumber, // Using WhatsApp number as alternate for now
+        user_alternate_number: whatsAppNumber,
         user_email_id: email,
         user_position: 1,
         user_active: 'Y',
@@ -127,10 +124,12 @@ const SignupScreen = () => {
 
       try {
         // Step 1: Signup API Request
-        const response = await axios.put('http://gateway.twmresearchalert.com/kyc', payload);
+        if (!process.env.EXPO_PUBLIC_SIGNUP_URL) {
+          throw new Error('Signup URL is not defined');
+        }
+        const response = await axios.put(process.env.EXPO_PUBLIC_SIGNUP_URL, payload);
         Alert.alert('Success', 'Account created successfully! Logging you in...');
 
-        // Step 2: Prepare Login Payload
         const loginPayload = {
           number: whatsAppNumber,
           password: password,
@@ -140,26 +139,26 @@ const SignupScreen = () => {
         try {
           // Step 3: Login API Request
           const loginResponse = await axios.post(
-            'https://kyclogin.twmresearchalert.com/session',
+            process.env.EXPO_PUBLIC_LOGIN_URL || '',
             loginPayload
           );
 
           const loginData = loginResponse.data.data;
-          // console.log('Login Successful:', loginData);
+          
+          const userId = loginData.user_id.replace('LNUSR', '');
 
-          // Step 4: Store Tokens in AsyncStorage
           await AsyncStorage.setItem('access_token', loginData.access_token);
           await AsyncStorage.setItem('refresh_token', loginData.refresh_token);
-          await AsyncStorage.setItem('user_id', loginData.user_id);
+          await AsyncStorage.setItem('user_id', userId);
           await AsyncStorage.setItem('user_name', loginData.user_name);
 
-
-          // Step 6: Navigate to home Page
           router.replace('/home');
         } catch (loginError) {
-          // console.error('Login Error:', loginError);
-          Alert.alert('Login Failed', 'Auto-login failed. Please log in manually.');
-          router.replace('/login'); // Redirect to login if auto-login fails
+          setErrorMessage('Auto-login failed. Please log in manually.');
+          setTimeout(() => {
+            setErrorMessage('');
+            router.replace('/login');
+          }, 2000);
         }
       } catch (error: any) {
         if (
@@ -169,30 +168,37 @@ const SignupScreen = () => {
             error.response.data.message === 'WhatsApp number already exists and Email already exists'
           )
         ) {
-          Alert.alert('Signup Failed', 'WhatsApp number already exists! Try logging in.');
-          router.replace('/login');
+          setErrorMessage('WhatsApp number already exists! Try logging in.');
+          setTimeout(() => {
+            setErrorMessage('');
+            router.replace('/login');
+          }, 2000);
         } else if (
           error?.response?.data?.status === 'error' &&
           error.response.data.message === 'Email already exists'
         ) {
-          Alert.alert('Signup Failed', 'Email already exists!');
-          setCurrentStep(2);
-        } else if (
-          error?.response?.data?.status === 'error' &&
-          error.response.data.message === 'Email already exists'
-        ) {
-          Alert.alert('Signup Failed', 'Email already exists!');
-          setCurrentStep(2);
+          setErrorMessage('Email already exists!');
+          setTimeout(() => {
+            setErrorMessage('');
+            setCurrentStep(2);
+          }, 2000);
         } else {
-          // console.error('Signup Error:', error);
-          Alert.alert('Signup Failed', 'An unexpected error occurred.');
+          setErrorMessage('An unexpected error occurred.');
+          setTimeout(() => setErrorMessage(''), 2000);
         }
       } finally {
         setLoading(false);
       }
-
     } else {
+      setErrorMessage('');
       setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setErrorMessage('');
+      setCurrentStep(currentStep - 1);
     }
   };
 
@@ -207,12 +213,10 @@ const SignupScreen = () => {
             </Text>
           </View>
 
-          {/* Updated Title */}
           <Text style={[styles.title, { fontFamily: 'San Francisco' }]}>
             Join Now to Get <Text style={{ color: '#306ee9' }}>3 Free Trades</Text>
           </Text>
 
-          {/* Moved "Equity | Futures | Options | Commodities" */}
           <Text style={styles.subtitle}>
             Equity | Futures | Options | Commodities
           </Text>
@@ -256,15 +260,44 @@ const SignupScreen = () => {
             />
           )}
 
-          {loading ? (
-            <ActivityIndicator size="large" color="#FFFFFF" />
-          ) : (
-            <TouchableOpacity style={styles.button} onPress={handleNext}>
-              <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>
-                {currentStep === fields.length - 1 ? 'Register' : 'Next'}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {/* Error Message Display */}
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
+
+          {/* Navigation Buttons */}
+          <View style={[
+            styles.buttonContainer,
+            loading && { justifyContent: 'center' },
+            !loading && currentStep === 0 && { justifyContent: 'center' }
+          ]}>
+            {!loading && currentStep > 0 && (
+              <TouchableOpacity
+                style={[styles.button, styles.backButton]}
+                onPress={handleBack}
+              >
+                <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>
+                  Back
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            {!loading ? (
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  currentStep === 0 && { width: '80%' }
+                ]}
+                onPress={handleNext}
+              >
+                <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>
+                  {currentStep === fields.length - 1 ? 'Register' : 'Next'}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <ActivityIndicator size="large" color="#FFFFFF" />
+            )}
+          </View>
 
           <Text style={styles.subtitle}>
             Already have an account?{' '}
@@ -273,7 +306,6 @@ const SignupScreen = () => {
             </Text>
           </Text>
 
-          {/* Moved Terms & Privacy Policy to the Bottom */}
           <View style={styles.bottomContainer}>
             <Text style={[styles.subtitle, { fontFamily: 'San Francisco', textAlign: 'center' }]}>
               By continuing, you agree to
@@ -283,7 +315,6 @@ const SignupScreen = () => {
             </Text>
             <Text style={{ fontFamily: 'San Francisco', textAlign: 'center' }}>SEBI Reg. Research Analyst</Text>
           </View>
-
         </View>
       </ScrollView>
     </LinearGradient>
@@ -292,7 +323,7 @@ const SignupScreen = () => {
 
 const styles = StyleSheet.create({
   bottomContainer: {
-    width: "100%",
+    width: '100%',
     paddingTop: 95,
   },
   container: {
@@ -362,8 +393,14 @@ const styles = StyleSheet.create({
     right: 15,
     top: 12,
   },
-  button: {
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '80%',
+    marginBottom: 20,
+  },
+  button: {
+    width: '48%',
     height: 50,
     backgroundColor: '#306ee8',
     borderRadius: 15,
@@ -373,7 +410,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
-    marginBottom: 20,
+  },
+  backButton: {
+    backgroundColor: '#666',
   },
   buttonText: {
     fontSize: 18,
@@ -385,6 +424,13 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
     textDecorationLine: 'underline',
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#FF4444',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontFamily: 'San Francisco',
   },
 });
 

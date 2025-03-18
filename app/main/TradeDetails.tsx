@@ -12,32 +12,15 @@ import { ThemedText } from '@/components/ThemedText';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Animated, PanResponder } from 'react-native';
 
-// Trade interface remains unchanged
 interface Trade {
-  title: string;
-  desc: string;
-  traders: string;
-  tags: string[];
-  credits: string;
-  minInvestment: string;
-  icon: string;
-  category: string;
-  additionalInfo: string[];
-  expectedReturn: string;
-  riskLevel: string;
-  duration: string;
-  startDate: string;
-  totalInvested: string;
-  availableSlots: number;
-  performanceMetrics: {
-    pastYearReturn: string;
-    volatility: string;
-    successRate: string;
-  };
-  prerequisites: string[];
+  title: string;        // From subtype_name or type_name
+  price: string;        // Formatted price (e.g., "₹12000")
+  details: string[];    // Array of details from API
+  categoryTag: string;  // type_name from API
+  icon: string;         // Icon based on category
+  tags: string[];       // Two random tags
 }
 
-// Main Component (unchanged except for SubscribeButton usage)
 export default function TradeDetails() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -45,37 +28,22 @@ export default function TradeDetails() {
 
   const trade: Trade = {
     title: params.title as string,
-    desc: params.desc as string,
-    traders: params.traders as string,
-    tags: JSON.parse(params.tags as string),
-    credits: params.credits as string,
-    minInvestment: params.minInvestment as string,
+    price: params.price as string,
+    details: params.details ? JSON.parse(params.details as string) : [],
+    categoryTag: params.categoryTag as string,
     icon: params.icon as string,
-    category: params.category as string,
-    additionalInfo: params.additionalInfo ? JSON.parse(params.additionalInfo as string) : [],
-    expectedReturn: params.expectedReturn as string || "8-12% annually",
-    riskLevel: params.riskLevel as string || "Moderate",
-    duration: params.duration as string || "6-12 months",
-    startDate: params.startDate as string || "2025-03-01",
-    totalInvested: params.totalInvested as string || "$250,000",
-    availableSlots: Number(params.availableSlots) || 15,
-    performanceMetrics: params.performanceMetrics 
-      ? JSON.parse(params.performanceMetrics as string) 
-      : { pastYearReturn: "10.5%", volatility: "Medium", successRate: "85%" },
-    prerequisites: params.prerequisites 
-      ? JSON.parse(params.prerequisites as string) 
-      : ["Verified Account", "Minimum $1000 balance"],
+    tags: params.tags ? JSON.parse(params.tags as string) : [],
   };
 
   const colors = {
     background: isDark ? '#121212' : '#f7f7f7',
     text: isDark ? '#ffffff' : '#333333',
     border: isDark ? '#333333' : '#e0e0e0',
-    error: '#ff4444',
     primary: '#00BCD4',
     buttonPrimary: '#00b300',
     success: '#00c853',
     warning: '#ffab00',
+    error: '#ff4444',
   };
 
   const getTagStyle = (tag: string): { borderColor: string; icon: string } => {
@@ -96,18 +64,16 @@ export default function TradeDetails() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <ThemedText style={[styles.category, { color: colors.primary }]}>{trade.category}</ThemedText>
+        <ThemedText style={[styles.category, { color: colors.primary }]}>{trade.categoryTag}</ThemedText>
         <View style={styles.headerSpacer} />
       </View>
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <CardHeader trade={trade} colors={colors} />
-        <RiskReturnSection trade={trade} colors={colors} getTagStyle={getTagStyle} />
+        <TagsSection trade={trade} colors={colors} getTagStyle={getTagStyle} />
         <DescriptionSection trade={trade} colors={colors} />
         <PricingSection trade={trade} colors={colors} />
-        <PerformanceSection trade={trade} colors={colors} />
-        <PrerequisitesSection trade={trade} colors={colors} />
-        <AdditionalInfoSection trade={trade} colors={colors} />
+        <DetailsSection trade={trade} colors={colors} />
       </ScrollView>
 
       <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
@@ -117,110 +83,54 @@ export default function TradeDetails() {
   );
 }
 
-// Component Definitions (unchanged except SubscribeButton)
+// Component Definitions
+
 const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
-  <View style={[styles.cardHeader, {backgroundColor: colors.background}]}>
+  <View style={[styles.cardHeader, { backgroundColor: colors.background }]}>
     <ThemedText style={[styles.title, { color: colors.text }]}>{trade.title}</ThemedText>
     <MaterialIcons name={trade.icon} size={24} color={colors.text} />
   </View>
 );
 
-const RiskReturnSection: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
+const TagsSection: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
   <View style={styles.section}>
     <View style={styles.tagsContainer}>
       {trade.tags.map((tag, index) => {
         const { borderColor, icon } = getTagStyle(tag);
         return (
-          <View key={index} style={[styles.tagContainer, { borderColor, borderWidth: 2 }]}>
+          <View key={index} style={[styles.tagContainer, { borderColor }]}>
             <MaterialIcons name={icon} size={16} color={borderColor} style={styles.tagIcon} />
             <ThemedText style={[styles.tagText, { color: borderColor }]}>{tag}</ThemedText>
           </View>
         );
       })}
     </View>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Expected Return: {trade.expectedReturn}
-    </ThemedText>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Risk Level: {trade.riskLevel}
-    </ThemedText>
   </View>
 );
 
 const DescriptionSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <View style={styles.section}>
+    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Description</ThemedText>
     <ThemedText style={[styles.description, { color: colors.text }]}>
-      {`${trade.desc}\n${trade.traders}`}
-    </ThemedText>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Duration: {trade.duration}
-    </ThemedText>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Start Date: {trade.startDate}
+      {trade.details[0] || 'No description available'}
     </ThemedText>
   </View>
 );
 
 const PricingSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <View style={styles.section}>
-    <View style={styles.priceContainer}>
-      <ThemedText style={[styles.minInvestment, { color: colors.text }]}>
-        Min. Investment: {trade.minInvestment}
-      </ThemedText>
-      <ThemedText style={[styles.detailText, { color: colors.text }]}>
-        Total Invested: {trade.totalInvested}
-      </ThemedText>
-      <ThemedText style={[styles.detailText, { color: colors.text }]}>
-        Available Slots: {trade.availableSlots}
-      </ThemedText>
-    </View>
+    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Pricing</ThemedText>
+    <ThemedText style={[styles.price, { color: colors.primary }]}>{trade.price}</ThemedText>
   </View>
 );
 
-const PerformanceSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
+const DetailsSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <View style={styles.section}>
-    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-      Performance Metrics
-    </ThemedText>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Past Year Return: {trade.performanceMetrics.pastYearReturn}
-    </ThemedText>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Volatility: {trade.performanceMetrics.volatility}
-    </ThemedText>
-    <ThemedText style={[styles.detailText, { color: colors.text }]}>
-      Success Rate: {trade.performanceMetrics.successRate}
-    </ThemedText>
-  </View>
-);
-
-const PrerequisitesSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
-  <View style={styles.section}>
-    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-      Prerequisites
-    </ThemedText>
-    {trade.prerequisites.map((prereq, index) => (
-      <View key={index} style={styles.additionalInfoItem}>
+    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Details</ThemedText>
+    {trade.details.map((detail, index) => (
+      <View key={index} style={styles.detailItem}>
         <MaterialIcons name="check" size={16} color={colors.success} style={styles.checkIcon} />
-        <ThemedText style={[styles.additionalInfoText, { color: colors.text }]}>
-          {prereq}
-        </ThemedText>
-      </View>
-    ))}
-  </View>
-);
-
-const AdditionalInfoSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
-  <View style={styles.section}>
-    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>
-      Additional Information
-    </ThemedText>
-    {trade.additionalInfo.map((info, index) => (
-      <View key={index} style={styles.additionalInfoItem}>
-        <MaterialIcons name="check" size={16} color={colors.success} style={styles.checkIcon} />
-        <ThemedText style={[styles.additionalInfoText, { color: colors.text }]}>
-          {info}
-        </ThemedText>
+        <ThemedText style={[styles.detailText, { color: colors.text }]}>{detail}</ThemedText>
       </View>
     ))}
   </View>
@@ -233,7 +143,6 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
   const sliderWidth = 60;
   const padding = 5;
 
-  // Start wiggle animation
   const startWiggle = () => {
     wiggleAnimation.current = Animated.loop(
       Animated.sequence([
@@ -252,7 +161,6 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
     wiggleAnimation.current.start();
   };
 
-  // Stop wiggle animation
   const stopWiggle = () => {
     if (wiggleAnimation.current) {
       wiggleAnimation.current.stop();
@@ -260,10 +168,9 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
     }
   };
 
-  // Start wiggle on mount
   useEffect(() => {
     startWiggle();
-    return () => stopWiggle(); // Cleanup on unmount
+    return () => stopWiggle();
   }, []);
 
   const textOpacity = pan.interpolate({
@@ -280,25 +187,15 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
-    
     onPanResponderMove: (_, gestureState) => {
-      if (!buttonWidth || !sliderWidth || !padding) {
-        console.warn('Required dimensions not defined');
-        return;
-      }
       const maxX = buttonWidth - sliderWidth - (padding * 2);
       const newX = Math.max(0, Math.min(gestureState.dx, maxX));
       pan.setValue(newX);
     },
-    
     onPanResponderRelease: (_, gestureState) => {
-      if (!buttonWidth || !sliderWidth || !padding || !onPress || !startWiggle) {
-        console.warn('Required dependencies not defined');
-        return;
-      }
       const threshold = buttonWidth - sliderWidth - (padding * 2) - 10;
       const maxPosition = buttonWidth - sliderWidth - (padding * 2);
-  
+
       if (gestureState.dx >= threshold) {
         Animated.spring(pan, {
           toValue: maxPosition,
@@ -332,30 +229,30 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
   });
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[
-        styles.subscribeButton, 
-        { 
+        styles.subscribeButton,
+        {
           backgroundColor,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.3,
           shadowRadius: 4,
           elevation: 5,
-        }
+        },
       ]}
     >
       <View style={[styles.track, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]} />
-      <Animated.Text 
+      <Animated.Text
         style={[
-          styles.subscribeButtonText, 
-          { 
-            opacity: textOpacity, 
+          styles.subscribeButtonText,
+          {
+            opacity: textOpacity,
             color: '#ffffff',
             textShadowColor: 'rgba(0, 0, 0, 0.3)',
             textShadowOffset: { width: 0, height: 1 },
             textShadowRadius: 2,
-          }
+          },
         ]}
       >
         Subscribe
@@ -365,29 +262,20 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
           styles.slider,
           {
             transform: [{ translateX: pan }],
-            backgroundColor: 'rgba(0, 0, 0, 0.11)', // Semi-transparent for pseudo-blur effect
-            // shadowColor: '#000',
-            // shadowOffset: { width: 0, height: 2 },
-            // shadowOpacity: 0.4,
-            // shadowRadius: 6,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
             borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.2)', // Subtle inset effect
+            borderColor: 'rgba(255, 255, 255, 0.2)',
           },
         ]}
         {...panResponder.panHandlers}
       >
-        <MaterialIcons 
-          name="chevron-right" 
-          size={24} 
-          color="#ffffff" 
-          style={styles.chevron} 
-        />
+        <MaterialIcons name="chevron-right" size={24} color="#ffffff" style={styles.chevron} />
       </Animated.View>
     </Animated.View>
   );
 };
 
-// Styles (unchanged)
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -398,14 +286,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  headerLight: {
-    backgroundColor: '#ffffff',
-    borderBottomColor: '#eef1f5',
-  },
-  headerDark: {
-    backgroundColor: '#1e1e1e',
-    borderBottomColor: '#2d2d2d',
   },
   backButton: {
     padding: 4,
@@ -442,16 +322,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 8,
   },
-  description: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 8,
-  },
-  detailText: {
-    fontSize: 14,
-    lineHeight: 20,
-    marginBottom: 4,
-  },
   tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -461,39 +331,39 @@ const styles = StyleSheet.create({
   tagContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderWidth: 2,
     paddingVertical: 1,
-    paddingHorizontal: 10,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    borderRadius: 12,
   },
   tagIcon: {
-    marginRight: 6,
+    marginRight: 4,
   },
   tagText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '500',
   },
-  priceContainer: {
-    gap: 8,
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 8,
   },
-  minInvestment: {
+  price: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 4,
   },
-  additionalInfoContainer: {
-    marginTop: 4,
-  },
-  additionalInfoItem: {
+  detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 4,
   },
-  checkIcon: {
-    marginRight: 8,
-  },
-  additionalInfoText: {
+  detailText: {
     fontSize: 13,
     lineHeight: 18,
+  },
+  checkIcon: {
+    marginRight: 8,
   },
   buttonContainer: {
     padding: 16,
@@ -512,7 +382,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)', // Subtle inset effect
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   track: {
     position: 'absolute',
@@ -535,8 +405,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.8)',
-    // elevation: 2,
   },
   chevron: {
     marginLeft: 4,

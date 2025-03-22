@@ -6,6 +6,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons'; // Import the icon set
 import { Pressable } from 'react-native';
+import { ScrollView } from 'react-native';
 
 const LoginScreen = () => {
   const [whatsAppNumber, setWhatsAppNumber] = useState('');
@@ -48,9 +49,7 @@ const LoginScreen = () => {
       await AsyncStorage.setItem('user_name', response.data.data.user_name);
 
       // Redirect to the main screen
-      setTimeout(() => {
-        router.replace('/(tabs)/home');
-      }, 2000);
+      router.replace('/(tabs)/home');
     } catch (error: any) {
       if(error.response?.data?.messages[0]==="Too Many Incorrect Password Attempts"){
         setErrorMessage('Too Many Incorrect Password Attempts! Try after 30 minutes');
@@ -67,60 +66,62 @@ const LoginScreen = () => {
 
   return (
     <LinearGradient colors={['#306ee8', '#306ee8']} style={styles.container}>
-      <View style={styles.innerContainer}>
-        <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
-        <Text style={[styles.title, { fontFamily: 'San Francisco' }]}>
-          Welcome to  
-          <Text style={{ color: '#306ee9' }}> TradeEdge</Text>
-        </Text>
-        <Text style={styles.subtitle}>Please login to continue</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <View style={styles.innerContainer}>
+          <Image source={require('../../assets/images/logo.png')} style={styles.logo} />
+          <Text style={[styles.title, { fontFamily: 'San Francisco' }]}>
+            Welcome to  
+            <Text style={{ color: '#306ee9' }}> TradeEdge</Text>
+          </Text>
+          <Text style={styles.subtitle}>Please login to continue</Text>
 
-        <TextInput
-          style={[styles.input, { fontFamily: 'San Francisco' }]}
-          placeholder="Phone Number"
-          placeholderTextColor="#999"
-          value={whatsAppNumber}
-          onChangeText={setWhatsAppNumber}
-          maxLength={10}
-        />
-        <View style={styles.passwordContainer}>
           <TextInput
-            style={[styles.input, styles.passwordInput, { fontFamily: 'San Francisco' }]}
-            placeholder="Password"
+            style={[styles.input, { fontFamily: 'San Francisco' }]}
+            placeholder="Phone Number"
             placeholderTextColor="#999"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={!showPassword} 
+            value={whatsAppNumber}
+            onChangeText={setWhatsAppNumber}
+            maxLength={10}
           />
-          <TouchableOpacity
-            style={styles.eyeIcon}
-            onPress={() => setShowPassword(!showPassword)}
-          >
-            <MaterialIcons
-              name={showPassword ? 'visibility-off' : 'visibility'} // Toggle icon based on state
-              size={24}
-              color="#999"
+          <View style={styles.passwordContainer}>
+            <TextInput
+              style={[styles.input, styles.passwordInput, { fontFamily: 'San Francisco' }]}
+              placeholder="Password"
+              placeholderTextColor="#999"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword} 
             />
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.eyeIcon}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <MaterialIcons
+                name={showPassword ? 'visibility-off' : 'visibility'} // Toggle icon based on state
+                size={24}
+                color="#999"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Error Message Display */}
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
+
+          {loading ? (
+            <ActivityIndicator size="large" color="#FFFFFF" />
+          ) : (
+            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+              <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>Log In</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.subtitle}>Don’t have an account? </Text>
+          <Pressable onPress={() => router.replace('/signup')}>
+            <Text style={styles.link}>Register</Text>
+          </Pressable>
         </View>
-
-        {/* Error Message Display */}
-        {errorMessage ? (
-          <Text style={styles.errorText}>{errorMessage}</Text>
-        ) : null}
-
-        {loading ? (
-          <ActivityIndicator size="large" color="#FFFFFF" />
-        ) : (
-          <TouchableOpacity style={styles.button} onPress={handleLogin}>
-            <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>Log In</Text>
-          </TouchableOpacity>
-        )}
-        <Text style={styles.subtitle}>Don’t have an account? </Text>
-        <Pressable onPress={() => router.replace('/signup')}>
-          <Text style={styles.link}>Register</Text>
-        </Pressable>
-      </View>
+      </ScrollView>
     </LinearGradient>
   );
 };
@@ -128,6 +129,9 @@ const LoginScreen = () => {
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },

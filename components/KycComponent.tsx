@@ -1,15 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ThemedText } from './ThemedText';
 
-interface KycComponentProps {
-  isKycDone?: boolean;
-  onKycComplete?: () => void;
-}
-
-const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone = false, onKycComplete }) => {
+const KycComponent: React.FC = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const colors = {
@@ -24,20 +20,23 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
     yellowBorder: '#ffab00',
+    shadowColor: isDark ? 'white':'black',
   };
 
-  const [isKycDone, setIsKycDone] = useState(initialKycDone);
+  const [isKycDone, setIsKycDone] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isKycExpanded, setIsKycExpanded] = useState(false);
   const [aadhaarFile, setAadhaarFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [panFile, setPanFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [kycStatus, setKycStatus] = useState<string | null>(null);
+  const [fetchingKycStatus, setFetchingKycStatus] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
 
   // Check KYC status on every mount
   useEffect(() => {
     const checkKycStatus = async () => {
+      setFetchingKycStatus(true);
       const userId = await AsyncStorage.getItem("user_id");
       if (userId) {
         try {
@@ -58,7 +57,9 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
 
           setKycStatus(auth);
         } catch (error) {
-          // console.log('Error checking KYC status:', error);
+          console.log('Error checking KYC status:', error);
+        } finally {
+          setFetchingKycStatus(false);
         }
       }
     };
@@ -86,7 +87,7 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
         setAadhaarFile(result);
       }
     } catch (err) {
-      // console.log('Error picking Aadhaar:', err);
+      console.log('Error picking Aadhaar:', err);
       setMessage('Failed to pick Aadhaar image');
     }
   };
@@ -101,7 +102,7 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
         setPanFile(result);
       }
     } catch (err) {
-      // console.log('Error picking PAN:', err);
+      console.log('Error picking PAN:', err);
       setMessage('Failed to pick PAN image');
     }
   };
@@ -138,7 +139,7 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
 
       formData.append('user_id', userId);
 
-      // console.log('User ID:', userId);
+      console.log('User ID:', userId);
 
       setUploading(true);
       const response = await fetch('https://gateway.twmresearchalert.com/kyc', {
@@ -151,12 +152,12 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
 
       if (!response.ok) {
         const errorText = await response.text();
-        // console.log('Error Response:', errorText);
+        console.log('Error Response:', errorText);
         throw new Error(`HTTP error! Status: ${response.status}, Response: ${errorText}`);
       }
 
       const result: any = await response.json();
-      // console.log('KYC Submit response:', result);
+      console.log('KYC Submit response:', result);
 
       setMessage('Documents submitted for review!');
       setIsProcessing(true);
@@ -164,13 +165,13 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
       setAadhaarFile(null);
       setPanFile(null);
     } catch (error: unknown) {
-      // console.log('KYC Submit error:', error);
+      console.log('KYC Submit error:', error);
       let errorMessage = 'Failed to submit KYC';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
       setMessage(errorMessage);
-      // console.log('Error', error);
+      console.log('Error', error);
       setIsProcessing(false);
     } finally {
       setUploading(false);
@@ -181,26 +182,33 @@ const KycComponent: React.FC<KycComponentProps> = ({ isKycDone: initialKycDone =
     setIsKycExpanded(false);
   };
 
-  // Verified user 
-  if (kycStatus === "Y") {
+  if (fetchingKycStatus) {
     return (
-      <View style={[styles.kycContainer, { backgroundColor: colors.success, borderColor: colors.success }]}>
-        <Text style={[styles.kycStatusText, { color: colors.text }]}>User Verified</Text>
+      <View style={styles.loadingContainer}>
+        <ThemedText>Fetching KYC status</ThemedText>
+        <ActivityIndicator size="large" color={colors.text} />
       </View>
     );
   }
-  
-  // Unverified user 
+
+  if (kycStatus === "Y") {
+    return (
+      <View style={[styles.kycContainer, { backgroundColor: colors.success, borderColor: colors.success, shadowColor: colors.shadowColor }]}>
+        <Text style={[styles.kycStatusText, { }]}>User has been verified</Text>
+      </View>
+    );
+  }
+
   if (kycStatus === "N") {
     return (
-      <View style={[styles.kycContainer, { backgroundColor: colors.error, borderColor: colors.error }]}>
-        <Text style={[styles.kycStatusText, { color: colors.text }]}>Unverified contact support center</Text>
+      <View style={[styles.kycContainer, { backgroundColor: colors.error, borderColor: colors.error, shadowColor: colors.shadowColor }]}>
+        <Text style={[styles.kycStatusText, { }]}>Unverified contact support center</Text>
       </View>
     );
   }
 
   return (
-    <View style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder }]}>
+    <View style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder, shadowColor: colors.shadowColor }]}>
       {!isKycExpanded ? (
         // KYC section collapsed
         <View style={styles.kycHeader}>
@@ -278,6 +286,10 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     borderWidth: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
   },
   kycHeader: {
     flexDirection: 'row',
@@ -287,6 +299,7 @@ const styles = StyleSheet.create({
   kycStatusText: {
     fontSize: 16,
     fontWeight: '600',
+    color: 'white',
   },
   kycButton: {
     paddingVertical: 8,
@@ -363,6 +376,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 14,
     textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    gap: 2,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

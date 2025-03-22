@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -10,10 +10,23 @@ import {
   Text,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useStockContext } from '@/context/StockContext';
 import { router } from 'expo-router';
+
+type ServiceItem = {
+  title: string;
+  price: string;
+  details: string[];
+  categoryTag: string;
+  icon: string;
+  tags: string[];
+  // Adding fields to match the image (using dummy data for now)
+  minimumInvestment?: string;
+  riskCategory?: string;
+  profitPotential?: string;
+};
 
 const { width } = Dimensions.get('window');
 
@@ -27,43 +40,21 @@ export default function Trades() {
     card: isDark ? '#1e1e1e' : '#ffffff',
     border: isDark ? '#333333' : '#e0e0e0',
     primary: '#00BCD4',
-    buttonPrimary: '#6200ee',
+    buttonPrimary: 'rgb(44, 145, 5)',
     shadowColor: isDark ? 'white' : 'black',
     selectedTagBackground: '#3498db',
     tagBackground: isDark ? '#333333' : '#e0e0e0',
     success: '#00c853',
     warning: '#ffab00',
     error: '#ff4444',
+    buttonSecondary: '#00BCD4', // For the "Enquire" button
   };
 
-  interface ServiceItem {
-    title: string; // subtype_name or type_name if no subtypes
-    price: string; // Price in rupees
-    details: string[]; // List of details
-    categoryTag: string; // type_name
-    icon: string; // Icon based on category
-    tags: string[]; // Two random tags
-  }
+  const { services, loading } = useStockContext();
+  const [selectedTag, setSelectedTag] = useState<string>('Equity');
 
-  const [services, setServices] = useState<ServiceItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [tags, setTags] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string>('');
-
-  // Random tags pool from previous code
-  const randomTags = [
-    'Low Risk',
-    'Moderate Risk',
-    'High Risk',
-    'Avg ₹2,000/trade',
-    'Avg ₹5,000/trade',
-    'Avg 10%+',
-  ];
-
-  const getRandomTags = () => {
-    const shuffled = randomTags.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 2); // Return 2 random tags
-  };
+  const uniqueTags = [...new Set(services.map((service) => service.categoryTag))] as string[];
+  const tags = uniqueTags.length > 0 ? uniqueTags : [''];
 
   const getTagStyle = (tag: string): { borderColor: string; icon: string } => {
     if (tag.includes('Low Risk')) return { borderColor: colors.success, icon: 'check-circle' };
@@ -71,66 +62,6 @@ export default function Trades() {
     if (tag.includes('High Risk')) return { borderColor: colors.error, icon: 'error' };
     if (tag.includes('Avg')) return { borderColor: colors.primary, icon: 'trending-up' };
     return { borderColor: colors.primary, icon: 'info' };
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = await AsyncStorage.getItem("access_token");
-        const apiResponse = await fetch('http://gateway.twmresearchalert.com/package', {
-          headers: {
-            Authorization: token || '',
-          },
-        });
-
-        const responseJson = await apiResponse.json();
-        console.log(responseJson);
-
-        if (responseJson.status === 'success') {
-          const transformedServices: ServiceItem[] = responseJson.data.flatMap((type: any) => {
-            const items = type.subtypes.length > 0
-              ? type.subtypes
-              : [{ subtype_name: type.type_name, price: type.price, details: type.details || [] }];
-
-            return items.map((item: any) => ({
-              title: item.subtype_name,
-              price: item.price ? `₹${String(item.price)}` : 'Contact for pricing',
-              details: item.details || ['Details not available'],
-              categoryTag: type.type_name,
-              icon: getIconForCategory(type.type_name),
-              tags: getRandomTags(), // Assign 2 random tags
-            }));
-          });
-
-          const uniqueTags = [...new Set(responseJson.data.map((type: any) => type.type_name))] as string[];
-          setTags(uniqueTags);
-          setSelectedTag(uniqueTags[0] || '');
-          setServices(transformedServices);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
-  const getIconForCategory = (category: string) => {
-    switch (category) {
-      case 'Equity': return 'trending-up';
-      case 'Stock Option': return 'tune';
-      case 'Stock Future': return 'bar-chart';
-      case 'Index Option': return 'tune';
-      case 'Index Future': return 'bar-chart';
-      case 'Swing Trading': return 'trending-up';
-      case 'TWM Package (All In One)': return 'star';
-      case 'MCX Commodities': return 'diamond';
-      case 'Forex': return 'currency-exchange';
-      case 'International Club Commodities': return 'public';
-      default: return 'info';
-    }
   };
 
   const handleTradePress = (item: ServiceItem) => {
@@ -142,14 +73,21 @@ export default function Trades() {
         details: JSON.stringify(item.details),
         categoryTag: item.categoryTag,
         icon: item.icon,
-        tags: JSON.stringify(item.tags), // Pass tags to TradeDetails
+        tags: JSON.stringify(item.tags),
+        minimumInvestment: item.minimumInvestment || 'N/A',
+        riskCategory: item.riskCategory || 'N/A',
+        profitPotential: item.profitPotential || 'N/A',
       },
     });
   };
 
-  const filteredServices = services.filter(
-    (item) => item.categoryTag === selectedTag
-  );
+  const filteredServices = services.map((service) => ({
+    ...service,
+    // Adding dummy data for fields not present in the original ServiceItem
+    minimumInvestment: '₹10,000', // Dummy data
+    riskCategory: service.tags.find((tag) => tag.includes('Risk')) || 'Moderate Risk', // Use tags or default
+    profitPotential: '15-20% p.a.', // Dummy data
+  })).filter((item) => item.categoryTag === selectedTag);
 
   if (loading) {
     return (
@@ -199,38 +137,67 @@ export default function Trades() {
             <ThemedView key={idx} style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
               <TouchableOpacity onPress={() => handleTradePress(item)}>
                 <View style={[styles.card, { backgroundColor: colors.card }]}>
-                  <View style={styles.cardHeader}>
-                    <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} />
+                  {/* Card Header (Name) */}
+                  <View style={[styles.cardHeader, {borderBottomColor: colors.text}]}>
+                    {/* <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} /> */}
                     <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
                   </View>
-                  <View style={styles.tagsContainer}>
-                    {item.tags.map((tag, tagIdx) => {
-                      const { borderColor, icon } = getTagStyle(tag);
-                      return (
-                        <View
-                          key={tagIdx}
-                          style={[styles.tagContainer, { borderColor }]}
+
+                  {/* Card Details (Minimum Investment, Risk Category, Profit Potential) */}
+                  <View style={[styles.cardDetails, {borderBottomColor: colors.text}]}>
+                    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
+                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
+                        Min Investment
+                      </ThemedText>
+                      <ThemedText style={[styles.detailValue, { color: colors.primary }]}>
+                        {item.minimumInvestment}
+                      </ThemedText>
+                    </View>
+                    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
+                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
+                        Risk Category
+                      </ThemedText>
+                      <View style={styles.riskTag}>
+                        <MaterialIcons
+                          name={getTagStyle(item.riskCategory).icon}
+                          size={14}
+                          color={getTagStyle(item.riskCategory).borderColor}
+                        />
+                        <ThemedText
+                          style={[
+                            styles.detailValue,
+                            { color: getTagStyle(item.riskCategory).borderColor },
+                          ]}
                         >
-                          <MaterialIcons name={icon} size={14} color={borderColor} />
-                          <ThemedText style={[styles.tagText, { color: borderColor }]}>
-                            {tag}
-                          </ThemedText>
-                        </View>
-                      );
-                    })}
+                          {item.riskCategory}
+                        </ThemedText>
+                      </View>
+                    </View>
+                    <View style={styles.detailRow}>
+                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
+                        Profit Potential
+                      </ThemedText>
+                      <ThemedText style={[styles.detailValue, { color: colors.success }]}>
+                        {item.profitPotential}
+                      </ThemedText>
+                    </View>
                   </View>
-                  <ThemedText style={[styles.cardDesc, { color: colors.text }]}>
-                    {item.details[0]}
-                  </ThemedText>
-                  <ThemedText style={[styles.cardPrice, { color: colors.primary }]}>
-                    {item.price}
-                  </ThemedText>
-                  <TouchableOpacity
-                    style={[styles.exploreButton, { backgroundColor: colors.buttonPrimary }]}
-                    onPress={() => handleTradePress(item)}
-                  >
-                    <ThemedText style={styles.exploreButtonText}>Proceed to Pay</ThemedText>
-                  </TouchableOpacity>
+
+                  {/* Buttons (Enquire and Buy) */}
+                  <View style={[styles.buttonRow, {borderTopColor: colors.text}]}>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.buttonSecondary }]}
+                      onPress={() => handleTradePress(item)}
+                    >
+                      <ThemedText style={styles.actionButtonText}>Enquire</ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionButton, { backgroundColor: colors.buttonPrimary }]}
+                      onPress={() => handleTradePress(item)}
+                    >
+                      <ThemedText style={styles.actionButtonText}>Buy</ThemedText>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </TouchableOpacity>
             </ThemedView>
@@ -263,7 +230,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   scrollContent: {
-    padding: 16,
+    paddingVertical: 16,
   },
   tagSection: {
     marginBottom: 24,
@@ -275,6 +242,7 @@ const styles = StyleSheet.create({
   },
   tagScroll: {
     flexDirection: 'row',
+    paddingHorizontal: 10,
   },
   tagButton: {
     paddingVertical: 6,
@@ -289,6 +257,7 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     marginBottom: 16,
+    marginHorizontal: 6,
     borderWidth: 1,
     borderColor: '#3498db',
     borderRadius: 12,
@@ -304,50 +273,56 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
+    paddingBottom: 8,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,
   },
-  tagsContainer: {
+  cardDetails: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 12,
+    justifyContent: 'space-evenly',
+    // borderBottomWidth: 1,
+    marginBottom: 8,
   },
-  tagContainer: {
-    flexDirection: 'row',
+  detailRow: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 2,
-    paddingVertical: 1,
-    paddingHorizontal: 8,
-    borderRadius: 12,
+    // marginBottom: 8,
+    // paddingBottom: 8,
+
   },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  cardDesc: {
+  detailLabel: {
     fontSize: 14,
-    marginBottom: 12,
-    lineHeight: 20,
+    fontWeight: '500',
   },
-  cardPrice: {
-    fontSize: 16,
+  detailValue: {
+    fontSize: 14,
     fontWeight: '600',
-    marginBottom: 12,
   },
-  exploreButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignSelf: 'stretch',
+  riskTag: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  exploreButtonText: {
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+  },
+  actionButton: {
+    // flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  actionButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',

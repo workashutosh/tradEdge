@@ -2,7 +2,7 @@
 import { Stack, Redirect } from 'expo-router';
 import { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, StatusBar, useColorScheme } from 'react-native';
 import { AuthProvider } from '../context/AuthContext';
 import { StockProvider } from '@/context/StockContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -10,6 +10,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 export default function RootLayout() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const checkLoginStatus = useCallback(async () => {
     try {
@@ -50,6 +53,7 @@ export default function RootLayout() {
           {isLoggedIn && <Redirect href="/(tabs)/home" />}
         </StockProvider>
       </AuthProvider>
+      <StatusBar backgroundColor={isDark?'#121212' : '#f7f7f7'}/>
     </SafeAreaProvider>
   );
 }

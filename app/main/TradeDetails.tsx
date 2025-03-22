@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     padding: 16,
     position: 'absolute',
-    bottom: 0,
+    bottom: 10,
     left: 0,
     right: 0,
     alignItems: 'center',

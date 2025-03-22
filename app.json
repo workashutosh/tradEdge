@@ -15,7 +15,9 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.tradeedge.app",
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",

@@ -117,30 +117,18 @@ export default function Stocks() {
 
 
   const NSEBSECard = ({ item }: { item: { ticker: string; price: number; netChange: number; percentChange: number; high: number; low: number; } }) => {
-      const isGain = item.netChange > 0;
-      
+    const isGain = item.netChange > 0;
       return (
-        <ThemedView style={[styles.NSEBSECard, {borderColor: isGain?"green":"red" , backgroundColor: colors.card, shadowColor: colors.shadowColor }]}>
-          <ThemedText style={[styles.cardTitle, { 
-            color: isGain?'green':'red', // Green for gain, default color otherwise
-            fontSize: 15 
-          }]}>
-            {item.ticker}
-            {isGain && '  ▲'}  {/* Up triangle for gain */}
-            {!isGain && '▼'} {/* Down triangle for loss */}
-            {item.percentChange}%
+        <ThemedView style={[styles.NSEBSECard, { borderColor: isGain ? "green" : "red", backgroundColor: colors.card, shadowColor: colors.shadowColor }]}>
+          <ThemedText style={[styles.cardTitle, { color: isGain ? 'green' : 'red', fontSize: 15 }]}>
+            {item.ticker} {isGain ? '▲' : '▼'} {item.percentChange}%
           </ThemedText>
-          <ThemedView style={[{backgroundColor: 'transparent'}]}>
-            <ThemedText style={[styles.cardDescription, { 
-              color: isDark ? '#bbbbbb' : '#666' 
-            }]}>
-              {item.price}
-            </ThemedText>
-            <ThemedText style={[styles.cardDescription, { 
-              color: isDark ? '#bbbbbb' : '#666' 
-            }]}>
-              H: {item.high} L: {item.low}
-            </ThemedText>
+          <ThemedView style={[{ backgroundColor: 'transparent' }]}>
+            <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666', fontWeight: '600' }]}>{item.price}</ThemedText>
+            <ThemedView style={[{backgroundColor: 'transparent', flexDirection: 'row', justifyContent: 'space-between'}]}>
+              <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>High: {item.high}</ThemedText>
+              <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>Low: {item.low}</ThemedText>
+            </ThemedView>
           </ThemedView>
         </ThemedView>
       );
@@ -273,7 +261,7 @@ export default function Stocks() {
         )}
 
         {/* NSE cards Section */}
-        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
+        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background, paddingHorizontal: 0 }]}>
           <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
             NSE Most Active
           </ThemedText>
@@ -296,7 +284,7 @@ export default function Stocks() {
         </ThemedView>
 
         {/* BSE cards Section */}
-        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
+        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background, paddingHorizontal: 0 }]}>
           <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
             BSE Most Active
           </ThemedText>
@@ -470,12 +458,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     marginBottom: 10,
-    marginLeft: 8,
+    marginLeft: 12,
   },
   NSEBSECard: {
     borderWidth: 1,
     width: 200,
-    borderRadius: 10,
+    borderRadius: 5,
     padding: 15,
     marginRight: 10,
     marginBottom: 5,

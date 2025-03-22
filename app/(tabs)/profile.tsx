@@ -3,7 +3,7 @@ import { View, Text, useColorScheme, StyleSheet, SafeAreaView, ScrollView, Touch
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import axios from 'axios';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import KycComponent from '../../components/KycComponent'; // Import the component
 import { ThemedView } from '@/components/ThemedView';
 
@@ -26,19 +26,6 @@ export default function Profile() {
   // kys status
   const [isKycDone, setIsKycDone] = useState(false);
 
-  // check kyc status
-  useEffect(() => {
-    const checkKycStatus = async () => {
-      try {
-        const kycStatus = await AsyncStorage.getItem('kyc_done');
-        setIsKycDone(kycStatus === 'true');
-      } catch (error) {
-        console.log('Error checking KYC status:', error);
-      }
-    };
-    checkKycStatus();
-  }, []);
-
   // handle logout
   const handleLogout = async () => {
     try {
@@ -50,11 +37,6 @@ export default function Profile() {
     }
   };
 
-  const handleKycComplete = async () => {
-    await AsyncStorage.setItem('kyc_done', 'true');
-    setIsKycDone(true);
-  };
-
   return (
     <SafeAreaView style={[styles.safeArea, isDark ? styles.backgroundDark : styles.backgroundLight]}>
       <View style={[styles.header]}>
@@ -63,13 +45,16 @@ export default function Profile() {
           style={[styles.logoutButton, { backgroundColor: colors.primary }]}
           onPress={handleLogout}
         >
-          <Text style={[styles.logoutButtonText, { color: "white" }]}>Logout</Text>
+          <Text style={[styles.logoutButtonText, { color: "white" }]}>
+            Logout
+          </Text>
+          <FontAwesome name="sign-out" size={16} color="white" style={styles.logoutIcon} />
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Other profile content can go here */}
-        <KycComponent isKycDone={isKycDone} onKycComplete={handleKycComplete} />
-        <Text>Hello</Text>
+        <KycComponent />
+        {/* <Text>Hello</Text> */}
         <ThemedView style={[{paddingBottom: 70, backgroundColor: colors.background}]}>
           
         </ThemedView>
@@ -109,13 +94,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 7,
     borderRadius: 5,
     justifyContent: 'center',
-    alignItems: 'center',
     height: 30,
   },
   logoutButtonText: {
     fontSize: 16,
+    // alignSelf: 'center'
+  },
+  logoutIcon: {
+    marginLeft: 5,
   },
 });

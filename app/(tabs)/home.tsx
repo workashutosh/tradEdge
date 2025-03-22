@@ -2,21 +2,24 @@ import { Image, StyleSheet, Animated, Platform, TouchableOpacity, useColorScheme
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRightIcon, Sparkles } from 'lucide-react-native';
+import { ArrowRightIcon, BadgeCheck, Sparkles } from 'lucide-react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStockContext } from '@/context/StockContext';
 import { Modal } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import NseBseAccordian from '@/components/NseBseAccordian';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [username, setUsername] = useState('User');
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const [overlayVisible, setOverlayVisible] = useState(false);
 
-  const { NSEData, BSEData, marketIndices, updateNSEData, updateBSEData, updateMarketIndices } = useStockContext();
-  const stocks = ["nifty 200", "nifty 50", "nifty auto", "nifty bank", "sensex", "nifty infra", "nifty it", "nifty metal", "nifty pharma", "nifty psu bank"];
+  const { NSEData, BSEData, updateNSEData, updateBSEData } = useStockContext();
 
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
@@ -27,7 +30,8 @@ export default function HomeScreen() {
     headerBackground: isDark ? '#1e1e1e' : '#ffffff',
     headerBorderBottom: isDark ? '#2d2d2d' : '#eef1f5',
     text: isDark ? '#ffffff' : '#333333',
-    buttonPrimary: '#6200ee',
+    buttonBackground: isDark ? '#ffffff' : '#000000',
+    buttonText: isDark ? '#000000' : '#ffffff',
     card: isDark ? '#1e1e1e' : '#ffffff',
     border: isDark ? '#333333' : '#e0e0e0',
     error: '#ff4444',
@@ -39,20 +43,6 @@ export default function HomeScreen() {
     shadowColor: isDark ? "rgb(128, 128, 128)" : "rgb(0, 0, 0)",
   };
 
-  interface MarketIndicesData {
-    ticker: string;
-    percentChange: number;
-  }
-
-  interface StockData {
-    ticker: string;
-    price: number;
-    netChange: number;
-    percentChange: number;
-    high: number;
-    low: number;
-  }
-
   interface TradeCards {
     title: string;
     price: string;
@@ -60,10 +50,9 @@ export default function HomeScreen() {
     categoryTag: string;
     icon: string;
     tags: string[];
-    color: string;
   }
 
-  interface ServiceItem {
+  interface PackagesItem {
     isShowMore?: boolean;
     title: string;
     price: string;
@@ -71,9 +60,9 @@ export default function HomeScreen() {
     categoryTag: string;
     icon: string;
     tags: string[];
-    color: string;
   }
 
+  // get username
   useEffect(() => {
     const loadUsername = async () => {
       try {
@@ -86,80 +75,10 @@ export default function HomeScreen() {
     loadUsername();
   }, []);
 
-  const getMarketIndices = async () => {
-    try {
-      const results: MarketIndicesData[] = [];
-      for (const st of stocks) {
-        const response = await fetch(
-          `https://indian-stock-exchange-api2.p.rapidapi.com/stock?name=${st}`,
-          {
-            method: 'GET',
-            headers: {
-              'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
-              'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        if (data.error) {
-          console.error(`Stock not found: ${st}`);
-          continue;
-        }
-
-        const stockData: MarketIndicesData = {
-          ticker: st.toUpperCase(),
-          percentChange: data.percentChange,
-        };
-        results.push(stockData);
-      }
-      updateMarketIndices(results);
-    } catch (error) {
-      console.error('Error fetching market indices:', error);
-    }
-  };
-
-  const getNSEBSEStocks = async (stock: string) => {
-    try {
-      const response = await fetch(
-        `https://indian-stock-exchange-api2.p.rapidapi.com/${stock}_most_active`,
-        {
-          method: 'GET',
-          headers: {
-            'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
-            'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
-          },
-        }
-      );
-
-      const data = await response.json();
-      if (data.error) {
-        console.error('Error fetching most active stocks');
-      } else {
-        const formattedData: StockData[] = data.map((stock: any) => ({
-          ticker: stock.ticker,
-          price: stock.price,
-          netChange: stock.net_change,
-          percentChange: stock.percent_change,
-          high: stock.high,
-          low: stock.low,
-        }));
-        if (stock === "NSE") updateNSEData(formattedData);
-        if (stock === "BSE") updateBSEData(formattedData);
-      }
-    } catch (err) {
-      console.error(`Failed to fetch ${stock} data`);
-    }
-  };
-
-  const ourServices: ServiceItem[] = [
+  const ExplorePackages: PackagesItem[] = [
     {
       title: 'Cash Intraday',
-      price: '₹9,500',
+      price: '₹ 9,500',
       details: [
         'Intraday calls for cash market with daily recommendations.',
         'Get 1 Tip per day',
@@ -171,11 +90,10 @@ export default function HomeScreen() {
       categoryTag: 'Equity',
       icon: 'trending-up',
       tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
-      color: colors.primary,
     },
     {
       title: 'Index Futures',
-      price: '₹9,000',
+      price: '₹ 9,000',
       details: [
         'NIFTY & BANKNIFTY futures with precise entries.',
         'Get 1 Tip per day',
@@ -185,13 +103,12 @@ export default function HomeScreen() {
         'Trading calls via WhatsApp, SMS, and emails',
       ],
       categoryTag: 'Index Future',
-      icon: 'bar-chart',
+      icon: 'leaderboard',
       tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
-      color: colors.warning,
     },
     {
       title: 'Stock Options',
-      price: '₹9,500',
+      price: '₹ 9,500',
       details: [
         'High-accuracy options trading calls.',
         'Get 1 Tip per day',
@@ -203,11 +120,10 @@ export default function HomeScreen() {
       categoryTag: 'Stock Option',
       icon: 'tune',
       tags: ['High Risk', 'Avg ₹3,524/trade'],
-      color: colors.buttonPrimary,
     },
     {
       title: 'Index Options',
-      price: '₹9,000',
+      price: '₹ 9,000',
       details: [
         'Strategic trading for index options.',
         'Get 1 Tip per day',
@@ -219,14 +135,13 @@ export default function HomeScreen() {
       categoryTag: 'Index Option',
       icon: 'tune',
       tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
-      color: colors.error,
     },
   ];
-
+  
   const tradesCards: TradeCards[] = [
     {
       title: 'Cash Intraday',
-      price: '₹9,500',
+      price: '₹ 9,500',
       details: [
         'Intraday calls for cash market with daily recommendations.',
         'Get 1 Tip per day',
@@ -238,11 +153,10 @@ export default function HomeScreen() {
       categoryTag: 'Equity',
       icon: 'trending-up',
       tags: ['Moderate Risk', 'Avg ₹2,384/trade'],
-      color: colors.primary,
     },
     {
       title: 'Index Futures',
-      price: '₹9,000',
+      price: '₹ 9,000',
       details: [
         'NIFTY & BANKNIFTY futures with precise entries.',
         'Get 1 Tip per day',
@@ -252,13 +166,12 @@ export default function HomeScreen() {
         'Trading calls via WhatsApp, SMS, and emails',
       ],
       categoryTag: 'Index Future',
-      icon: 'bar-chart',
+      icon: 'leaderboard',
       tags: ['Moderate Risk', 'Avg ₹4,299/trade'],
-      color: colors.success,
     },
     {
       title: 'Index Options',
-      price: '₹9,000',
+      price: '₹ 9,000',
       details: [
         'Strategic trading for index options.',
         'Get 1 Tip per day',
@@ -270,11 +183,10 @@ export default function HomeScreen() {
       categoryTag: 'Index Option',
       icon: 'tune',
       tags: ['Moderate Risk', 'Avg ₹3,126/trade'],
-      color: colors.warning,
     },
     {
       title: 'Stock Options',
-      price: '₹9,500',
+      price: '₹ 9,500',
       details: [
         'High-accuracy options trading calls.',
         'Get 1 Tip per day',
@@ -286,7 +198,6 @@ export default function HomeScreen() {
       categoryTag: 'Stock Option',
       icon: 'tune',
       tags: ['High Risk', 'Avg ₹3,524/trade'],
-      color: colors.error,
     },
   ];
 
@@ -324,64 +235,47 @@ export default function HomeScreen() {
       },
     });
   };
-
-  const renderMarketIndex = ({ ticker, percentChange }: MarketIndicesData) => {
-    const isNegative = percentChange < 0;
-    return (
-      <ThemedView style={[styles.marketIndexItem]}>
-        <ThemedText style={[styles.indexText, { color: 'white' }]}>
-          {ticker} {' '}
-          <ThemedText style={{ color: isNegative ? colors.error : colors.success }}>
-            {isNegative ? '▼' : '▲'} {percentChange}% {' '}
-          </ThemedText>
-        </ThemedText>
-      </ThemedView>
-    );
-  };
-
-  const renderOurServicesItem = ({ item }: { item: ServiceItem }) => (
-    <ThemedView style={[styles.ourServicesCardContainer, { borderLeftColor: item.color, shadowColor: colors.shadowColor }]}>
-      <TouchableOpacity onPress={() => handleTradePress(item)}>
-        <View style={[styles.ourServicesCard, { backgroundColor: colors.card }]}>
-          <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
-          <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>
-            {item.details[0]}
-          </ThemedText>
-          <ThemedText style={[styles.cardDescription, { color: colors.text, fontWeight: "600" }]}>
-            Price: {item.price}
-          </ThemedText>
-        </View>
-      </TouchableOpacity>
-    </ThemedView>
-  );
-
-  const rendertradesCard = ({ item }: { item: TradeCards }) => (
-    <ThemedView style={[styles.bestTradesCardContainer, { borderLeftColor: item.color, shadowColor: colors.shadowColor }]}>
-      <TouchableOpacity onPress={() => handleTradePress(item)}>
-        <View style={[styles.bestTradesCard, { backgroundColor: colors.card }]}>
-          <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
-          <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>
-            {item.details[0]}
-          </ThemedText>
-        </View>
-      </TouchableOpacity>
-    </ThemedView>
-  );
-
-  const NSEBSECard = ({ item }: { item: StockData }) => {
-    const isGain = item.netChange > 0;
-    return (
-      <ThemedView style={[styles.NSEBSECard, { borderColor: isGain ? "green" : "red", backgroundColor: colors.card, shadowColor: colors.shadowColor }]}>
-        <ThemedText style={[styles.cardTitle, { color: isGain ? 'green' : 'red', fontSize: 15 }]}>
-          {item.ticker} {isGain ? '▲' : '▼'} {item.percentChange}%
-        </ThemedText>
-        <ThemedView style={[{ backgroundColor: 'transparent' }]}>
-          <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>{item.price}</ThemedText>
-          <ThemedText style={[styles.cardDescription, { color: isDark ? '#bbbbbb' : '#666' }]}>H: {item.high} L: {item.low}</ThemedText>
+  
+  // Explore Packages component
+  const renderExplorePackagesItem = ({ item }: { item: PackagesItem }) => (
+    <ThemedView style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
+      <TouchableOpacity onPress={()=>handleTradePress(item)}>
+        <ThemedView style={styles.cardHeader}>
+          <ThemedText style={styles.cardTitle}>{item.title}</ThemedText>
+          <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color={'green'} />
         </ThemedView>
-      </ThemedView>
-    );
-  };
+        <ThemedView style={styles.cardBody}>
+          <ThemedText>{item.details[0]}</ThemedText>
+        </ThemedView>
+        <ThemedView style={styles.cardFooter}>
+          <View style={[styles.cardDivider, { backgroundColor: 'grey' }]} />
+          <ThemedView style={[{borderColor: 'green', borderWidth: 2, borderRadius: 5,}]}>
+            <ThemedText style={styles.cardPrice}>{item.price}</ThemedText>
+          </ThemedView>
+        </ThemedView>
+      </TouchableOpacity>
+    </ThemedView>
+  );
+  
+  // Trades cards component
+  const rendertradesCard = ({ item }: { item: TradeCards }) => (
+    <ThemedView style={[styles.tradeCardContainer, { shadowColor: colors.shadowColor }]}>
+      <TouchableOpacity onPress={()=>handleTradePress(item)}>
+        <ThemedView style={[styles.tradeCardHeader, {}]}>
+          <ThemedText style={[styles.tradeCardTitle, ]}>{item.title}</ThemedText>
+          <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color={colors.text} />
+        </ThemedView>
+        <ThemedView style={styles.cardBody}>
+          <ThemedText style={[{ fontSize: 15, lineHeight: 18, color: 'grey' }]}>{item.details[0]}</ThemedText>
+        </ThemedView>
+        {/* <ThemedView style={styles.cardFooter}> */}
+          {/* <View style={[styles.cardDivider, { backgroundColor: colors.buttonPrimary }]} /> */}
+          <ThemedText style={[styles.cardPrice, {alignSelf: 'flex-end'}]}>{item.price}</ThemedText>
+        {/* </ThemedView> */}
+      </TouchableOpacity>
+    </ThemedView>
+  );
+
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
@@ -392,8 +286,9 @@ export default function HomeScreen() {
         </View>
       )}
 
+      {/* Header */}
       <View style={[styles.header]}>
-        <ThemedView style={[styles.profileContainer, { backgroundColor: colors.background }]}>
+        <ThemedView style={[styles.profileContainer, { backgroundColor: 'transparent' }]}>
           <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')}>
             <FontAwesome name="user-circle-o" size={28} color={colors.text} />
           </TouchableOpacity>
@@ -403,7 +298,7 @@ export default function HomeScreen() {
         </ThemedView>
         <ThemedView style={[styles.buyProButtonContainer, { shadowColor: colors.shadowColor }]}>
           <TouchableOpacity
-            style={[styles.buyProButton, { backgroundColor: colors.primary, borderColor: colors.warning }]}
+            style={[styles.buyProButton, { backgroundColor: colors.buttonBackground, borderColor: colors.warning }]}
             onPress={() => {
               setIsPopupVisible(true);
               setOverlayVisible(!overlayVisible);
@@ -417,120 +312,88 @@ export default function HomeScreen() {
         </ThemedView>
       </View>
 
+      {/* body */}
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {marketIndices.length === 0 ? (
-          <ThemedText style={[{ color: colors.text }]}></ThemedText>
-        ) : (
-          <ScrollView
-            horizontal
-            style={styles.marketIndicesContainer}
-            contentContainerStyle={styles.marketIndicesContent}
-          >
-            {marketIndices.map((index: MarketIndicesData, idx: number) => (
-              <React.Fragment key={idx}>{renderMarketIndex(index)}</React.Fragment>
-            ))}
-          </ScrollView>
-        )}
-
+        {/* Website redirection */}
         <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor }]}>
-          <ThemedText style={{ fontSize: 15, color: "black" }}>Your Trusted Research Analyst</ThemedText>
-          <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: "black" }}>
+          <ThemedText style={{ fontSize: 15, color: "white" }}>Your Trusted Research Analyst</ThemedText>
+          <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: "white" }}>
             Pay for Successful Research Calls
           </ThemedText>
-          <ThemedText style={{ fontSize: 15, color: "black" }}>Start your wealth creation journey!</ThemedText>
+          <ThemedText style={{ fontSize: 15, color: "white" }}>Start your wealth creation journey!</ThemedText>
           <ThemedView style={styles.websiteRedirectContainerBottom}>
             <TouchableOpacity
               onPress={() => Linking.openURL('https://twmresearchalert.com')}
-              style={[styles.redirectionButton, { backgroundColor: colors.primary }]}
+              style={[styles.redirectionButton, { }]}
             >
-              <ThemedText style={{ color: '#ffffff' }}>Know More</ThemedText>
+              <ThemedText style={{ color: 'white', fontWeight: 'bold' }}>Start only with 1999/-</ThemedText>
             </TouchableOpacity>
             <Image style={styles.tradedgeLogo} source={require('@/assets/images/logo.png')} />
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={[styles.tradesContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Our Services</ThemedText>
+        {/* Explore packages */}
+        <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
+          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
-            data={[...ourServices, { isShowMore: true }]}
+          data={[...ExplorePackages, { isShowMore: true }]}
             renderItem={({ item }) => {
-              if (item.isShowMore) {
-                return (
-                  <TouchableOpacity
-                    style={styles.showMoreContainer}
-                    onPress={() => router.replace('/(tabs)/trades')}
-                  >
-                    <ThemedText style={{ color: colors.text }}>See More</ThemedText>
-                    <ArrowRightIcon size={16} color={colors.warning} fill={colors.warning} />
-                  </TouchableOpacity>
-                );
-              }
-              if ('title' in item) {
-                return renderOurServicesItem({ item });
-              }
-              return null;
-            }}
-            keyExtractor={(item, index) => 'title' in item ? item.title : `show-more-${index}`}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.cardList}
-          />
-        </ThemedView>
-
-        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>NSE Most Active</ThemedText>
-          {NSEData.length === 0 ? (
-            <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>No NSE data Available</ThemedText>
-          ) : (
-            <FlatList
-              data={NSEData}
-              renderItem={NSEBSECard}
-              keyExtractor={(item) => item.ticker}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cardList}
-            />
-          )}
-        </ThemedView>
-
-        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>BSE Most Active</ThemedText>
-          {BSEData.length === 0 ? (
-            <ThemedText style={[{ color: colors.text, alignSelf: "center" }]}>No BSE data available</ThemedText>
-          ) : (
-            <FlatList
-              data={BSEData}
-              renderItem={NSEBSECard}
-              keyExtractor={(item) => item.ticker}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.cardList}
-            />
-          )}
-        </ThemedView>
-
-        <ThemedView style={[styles.tradesContainer, { backgroundColor: colors.background }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Best Trades</ThemedText>
-          <View style={styles.gridContainer}>
-            <View style={styles.gridRow}>
-              {rendertradesCard({ item: tradesCards[0] })}
-              {rendertradesCard({ item: tradesCards[1] })}
-            </View>
-            <View style={styles.gridRow}>
-              {rendertradesCard({ item: tradesCards[2] })}
-              {rendertradesCard({ item: tradesCards[3] })}
-            </View>
-          </View>
-        </ThemedView>
-
-        <TouchableOpacity
-          onPress={() => {
-            getNSEBSEStocks("NSE");
-            getNSEBSEStocks("BSE");
+            if (item.isShowMore) {
+              return (
+                <TouchableOpacity
+                  style={styles.showMoreContainer}
+                  onPress={() => router.replace('/(tabs)/trades')}
+                >
+                  <ThemedText style={{ color: colors.text }}>See More</ThemedText>
+                  <Ionicons
+                    name={'chevron-forward'}
+                    size={24}
+                    color={isDark?'white':'black'}
+                  />
+                </TouchableOpacity>
+              );
+            }
+            if ('title' in item) {
+                return renderExplorePackagesItem({ item });
+            }
+            return null;
           }}
-        >
-          <ThemedText>Get data</ThemedText>
-        </TouchableOpacity>
+          keyExtractor={(item, index) => 'title' in item ? item.title : `show-more-${index}`}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.cardList}
+        />
+        </ThemedView>
+
+        {/* Accordian */}
+        <View style={[{marginHorizontal: 7}]}>
+          <NseBseAccordian/>
+        </View>
+
+        {/* best trades container */}
+        <LinearGradient colors={['rgb(28, 28, 28)', 'rgb(143, 234, 214)']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={{ marginHorizontal: 7, borderRadius: 10 }}>
+          <ThemedView style={[styles.bestTradesContainer, {  }]}>
+            <ThemedView style={[styles.bestTradesSectionHeader, {}]}>
+              <ThemedText style={[{ color: 'white', fontWeight: '600', fontSize: 22,  }]}>Best Trades</ThemedText>
+              <View style={[{flexDirection: 'row'}]}>
+                <BadgeCheck size={24} color={'rgb(9, 196, 9)'} style={[{marginRight: 3}]}/>
+                <ThemedText style={[{ color: 'white', fontWeight: 'bold', alignSelf: 'center' }]}>SEBI Reg</ThemedText>
+              </View>
+            </ThemedView>
+            <View style={styles.gridContainer}>
+              <View style={styles.gridRow}>
+                {rendertradesCard({ item: tradesCards[0] })}
+                {rendertradesCard({ item: tradesCards[1] })}
+              </View>
+              <View style={styles.gridRow}>
+                {rendertradesCard({ item: tradesCards[2] })}
+                {rendertradesCard({ item: tradesCards[3] })}
+              </View>
+            </View>
+          </ThemedView>
+        </LinearGradient>
 
         <ThemedView style={[{ backgroundColor: colors.background, paddingBottom: 70 }]}></ThemedView>
       </ScrollView>
@@ -553,9 +416,9 @@ export default function HomeScreen() {
                   setIsPopupVisible(false);
                   setOverlayVisible(!overlayVisible);
                 }}
-                style={[{ backgroundColor: colors.buttonPrimary, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 }]}
+                style={[{ backgroundColor: colors.buttonBackground, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 }]}
               >
-                <ThemedText style={[{ color: "white", fontSize: 20 }]}>Close</ThemedText>
+                <ThemedText style={[{ color: colors.buttonText, fontSize: 20 }]}>Close</ThemedText>
               </TouchableOpacity>
             </ThemedView>
           </View>
@@ -586,7 +449,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     zIndex: 1,
-    shadowColor: 'white',
+    shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -632,31 +495,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 0,
-  },
-  marketIndicesContainer: {
-    marginBottom: 12,
-  },
-  marketIndicesContent: {
-    padding: 8,
-    gap: 12,
-    backgroundColor: "rgb(0, 37, 96)",
-  },
-  marketIndexItem: {
-    backgroundColor: 'transparent',
-  },
-  indexText: {
-    fontSize: 14,
-    fontWeight: '500',
   },
   websiteRedirectContainer: {
-    marginHorizontal: 8,
-    marginTop: 0,
+    marginHorizontal: 10,
+    marginTop: 15,
     paddingVertical: 30,
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,
-    backgroundColor: "rgb(88, 233, 252)",
+    backgroundColor: "rgb(30, 106, 0)",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -670,8 +517,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   redirectionButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    backgroundColor: 'rgb(44, 145, 5)',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
     borderRadius: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -691,42 +539,112 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     paddingTop: 5,
-    paddingHorizontal: 8,
   },
   sectionHeader: {
     fontSize: 20,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: 12,
     marginLeft: 8,
   },
-  NSEBSECard: {
-    borderWidth: 1,
-    width: 200,
-    borderRadius: 10,
-    padding: 15,
-    marginRight: 10,
-    marginBottom: 5,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
+  bestTradesSectionHeader: {
+    marginBottom: 12,
+    marginLeft: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
   },
   cardList: {
     paddingBottom: 10,
   },
+  cardContainer: {
+    height: 210,
+    width: 250,
+    paddingHorizontal: 10,
+    paddingVertical: 15,
+    borderColor: 'green',
+    marginHorizontal: 8,
+    borderWidth: 1,
+    borderRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  tradeCardContainer: {
+    height: 170,
+    width: '48%',
+    paddingHorizontal: 10,
+    paddingVertical: 15,
+    borderWidth: 0.5,
+    borderRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 10,
+  },
+  tradeCardHeader: {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 2,
+    borderColor: 'grey', 
+    paddingBottom: 5, 
+    height: 30
+  },
+  cardHeader: {
+    height: '20%',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  cardBody: {
+    height: '60%',
+    justifyContent: 'center',
+  },
+  cardFooter: {
+    height: '20%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-evenly',
+  },
+  tradeCardTitle: {
+    fontWeight: '700',
+    fontSize: 15,
+    width: '85%',
+  },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 6,
-    textAlign: 'left',
+    fontWeight: '700',
+    fontSize: 20,
+    width: '85%',
+  },
+  cardIcon: {
+    width: '15%',
+  },
+  cardDivider: {
+    flex: 1,
+    height: 2,
+    borderRadius: 1,
+    marginRight: 10,
+    alignSelf: 'center',
+  },
+  cardPrice: {
+    fontSize: 20,
+    fontWeight: '700',
+    top: -2,
+    padding: 5,
+    color: 'green',
   },
   cardDescription: {
     fontSize: 14,
     textAlign: 'left',
   },
-  tradesContainer: {
+  explorePackagesContainer: {
+    paddingVertical: 10,
+  },
+  bestTradesContainer: {
     paddingVertical: 10,
     paddingHorizontal: 8,
+    backgroundColor: 'transparent',
   },
   gridContainer: {
     flexDirection: 'column',
@@ -737,21 +655,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 12,
   },
-  ourServicesCardContainer: {
-    width: 250,
-    borderRadius: 10,
-    borderLeftWidth: 5,
-    marginBottom: 5,
-    marginRight: 10,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  ourServicesCard: {
-    borderRadius: 10,
-    padding: 15,
-  },
   showMoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -760,19 +663,5 @@ const styles = StyleSheet.create({
     height: '100%',
     marginRight: 10,
     gap: 5,
-  },
-  bestTradesCardContainer: {
-    flex: 1,
-    borderRadius: 10,
-    borderLeftWidth: 5,
-    marginBottom: 5,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  bestTradesCard: {
-    borderRadius: 10,
-    padding: 15,
   },
 });

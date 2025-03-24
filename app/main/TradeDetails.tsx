@@ -13,12 +13,14 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { Animated, PanResponder } from 'react-native';
 
 interface Trade {
-  title: string;        // From subtype_name or type_name
-  price: string;        // Formatted price (e.g., "₹12000")
-  details: string[];    // Array of details from API
-  categoryTag: string;  // type_name from API
-  icon: string;         // Icon based on category
-  tags: string[];       // Two random tags
+  title: string;
+  price: string;
+  details: string[];
+  categoryTag: string;
+  icon: string;
+  riskCategory: string;
+  minimumInvestment?: string;
+  profitPotential?: string;
 }
 
 export default function TradeDetails() {
@@ -32,7 +34,9 @@ export default function TradeDetails() {
     details: params.details ? JSON.parse(params.details as string) : [],
     categoryTag: params.categoryTag as string,
     icon: params.icon as string,
-    tags: params.tags ? JSON.parse(params.tags as string) : [],
+    riskCategory: params.riskCategory as string,
+    minimumInvestment: params.minimumInvestment as string,
+    profitPotential: params.profitPotential as string,
   };
 
   const colors = {
@@ -46,12 +50,10 @@ export default function TradeDetails() {
     error: '#ff4444',
   };
 
-  const getTagStyle = (tag: string): { borderColor: string; icon: string } => {
-    if (tag.includes('Low Risk')) return { borderColor: colors.success, icon: 'check-circle' };
-    if (tag.includes('Moderate Risk')) return { borderColor: colors.warning, icon: 'warning' };
-    if (tag.includes('High Risk')) return { borderColor: colors.error, icon: 'error' };
-    if (tag.includes('Avg')) return { borderColor: colors.primary, icon: 'trending-up' };
-    return { borderColor: colors.primary, icon: 'info' };
+  const getTagStyle = (riskCategory: string): { borderColor: string; icon: string } => {
+    if (riskCategory.includes('Low')) return { borderColor: colors.success, icon: 'check-circle' };
+    if (riskCategory.includes('Moderate')) return { borderColor: colors.warning, icon: 'warning' };
+    return { borderColor: colors.error, icon: 'error' };
   };
 
   const handleSubscribe = () => {
@@ -70,7 +72,8 @@ export default function TradeDetails() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <CardHeader trade={trade} colors={colors} />
-        <TagsSection trade={trade} colors={colors} getTagStyle={getTagStyle} />
+        {/* <TagsSection trade={trade} colors={colors} getTagStyle={getTagStyle} /> */}
+        <CardDetailsTable trade={trade} colors={colors} getTagStyle={getTagStyle} />
         <DescriptionSection trade={trade} colors={colors} />
         <PricingSection trade={trade} colors={colors} />
         <DetailsSection trade={trade} colors={colors} />
@@ -92,18 +95,59 @@ const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) 
   </View>
 );
 
-const TagsSection: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
-  <View style={styles.section}>
-    <View style={styles.tagsContainer}>
-      {trade.tags.map((tag, index) => {
-        const { borderColor, icon } = getTagStyle(tag);
-        return (
-          <View key={index} style={[styles.tagContainer, { borderColor }]}>
-            <MaterialIcons name={icon} size={16} color={borderColor} style={styles.tagIcon} />
-            <ThemedText style={[styles.tagText, { color: borderColor }]}>{tag}</ThemedText>
-          </View>
-        );
-      })}
+// const TagsSection: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
+//   <View style={styles.section}>
+//     <View style={styles.tagsContainer}>
+//       {trade.tags.map((tag, index) => {
+//         const { borderColor, icon } = getTagStyle(tag);
+//         return (
+//           <View key={index} style={[styles.tagContainer, { borderColor }]}>
+//             <MaterialIcons name={icon} size={16} color={borderColor} style={styles.tagIcon} />
+//             <ThemedText style={[styles.tagText, { color: borderColor }]}>{tag}</ThemedText>
+//           </View>
+//         );
+//       })}
+//     </View>
+//   </View>
+// );
+
+const CardDetailsTable: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
+  <View style={[styles.cardDetails, {borderBottomColor: colors.text}]}>
+    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
+      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
+        Min Investment
+      </ThemedText>
+      <ThemedText style={[styles.detailValue, { color: colors.primary }]}>
+        {trade.minimumInvestment}
+      </ThemedText>
+    </View>
+    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
+      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
+        Risk Category
+      </ThemedText>
+      <View style={styles.riskTag}>
+        <MaterialIcons
+          name={getTagStyle(trade.riskCategory).icon}
+          size={14}
+          color={getTagStyle(trade.riskCategory).borderColor}
+        />
+        <ThemedText
+          style={[
+            styles.detailValue,
+            { color: getTagStyle(trade.riskCategory).borderColor },
+          ]}
+        >
+          {trade.riskCategory}
+        </ThemedText>
+      </View>
+    </View>
+    <View style={styles.detailRow}>
+      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
+        Profit Potential
+      </ThemedText>
+      <ThemedText style={[styles.detailValue, { color: colors.success }]}>
+        {trade.profitPotential}
+      </ThemedText>
     </View>
   </View>
 );
@@ -408,5 +452,35 @@ const styles = StyleSheet.create({
   },
   chevron: {
     marginLeft: 4,
+  },
+
+  // cradDetailsTable
+  cardDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    // borderBottomWidth: 1,
+    marginBottom: 8,
+  },
+  detailRow: {
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    // marginBottom: 8,
+    // paddingBottom: 8,
+
+  },
+  detailLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  riskTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
 });

@@ -21,7 +21,7 @@ interface ServiceItem {
   details: string[];
   categoryTag: string;
   icon: string;
-  tags: string[];
+  riskCategory: string;
 }
 
 interface StockContextType {
@@ -54,10 +54,10 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateBSEData = (data: StockData[]) => setBSEData(data);
   const updateMarketIndices = (data: MarketIndicesData[]) => setMarketIndices(data);
 
-  const getRandomTags = () => {
-    const randomTags = ['Low Risk', 'Moderate Risk', 'High Risk', 'Avg ₹2,000/trade', 'Avg ₹5,000/trade', 'Avg 10%+'];
+  const getRandomRiskCategory = () => {
+    const randomTags = ['Low', 'Moderate', 'High'];
     const shuffled = randomTags.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 2);
+    return shuffled.slice(0, 1);
   };
 
   const getIconForCategory = (category: string) => {
@@ -187,7 +187,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             details: item.details || ['Details not available'],
             categoryTag: type.type_name,
             icon: getIconForCategory(type.type_name),
-            tags: getRandomTags(),
+            riskCategory: getRandomRiskCategory(),
           }));
         });
         setServices(transformedServices);

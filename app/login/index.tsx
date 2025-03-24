@@ -1,67 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Image } from 'react-native';
-import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons'; // Import the icon set
 import { Pressable } from 'react-native';
 import { ScrollView } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 
 const LoginScreen = () => {
   const [whatsAppNumber, setWhatsAppNumber] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
-  const [errorMessage, setErrorMessage] = useState('');
+  const { handleLogin, loading, errorMessage } = useAuth();
   const router = useRouter();
 
-  const handleLogin = async () => {
-    if (!whatsAppNumber || !password) {
-      setErrorMessage('Please fill in all fields');
-      setTimeout(() => setErrorMessage(''), 3000);
-      // Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const loginUrl = process.env.EXPO_PUBLIC_LOGIN_URL;
-      if (!loginUrl) {
-        setErrorMessage('Login URL is not defined');
-        setLoading(false);
-        return;
-      }
-
-      const response = await axios.post(loginUrl, {
-        number: whatsAppNumber,
-        password: password,
-        platform: 'mobile', // Add platform if required by your backend
-      });
-
-      const userId = response.data.data.user_id.replace('LNUSR', '');
-
-      // Save tokens and user data to AsyncStorage
-      await AsyncStorage.setItem('access_token', response.data.data.access_token);
-      await AsyncStorage.setItem('refresh_token', response.data.data.refresh_token);
-      await AsyncStorage.setItem('user_id', userId);
-      await AsyncStorage.setItem('user_name', response.data.data.user_name);
-
-      // Redirect to the main screen
-      router.replace('/(tabs)/home');
-    } catch (error: any) {
-      if(error.response?.data?.messages[0]==="Too Many Incorrect Password Attempts"){
-        setErrorMessage('Too Many Incorrect Password Attempts! Try after 30 minutes');
-        setTimeout(() => setErrorMessage(''), 3000);
-      }else{
-        setErrorMessage('Invalid Credentials');
-        setTimeout(() => setErrorMessage(''), 3000);
-        // Alert.alert('Login Failed', error.response?.data?.messages[0] || 'An error occurred');
-      }
-    } finally {
-      setLoading(false);
-    }
+  const onLoginPress = async (): Promise<void> => {
+    await handleLogin(whatsAppNumber, password, router);
   };
 
   return (
@@ -112,7 +66,7 @@ const LoginScreen = () => {
           {loading ? (
             <ActivityIndicator size="large" color="#FFFFFF" />
           ) : (
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+            <TouchableOpacity style={styles.button} onPress={onLoginPress}>
               <Text style={[styles.buttonText, { fontFamily: 'San Francisco' }]}>Log In</Text>
             </TouchableOpacity>
           )}

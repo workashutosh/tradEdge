@@ -21,8 +21,6 @@ type ServiceItem = {
   details: string[];
   categoryTag: string;
   icon: string;
-  tags: string[];
-  // Adding fields to match the image (using dummy data for now)
   minimumInvestment?: string;
   riskCategory?: string;
   profitPotential?: string;
@@ -56,12 +54,10 @@ export default function Trades() {
   const uniqueTags = [...new Set(services.map((service) => service.categoryTag))] as string[];
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
 
-  const getTagStyle = (tag: string): { borderColor: string; icon: string } => {
-    if (tag.includes('Low Risk')) return { borderColor: colors.success, icon: 'check-circle' };
-    if (tag.includes('Moderate Risk')) return { borderColor: colors.warning, icon: 'warning' };
-    if (tag.includes('High Risk')) return { borderColor: colors.error, icon: 'error' };
-    if (tag.includes('Avg')) return { borderColor: colors.primary, icon: 'trending-up' };
-    return { borderColor: colors.primary, icon: 'info' };
+  const getTagStyle = (riskCategory: string): { color: string; icon: string } => {
+    if (riskCategory.includes('Low')) return { color: colors.success, icon: 'check-circle' };
+    if (riskCategory.includes('Moderate')) return { color: colors.warning, icon: 'warning' };
+    return { color: colors.error, icon: 'error' };
   };
 
   const handleTradePress = (item: ServiceItem) => {
@@ -73,7 +69,6 @@ export default function Trades() {
         details: JSON.stringify(item.details),
         categoryTag: item.categoryTag,
         icon: item.icon,
-        tags: JSON.stringify(item.tags),
         minimumInvestment: item.minimumInvestment || 'N/A',
         riskCategory: item.riskCategory || 'N/A',
         profitPotential: item.profitPotential || 'N/A',
@@ -85,7 +80,6 @@ export default function Trades() {
     ...service,
     // Adding dummy data for fields not present in the original ServiceItem
     minimumInvestment: '₹10,000', // Dummy data
-    riskCategory: service.tags.find((tag) => tag.includes('Risk')) || 'Moderate Risk', // Use tags or default
     profitPotential: '15-20% p.a.', // Dummy data
   })).filter((item) => item.categoryTag === selectedTag);
 
@@ -149,7 +143,7 @@ export default function Trades() {
                       <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
                         Min Investment
                       </ThemedText>
-                      <ThemedText style={[styles.detailValue, { color: colors.primary }]}>
+                      <ThemedText style={[styles.detailValue, { color: colors.text }]}>
                         {item.minimumInvestment}
                       </ThemedText>
                     </View>
@@ -161,12 +155,12 @@ export default function Trades() {
                         <MaterialIcons
                           name={getTagStyle(item.riskCategory).icon}
                           size={14}
-                          color={getTagStyle(item.riskCategory).borderColor}
+                          color={getTagStyle(item.riskCategory).color}
                         />
                         <ThemedText
                           style={[
                             styles.detailValue,
-                            { color: getTagStyle(item.riskCategory).borderColor },
+                            { color: getTagStyle(item.riskCategory).color },
                           ]}
                         >
                           {item.riskCategory}
@@ -177,7 +171,7 @@ export default function Trades() {
                       <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
                         Profit Potential
                       </ThemedText>
-                      <ThemedText style={[styles.detailValue, { color: colors.success }]}>
+                      <ThemedText style={[styles.detailValue, { color: colors.text }]}>
                         {item.profitPotential}
                       </ThemedText>
                     </View>
@@ -186,7 +180,7 @@ export default function Trades() {
                   {/* Buttons (Enquire and Buy) */}
                   <View style={[styles.buttonRow, {borderTopColor: colors.text}]}>
                     <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.buttonSecondary }]}
+                      style={[styles.actionButton, { backgroundColor: colors.buttonPrimary }]}
                       onPress={() => handleTradePress(item)}
                     >
                       <ThemedText style={styles.actionButtonText}>Enquire</ThemedText>

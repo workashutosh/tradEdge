@@ -2,10 +2,11 @@
 import { View, Text, useColorScheme, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { router } from 'expo-router';
+import { router, useRouter } from 'expo-router';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import KycComponent from '../../components/KycComponent'; // Import the component
 import { ThemedView } from '@/components/ThemedView';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Profile() {
   const colorScheme = useColorScheme();
@@ -25,16 +26,13 @@ export default function Profile() {
 
   // kys status
   const [isKycDone, setIsKycDone] = useState(false);
+  const { userName, logout } = useAuth();
+  const router = useRouter();
 
   // handle logout
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.clear();
-      router.replace('/login');
-    } catch (error) {
-      const errorMessage = (error as any)?.response?.data?.messages?.[0] || 'An error occurred';
-      Alert.alert('Logout Failed', errorMessage);
-    }
+  const handleLogout = async (): Promise<void> => {
+    await logout();
+    router.replace('/login');
   };
 
   return (

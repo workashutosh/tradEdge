@@ -2,17 +2,18 @@ import { Image, StyleSheet, Animated, Platform, TouchableOpacity, useColorScheme
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import React, { useState, useEffect, useRef } from 'react';
-import { ArrowRightIcon, BadgeCheck, Sparkles } from 'lucide-react-native';
+import { ArrowRightIcon, BadgeCheck, Check, Sparkles } from 'lucide-react-native';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useStockContext } from '@/context/StockContext';
-import { Modal } from 'react-native';
+import Modal from 'react-native-modal';
 import { LinearGradient } from 'expo-linear-gradient';
 import NseBseAccordian from '@/components/NseBseAccordian';
 import { Ionicons } from '@expo/vector-icons';
+import BuyProButton from '@/components/BuyProButton';
 
 export default function HomeScreen() {
   const [username, setUsername] = useState('User');
@@ -24,6 +25,9 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const gradientColors = colorScheme === 'dark'
+    ? ['rgba(255, 255, 255, 0.8)', 'transparent', 'rgba(255, 255, 255, 0.8)'] // Dark theme: Deep green gradient
+    : ['rgba(255, 255, 255, 0.8)', 'transparent', 'rgba(255, 255, 255, 0.8)'] // Dark theme: Deep green gradient
 
   const colors = {
     background: isDark ? '#121212' : '#f5f7fa',
@@ -78,7 +82,7 @@ export default function HomeScreen() {
   const ExplorePackages: PackagesItem[] = [
     {
       title: 'Cash Intraday',
-      price: '₹ 9,500',
+      price: '₹ 9,499',
       details: [
         'Intraday calls for cash market with daily recommendations.',
         'Get 1 Tip per day',
@@ -108,7 +112,7 @@ export default function HomeScreen() {
     },
     {
       title: 'Stock Options',
-      price: '₹ 9,500',
+      price: '₹ 9,499',
       details: [
         'High-accuracy options trading calls.',
         'Get 1 Tip per day',
@@ -141,7 +145,7 @@ export default function HomeScreen() {
   const tradesCards: TradeCards[] = [
     {
       title: 'Cash Intraday',
-      price: '₹ 9,500',
+      price: '₹ 9,499',
       details: [
         'Intraday calls for cash market with daily recommendations.',
         'Get 1 Tip per day',
@@ -186,7 +190,7 @@ export default function HomeScreen() {
     },
     {
       title: 'Stock Options',
-      price: '₹ 9,500',
+      price: '₹ 9,499',
       details: [
         'High-accuracy options trading calls.',
         'Get 1 Tip per day',
@@ -201,26 +205,20 @@ export default function HomeScreen() {
     },
   ];
 
-  const scaleValue = useRef(new Animated.Value(1)).current;
-
+  // button shimmer animation
+  const shimmerAnim = useRef(new Animated.Value(-200)).current; // Start shimmer off-screen
   useEffect(() => {
-    const pulse = () => {
-      Animated.sequence([
-        Animated.timing(scaleValue, {
-          toValue: 1.2,
-          duration: 600,
+    const animateShimmer = () => {
+      Animated.loop(
+        Animated.timing(shimmerAnim, {
+          toValue: 300, // Move shimmer across the button
+          duration: 2000, // Speed of shimmer
           useNativeDriver: true,
-        }),
-        Animated.timing(scaleValue, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]).start(() => pulse());
+        })
+      ).start();
     };
-    pulse();
-    return () => scaleValue.stopAnimation();
-  }, [scaleValue]);
+    animateShimmer();
+  }, [shimmerAnim]);
 
   const handleTradePress = (item: TradeCards) => {
     router.push({
@@ -239,18 +237,47 @@ export default function HomeScreen() {
   // Explore Packages component
   const renderExplorePackagesItem = ({ item }: { item: PackagesItem }) => (
     <ThemedView style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
-      <TouchableOpacity onPress={()=>handleTradePress(item)}>
+      <TouchableOpacity onPress={() => handleTradePress(item)}>
         <ThemedView style={styles.cardHeader}>
           <ThemedText style={styles.cardTitle}>{item.title}</ThemedText>
           <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color={'green'} />
         </ThemedView>
         <ThemedView style={styles.cardBody}>
           <ThemedText>{item.details[0]}</ThemedText>
+          <View style={[{flexDirection: 'row', gap: 3, paddingTop: 5,}]}>
+            <Check color={"rgb(0, 255, 42)"} size={24}/>
+            <ThemedText>Daily calls</ThemedText>
+          </View>
+          <View style={[{flexDirection: 'row', gap: 3, paddingBottom: 5,}]}>
+            <Check color={"rgb(0, 255, 42)"}/>
+            <ThemedText>Profit margin 80%</ThemedText>
+          </View>
         </ThemedView>
         <ThemedView style={styles.cardFooter}>
-          <View style={[styles.cardDivider, { backgroundColor: 'grey' }]} />
-          <ThemedView style={[{borderColor: 'green', borderWidth: 2, borderRadius: 5,}]}>
-            <ThemedText style={styles.cardPrice}>{item.price}</ThemedText>
+          <Animated.View
+            style={[
+              styles.shimmer,
+              {
+                transform: [{ translateX: shimmerAnim }, { rotate: '35deg' },],
+              },
+            ]}
+          />
+          {/* Removed the cardDivider */}
+          <ThemedView style={[{ borderColor: 'green', borderWidth: 0, borderRadius: 5, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, backgroundColor: 'transparent' }]}>
+            <ThemedText style={[styles.cardPrice, { textDecorationLine: 'line-through', color: 'white' }]}>
+              ₹ 24,000
+            </ThemedText>
+            <LinearGradient
+              colors={['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.24)', 'rgba(255, 255, 255, 0.8)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              // style={styles.cardDiscountedPrice}
+              style={[{borderRadius: 10}]}
+            >
+              <ThemedText style={[styles.cardDiscountedPrice, { marginLeft: 8, color: 'black' }]}>
+                {item.price}
+              </ThemedText>
+            </LinearGradient>
           </ThemedView>
         </ThemedView>
       </TouchableOpacity>
@@ -270,7 +297,7 @@ export default function HomeScreen() {
         </ThemedView>
         {/* <ThemedView style={styles.cardFooter}> */}
           {/* <View style={[styles.cardDivider, { backgroundColor: colors.buttonPrimary }]} /> */}
-          <ThemedText style={[styles.cardPrice, {alignSelf: 'flex-end'}]}>{item.price}</ThemedText>
+          <ThemedText style={[styles.cardDiscountedPrice, {alignSelf: 'flex-end'}]}>{item.price}</ThemedText>
         {/* </ThemedView> */}
       </TouchableOpacity>
     </ThemedView>
@@ -279,12 +306,12 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      {overlayVisible && (
+      {/* {overlayVisible && (
         <View style={[styles.overlay, { zIndex: overlayVisible ? 10 : -1 }]}>
           <View style={[{ }]}>
           </View>
         </View>
-      )}
+      )} */}
 
       {/* Header */}
       <View style={[styles.header]}>
@@ -296,20 +323,14 @@ export default function HomeScreen() {
             Hi, {username}
           </ThemedText>
         </ThemedView>
-        <ThemedView style={[styles.buyProButtonContainer, { shadowColor: colors.shadowColor }]}>
-          <TouchableOpacity
-            style={[styles.buyProButton, { backgroundColor: colors.buttonBackground, borderColor: colors.warning }]}
-            onPress={() => {
-              setIsPopupVisible(true);
-              setOverlayVisible(!overlayVisible);
-            }}
-          >
-            <Animated.View style={[styles.starContainer, { transform: [{ scale: scaleValue }] }]}>
-              <Sparkles size={16} color={colors.warning} fill={colors.warning} style={styles.starIcon} />
-            </Animated.View>
-            <ThemedText style={[styles.buyProButtonText, { color: colors.warning }]}>Buy Pro</ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
+
+        {/* Buy pro Button */}
+        <BuyProButton 
+          setIsPopupVisible={setIsPopupVisible} 
+          setOverlayVisible={setOverlayVisible} 
+          overlayVisible={overlayVisible} 
+        />
+
       </View>
 
       {/* body */}
@@ -322,13 +343,25 @@ export default function HomeScreen() {
           </ThemedText>
           <ThemedText style={{ fontSize: 15, color: "white" }}>Start your wealth creation journey!</ThemedText>
           <ThemedView style={styles.websiteRedirectContainerBottom}>
-            <TouchableOpacity
-              onPress={() => Linking.openURL('https://twmresearchalert.com')}
-              style={[styles.redirectionButton, { }]}
-            >
-              <ThemedText style={{ color: 'white', fontWeight: 'bold' }}>Start only with 1999/-</ThemedText>
-            </TouchableOpacity>
-            <Image style={styles.tradedgeLogo} source={require('@/assets/images/logo.png')} />
+          <TouchableOpacity
+            onPress={() => Linking.openURL('https://twmresearchalert.com')}
+            style={styles.buttonContainer}
+          >
+            <View style={styles.redirectionButton}>
+              {/* Shimmer Effect */}
+              <Animated.View
+                style={[
+                  styles.shimmer,
+                  {
+                    transform: [{ translateX: shimmerAnim }, { rotate: '35deg' },],
+                  },
+                ]}
+              />
+              {/* Button Content */}
+              <ThemedText style={styles.buttonText}>Start only with 1999/-</ThemedText>
+            </View>
+          </TouchableOpacity>
+            <Image style={styles.tradedgeLogo} source={require('@/assets/images/logoWhite.png')} />
           </ThemedView>
         </ThemedView>
 
@@ -345,14 +378,11 @@ export default function HomeScreen() {
                   onPress={() => router.replace('/(tabs)/trades')}
                 >
                   <ThemedText style={{ color: colors.text }}>See More</ThemedText>
-                  <Ionicons
-                    name={'chevron-forward'}
-                    size={24}
-                    color={isDark?'white':'black'}
-                  />
+                  <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
                 </TouchableOpacity>
               );
             }
+            // rendering explore packages item
             if ('title' in item) {
                 return renderExplorePackagesItem({ item });
             }
@@ -399,22 +429,22 @@ export default function HomeScreen() {
       </ScrollView>
 
       <Modal
-        visible={isPopupVisible}
-        onRequestClose={() => {
-          setIsPopupVisible(false);
-          setOverlayVisible(!overlayVisible);
-        }}
-        animationType='slide'
-        transparent={true}
+        isVisible={isPopupVisible}
+        animationIn='slideInUp'
+        hasBackdrop={true}
+        onBackdropPress={()=>setIsPopupVisible(false)}
+        onBackButtonPress={()=>setIsPopupVisible(false)}
+        swipeDirection="down" // Enable swipe down gesture
+        onSwipeComplete={() => setIsPopupVisible(false)} // Close modal on swipe down
+        style={[{width: '100%', margin: 0 }]}
       >
         <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <View style={{ height: Dimensions.get('window').height * 0.7, width: '100%' }}>
-            <ThemedView style={{ flex: 1, borderRadius: 20, padding: 20 }}>
+            <ThemedView style={{ flex: 1, borderTopRightRadius: 20, borderTopLeftRadius: 20, padding: 20 }}>
               <ThemedText>Modal</ThemedText>
               <TouchableOpacity
                 onPress={() => {
                   setIsPopupVisible(false);
-                  setOverlayVisible(!overlayVisible);
                 }}
                 style={[{ backgroundColor: colors.buttonBackground, alignSelf: "center", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 5 }]}
               >
@@ -516,16 +546,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  buttonContainer: {
+    overflow: 'hidden', // Clip shimmer overflow
+    borderRadius: 6,
+  },
   redirectionButton: {
-    backgroundColor: 'rgb(44, 145, 5)',
-    paddingVertical: 10,
+    backgroundColor: 'rgb(44, 145, 5)', // Your original green
+    // paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: 'rgb(44, 145, 5)', // Glow matches background
+    shadowOffset: { width: 0, height: 0 }, // Centered glow
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 5,
+    alignItems: 'center', // Center text
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+    paddingVertical: 10,
+  },
+  shimmer: {
+    position: 'absolute',
+    width: 15, // Width of shimmer streak
+    height: '200%',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)', // Light shimmer effect
+    opacity: 0.7,
   },
   tradedgeLogo: {
     width: 100,
@@ -556,20 +605,6 @@ const styles = StyleSheet.create({
   cardList: {
     paddingBottom: 10,
   },
-  cardContainer: {
-    height: 210,
-    width: 250,
-    paddingHorizontal: 10,
-    paddingVertical: 15,
-    borderColor: 'green',
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderRadius: 10,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
   tradeCardContainer: {
     height: 170,
     width: '48%',
@@ -591,21 +626,44 @@ const styles = StyleSheet.create({
     paddingBottom: 5, 
     height: 30
   },
+  cardContainer: {
+    height: 210,
+    width: 250,
+    borderColor: 'green',
+    marginHorizontal: 8,
+    borderWidth: 1,
+    borderRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+    overflow: 'hidden',
+  },
   cardHeader: {
     height: '20%',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingTop: 15,
+    // backgroundColor: 'green',
   },
   cardBody: {
-    height: '60%',
+    height: '55%',
     justifyContent: 'center',
+    paddingHorizontal: 10,
+    overflow: 'hidden',
+    // backgroundColor: 'blue',
   },
   cardFooter: {
-    height: '20%',
+    height: '25%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
+    backgroundColor: 'rgb(30, 106, 0)',
+    overflow: 'hidden',
+    // borderTopRightRadius: 10,
+    // borderTopLeftRadius: 10,
   },
   tradeCardTitle: {
     fontWeight: '700',
@@ -620,19 +678,28 @@ const styles = StyleSheet.create({
   cardIcon: {
     width: '15%',
   },
-  cardDivider: {
-    flex: 1,
-    height: 2,
-    borderRadius: 1,
-    marginRight: 10,
-    alignSelf: 'center',
-  },
+  // cardDivider: {
+  //   flex: 1,
+  //   height: 2,
+  //   borderRadius: 1,
+  //   marginRight: 10,
+  //   alignSelf: 'center',
+  // },
   cardPrice: {
     fontSize: 20,
     fontWeight: '700',
-    top: -2,
+    // top: -2,
     padding: 5,
     color: 'green',
+  },
+  cardDiscountedPrice: {
+    fontSize: 20,
+    fontWeight: '700',
+    padding: 5,
+    color: 'green',
+    // backgroundColor: 'white',
+    // borderColor: 'rgba(0, 128, 0, 0.3)', // Subtle green border
+    // borderWidth: 1,
   },
   cardDescription: {
     fontSize: 14,

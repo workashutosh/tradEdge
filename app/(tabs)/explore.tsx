@@ -33,15 +33,15 @@ export default function TabTwoScreen() {
             setIpoData({ upcoming: [], active: [], closed: [] });
           }
         } else {
-          setError("Cant't fetch data");
+          setError("Can't fetch data");
           setIpoData({ upcoming: [], active: [], closed: [] });
         }
       }
     });
 
     xhr.open('GET', 'https://indian-stock-exchange-api2.p.rapidapi.com/ipo');
-    xhr.setRequestHeader('x-rapidapi-key', 'bc620173a1msh189575d170e4385p16222fjsnfad95363999a');
-    xhr.setRequestHeader('x-rapidapi-host', 'indian-stock-exchange-api2.p.rapidapi.com');
+    xhr.setRequestHeader('x-rapidapi-key', process.env.EXPO_PUBLIC_RAPID_API_KEY || '');
+    xhr.setRequestHeader('x-rapidapi-host', process.env.EXPO_PUBLIC_RAPID_API_HOST || '');
     xhr.send(null);
 
     // Cleanup function
@@ -94,7 +94,7 @@ export default function TabTwoScreen() {
         <Text style={[styles.headerTitle, isDarkMode && styles.textDark]}>IPO Listings</Text>
       </View>
       {error && (
-        <Text style={[styles.errorText, isDarkMode && styles.textDark]}>
+        <Text style={[styles.errorText]}>
           Error: {error}
         </Text>
       )}

@@ -6,16 +6,13 @@ import Svg, { Path } from 'react-native-svg';
 
 interface BuyProButtonProps {
   setIsPopupVisible: (visible: boolean) => void;
-  setOverlayVisible: (visible: boolean) => void;
-  overlayVisible: boolean;
 }
 
-const BuyProButton: React.FC<BuyProButtonProps> = ({ setIsPopupVisible, setOverlayVisible, overlayVisible }) => {
+const BuyProButton: React.FC<BuyProButtonProps> = ({ setIsPopupVisible }) => {
   return (
     <TouchableOpacity style={styles.buttonContainer} activeOpacity={0.8}
     onPress={() => {
         setIsPopupVisible(true);
-        setOverlayVisible(!overlayVisible);
       }}
     >
       <LinearGradient

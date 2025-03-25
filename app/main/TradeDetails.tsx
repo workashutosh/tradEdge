@@ -11,6 +11,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Animated, PanResponder } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface Trade {
   title: string;
@@ -48,33 +49,34 @@ export default function TradeDetails() {
     success: '#00c853',
     warning: '#ffab00',
     error: '#ff4444',
+    cardBackground: isDark ? '#1e1e1e' : '#ffffff',
+    gradientStart: '#00b300',
+    gradientEnd: '#00c853',
   };
 
   const getTagStyle = (riskCategory: string): { borderColor: string; icon: string } => {
     if (riskCategory.includes('Low')) return { borderColor: colors.success, icon: 'check-circle' };
-    if (riskCategory.includes('Moderate')) return { borderColor: colors.warning, icon: 'warning' };
     return { borderColor: colors.error, icon: 'error' };
   };
 
   const handleSubscribe = () => {
-    console.log(`Subscribed to ${trade.title}`);
+    // console.log(`Subscribed to ${trade.title}`);
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header]}>
+      <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <ThemedText style={[styles.category, { color: colors.primary }]}>{trade.categoryTag}</ThemedText>
+        <ThemedText style={[styles.category, { color: colors.text }]}>{trade.categoryTag}</ThemedText>
         <View style={styles.headerSpacer} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
         <CardHeader trade={trade} colors={colors} />
-        {/* <TagsSection trade={trade} colors={colors} getTagStyle={getTagStyle} /> */}
         <CardDetailsTable trade={trade} colors={colors} getTagStyle={getTagStyle} />
-        <DescriptionSection trade={trade} colors={colors} />
+        {/* <DescriptionSection trade={trade} colors={colors} /> */}
         <PricingSection trade={trade} colors={colors} />
         <DetailsSection trade={trade} colors={colors} />
       </ScrollView>
@@ -89,65 +91,43 @@ export default function TradeDetails() {
 // Component Definitions
 
 const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
-  <View style={[styles.cardHeader, { backgroundColor: colors.background }]}>
-    <ThemedText style={[styles.title, { color: colors.text }]}>{trade.title}</ThemedText>
-    <MaterialIcons name={trade.icon} size={24} color={colors.text} />
-  </View>
+  <LinearGradient
+    colors={[colors.gradientStart, colors.gradientEnd]}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    style={styles.cardHeader}
+  >
+    <ThemedText style={[styles.title, { color: '#ffffff' }]}>{trade.title}</ThemedText>
+    <MaterialIcons name={trade.icon} size={28} color="#ffffff" />
+  </LinearGradient>
 );
 
-// const TagsSection: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
-//   <View style={styles.section}>
-//     <View style={styles.tagsContainer}>
-//       {trade.tags.map((tag, index) => {
-//         const { borderColor, icon } = getTagStyle(tag);
-//         return (
-//           <View key={index} style={[styles.tagContainer, { borderColor }]}>
-//             <MaterialIcons name={icon} size={16} color={borderColor} style={styles.tagIcon} />
-//             <ThemedText style={[styles.tagText, { color: borderColor }]}>{tag}</ThemedText>
-//           </View>
-//         );
-//       })}
-//     </View>
-//   </View>
-// );
-
 const CardDetailsTable: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag: string) => { borderColor: string; icon: string } }> = ({ trade, colors, getTagStyle }) => (
-  <View style={[styles.cardDetails, {borderBottomColor: colors.text}]}>
-    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
-      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
-        Min Investment
-      </ThemedText>
-      <ThemedText style={[styles.detailValue, { color: colors.primary }]}>
-        {trade.minimumInvestment}
+  <View style={[styles.cardDetails, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+    <View style={styles.detailRow}>
+      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Min Investment</ThemedText>
+      <ThemedText style={[styles.detailValue, { color: colors.text }]}>
+      ₹ {trade.minimumInvestment ? new Intl.NumberFormat('en-IN').format(Number(trade.minimumInvestment)) : 'N/A'}
       </ThemedText>
     </View>
-    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
-      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
-        Risk Category
-      </ThemedText>
+    <View style={styles.detailRow}>
+      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Risk Category</ThemedText>
       <View style={styles.riskTag}>
         <MaterialIcons
           name={getTagStyle(trade.riskCategory).icon}
-          size={14}
+          size={16}
           color={getTagStyle(trade.riskCategory).borderColor}
         />
         <ThemedText
-          style={[
-            styles.detailValue,
-            { color: getTagStyle(trade.riskCategory).borderColor },
-          ]}
+          style={[styles.detailValue, { color: getTagStyle(trade.riskCategory).borderColor }]}
         >
-          {trade.riskCategory}
+          {trade.riskCategory || 'N/A'}
         </ThemedText>
       </View>
     </View>
     <View style={styles.detailRow}>
-      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
-        Profit Potential
-      </ThemedText>
-      <ThemedText style={[styles.detailValue, { color: colors.success }]}>
-        {trade.profitPotential}
-      </ThemedText>
+      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Profit Potential</ThemedText>
+      <ThemedText style={[styles.detailValue, { color: colors.success }]}>{trade.profitPotential || 'N/A'}</ThemedText>
     </View>
   </View>
 );
@@ -164,13 +144,15 @@ const DescriptionSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, co
 const PricingSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <View style={styles.section}>
     <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Pricing</ThemedText>
-    <ThemedText style={[styles.price, { color: colors.primary }]}>{trade.price}</ThemedText>
+    <ThemedText style={[styles.price, { color: colors.text }]}>
+      ₹ {trade.price ? new Intl.NumberFormat('en-IN').format(Number(trade.price)) : 'Contact for pricing'}
+    </ThemedText>
   </View>
 );
 
 const DetailsSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <View style={styles.section}>
-    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>Details</ThemedText>
+    <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>What we offer</ThemedText>
     {trade.details.map((detail, index) => (
       <View key={index} style={styles.detailItem}>
         <MaterialIcons name="check" size={16} color={colors.success} style={styles.checkIcon} />
@@ -229,16 +211,22 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
     extrapolate: 'clamp',
   });
 
+  const glowOpacity = pan.interpolate({
+    inputRange: [0, buttonWidth - sliderWidth],
+    outputRange: [0.3, 0.8],
+    extrapolate: 'clamp',
+  });
+
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderMove: (_, gestureState) => {
-      const maxX = buttonWidth - sliderWidth - (padding * 2);
+      const maxX = buttonWidth - sliderWidth - padding * 2;
       const newX = Math.max(0, Math.min(gestureState.dx, maxX));
       pan.setValue(newX);
     },
     onPanResponderRelease: (_, gestureState) => {
-      const threshold = buttonWidth - sliderWidth - (padding * 2) - 10;
-      const maxPosition = buttonWidth - sliderWidth - (padding * 2);
+      const threshold = buttonWidth - sliderWidth - padding * 2 - 10;
+      const maxPosition = buttonWidth - sliderWidth - padding * 2;
 
       if (gestureState.dx >= threshold) {
         Animated.spring(pan, {
@@ -278,11 +266,10 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
         styles.subscribeButton,
         {
           backgroundColor,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.3,
-          shadowRadius: 4,
-          elevation: 5,
+          shadowColor: colors.buttonPrimary,
+          shadowOpacity: glowOpacity,
+          shadowRadius: 10,
+          elevation: 8,
         },
       ]}
     >
@@ -293,9 +280,9 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
           {
             opacity: textOpacity,
             color: '#ffffff',
-            textShadowColor: 'rgba(0, 0, 0, 0.3)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 2,
+            textShadowColor: 'rgba(0, 0, 0, 0.5)',
+            textShadowOffset: { width: 0, height: 2 },
+            textShadowRadius: 4,
           },
         ]}
       >
@@ -306,14 +293,13 @@ const SubscribeButton: React.FC<{ colors: any; onPress: () => void }> = ({ color
           styles.slider,
           {
             transform: [{ translateX: pan }],
-            backgroundColor: 'rgba(0, 0, 0, 0.11)',
-            borderWidth: 1,
-            borderColor: 'rgba(255, 255, 255, 0.2)',
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            borderColor: colors.buttonPrimary,
           },
         ]}
         {...panResponder.panHandlers}
       >
-        <MaterialIcons name="chevron-right" size={24} color="#ffffff" style={styles.chevron} />
+        <MaterialIcons name="chevron-right" size={24} color={colors.buttonPrimary} style={styles.chevron} />
       </Animated.View>
     </Animated.View>
   );
@@ -330,13 +316,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
   backButton: {
-    padding: 4,
+    padding: 8,
   },
   category: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
     textAlign: 'center',
     flex: 1,
   },
@@ -344,70 +332,58 @@ const styles = StyleSheet.create({
     width: 32,
   },
   content: {
-    padding: 16,
-    paddingBottom: 80,
+    padding: 20,
+    paddingBottom: 100,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 12,
-    marginBottom: 10,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 4,
   },
   title: {
-    fontSize: 25,
-    fontWeight: '600',
+    fontSize: 22,
+    fontWeight: '700',
   },
   section: {
-    marginBottom: 12,
+    marginBottom: 24,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 2,
-    paddingVertical: 1,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-  },
-  tagIcon: {
-    marginRight: 4,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 12,
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
-    marginBottom: 8,
+    opacity: 0.9,
   },
   price: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: '700',
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   detailText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+    flex: 1,
   },
   checkIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   buttonContainer: {
     padding: 16,
@@ -453,34 +429,37 @@ const styles = StyleSheet.create({
   chevron: {
     marginLeft: 4,
   },
-
-  // cradDetailsTable
   cardDetails: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    // borderBottomWidth: 1,
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    padding: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   detailRow: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    // marginBottom: 8,
-    // paddingBottom: 8,
-
+    paddingHorizontal: 0,
   },
   detailLabel: {
     fontSize: 14,
     fontWeight: '500',
+    opacity: 0.7,
+    marginBottom: 4,
   },
   detailValue: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   riskTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 6,
   },
 });

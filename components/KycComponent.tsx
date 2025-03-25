@@ -52,12 +52,12 @@ const KycComponent: React.FC = () => {
           }
 
           const data = await response.json();
-          console.log(data);
+          // console.log(data);
           const { aadhar_name, auth, pan_name } = data.data;
 
           setKycStatus(auth);
         } catch (error) {
-          console.log('Error checking KYC status:', error);
+          // console.log('Error checking KYC status:', error);
         } finally {
           setFetchingKycStatus(false);
         }
@@ -87,7 +87,7 @@ const KycComponent: React.FC = () => {
         setAadhaarFile(result);
       }
     } catch (err) {
-      console.log('Error picking Aadhaar:', err);
+      // console.log('Error picking Aadhaar:', err);
       setMessage('Failed to pick Aadhaar image');
     }
   };
@@ -102,7 +102,7 @@ const KycComponent: React.FC = () => {
         setPanFile(result);
       }
     } catch (err) {
-      console.log('Error picking PAN:', err);
+      // console.log('Error picking PAN:', err);
       setMessage('Failed to pick PAN image');
     }
   };
@@ -139,7 +139,7 @@ const KycComponent: React.FC = () => {
 
       formData.append('user_id', userId);
 
-      console.log('User ID:', userId);
+      // console.log('User ID:', userId);
 
       setUploading(true);
       const response = await fetch('https://gateway.twmresearchalert.com/kyc', {
@@ -152,12 +152,12 @@ const KycComponent: React.FC = () => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.log('Error Response:', errorText);
+        // console.log('Error Response:', errorText);
         throw new Error(`HTTP error! Status: ${response.status}, Response: ${errorText}`);
       }
 
       const result: any = await response.json();
-      console.log('KYC Submit response:', result);
+      // console.log('KYC Submit response:', result);
 
       setMessage('Documents submitted for review!');
       setIsProcessing(true);
@@ -165,13 +165,13 @@ const KycComponent: React.FC = () => {
       setAadhaarFile(null);
       setPanFile(null);
     } catch (error: unknown) {
-      console.log('KYC Submit error:', error);
+      // console.log('KYC Submit error:', error);
       let errorMessage = 'Failed to submit KYC';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
       setMessage(errorMessage);
-      console.log('Error', error);
+      // console.log('Error', error);
       setIsProcessing(false);
     } finally {
       setUploading(false);

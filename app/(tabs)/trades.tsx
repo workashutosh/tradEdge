@@ -40,7 +40,7 @@ export default function Trades() {
     primary: '#00BCD4',
     buttonPrimary: 'rgb(44, 145, 5)',
     shadowColor: isDark ? 'white' : 'black',
-    selectedTagBackground: '#3498db',
+    selectedTagBackground: isDark? 'white':'black',
     tagBackground: isDark ? '#333333' : '#e0e0e0',
     success: '#00c853',
     warning: '#ffab00',
@@ -56,7 +56,6 @@ export default function Trades() {
 
   const getTagStyle = (riskCategory: string): { color: string; icon: string } => {
     if (riskCategory.includes('Low')) return { color: colors.success, icon: 'check-circle' };
-    if (riskCategory.includes('Moderate')) return { color: colors.warning, icon: 'warning' };
     return { color: colors.error, icon: 'error' };
   };
 
@@ -79,8 +78,8 @@ export default function Trades() {
   const filteredServices = services.map((service) => ({
     ...service,
     // Adding dummy data for fields not present in the original ServiceItem
-    minimumInvestment: '₹10,000', // Dummy data
-    profitPotential: '15-20% p.a.', // Dummy data
+    // minimumInvestment: '₹10,000', // Dummy data
+    profitPotential: '15-25% p.a.', // Dummy data
   })).filter((item) => item.categoryTag === selectedTag);
 
   if (loading) {
@@ -115,7 +114,7 @@ export default function Trades() {
                 <ThemedText
                   style={[
                     styles.tradeTagText,
-                    { color: selectedTag === tag ? '#ffffff' : isDark ? '#cccccc' : '#666666' },
+                    { color: selectedTag === tag ? isDark ? 'black' : 'white' : isDark ? '#cccccc' : '#666666' },
                   ]}
                 >
                   {tag}
@@ -144,7 +143,7 @@ export default function Trades() {
                         Min Investment
                       </ThemedText>
                       <ThemedText style={[styles.detailValue, { color: colors.text }]}>
-                        {item.minimumInvestment}
+                      ₹ {item.minimumInvestment ? new Intl.NumberFormat('en-IN').format(Number(item.minimumInvestment)) : 'N/A'}
                       </ThemedText>
                     </View>
                     <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
@@ -301,6 +300,7 @@ const styles = StyleSheet.create({
   riskTag: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 3,
   },
   buttonRow: {
     flexDirection: 'row',

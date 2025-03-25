@@ -117,9 +117,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUserId(userId);
       setUserName(response.data.data.user_name);
       
-      console.log("redirecting to home");
+      // console.log("redirecting to home");
       router.replace('/(tabs)/home');
-      console.log(AsyncStorage.getAllKeys());
+      // console.log(AsyncStorage.getAllKeys());
       return true;
     } catch (error) {
       const axiosError = error as AxiosError<LoginResponse>;

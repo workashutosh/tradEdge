@@ -22,6 +22,7 @@ interface ServiceItem {
   categoryTag: string;
   icon: string;
   riskCategory: string;
+  minimumInvestment: string;
 }
 
 interface StockContextType {
@@ -54,11 +55,11 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateBSEData = (data: StockData[]) => setBSEData(data);
   const updateMarketIndices = (data: MarketIndicesData[]) => setMarketIndices(data);
 
-  const getRandomRiskCategory = () => {
-    const randomTags = ['Low', 'Moderate', 'High'];
-    const shuffled = randomTags.sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, 1);
-  };
+  // const getRandomRiskCategory = () => {
+  //   const randomTags = ['Low', 'Moderate', 'High'];
+  //   const shuffled = randomTags.sort(() => 0.5 - Math.random());
+  //   return shuffled.slice(0, 1);
+  // };
 
   const getIconForCategory = (category: string) => {
     switch (category) {
@@ -162,7 +163,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     try {
       setLoading(true);
       setError(null);
-      const token = await AsyncStorage.getItem("access_token");
+      const token = await AsyncStorage.getItem('access_token');
       const response = await fetch('https://gateway.twmresearchalert.com/package', {
         headers: {
           Authorization: token || '',
@@ -174,24 +175,38 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const data = await response.json();
-      // console.log('Services Data:', data); // Debug log
-      if (data.status === 'success') {
-        const transformedServices: ServiceItem[] = data.data.flatMap((type: any) => {
-          const items = type.subtypes.length > 0
+      // Assuming the API returns an array of package objects directly (no 'status' or 'data' wrapper)
+      const transformedServices: ServiceItem[] = data.data.flatMap((type: any) => {
+        const items =
+          type.subtypes.length > 0
             ? type.subtypes
-            : [{ subtype_name: type.type_name, price: type.price, details: type.details || [] }];
+            : [
+                {
+                  subtype_name: type.type_name,
+                  price: type.price,
+                  details: type.details || [],
+                  minimumInvestment: type.minimumInvestment,
+                  riskCategory: type.riskCategory,
+                },
+              ];
 
-          return items.map((item: any) => ({
-            title: item.subtype_name,
-            price: item.price ? `₹${String(item.price)}` : 'Contact for pricing',
-            details: item.details || ['Details not available'],
-            categoryTag: type.type_name,
-            icon: getIconForCategory(type.type_name),
-            riskCategory: getRandomRiskCategory(),
-          }));
-        });
-        setServices(transformedServices);
-      }
+        return items.map((item: {
+          subtype_name: string;
+          price: number | null;
+          details: string[];
+          minimumInvestment: string;
+          riskCategory: string;
+        }) => ({
+          title: item.subtype_name,
+          price: item.price ? item.price : 'Contact for pricing',
+          details: (item.details || ['Details not available']).map(detail => detail.replace(/\?/g, '₹')),
+          categoryTag: type.type_name,
+          icon: getIconForCategory(type.type_name),
+          riskCategory: (item.riskCategory || 'N/A').replace(/^\w/, c => c.toUpperCase()),
+          minimumInvestment: item.minimumInvestment || 'N/A', // Use provided minimumInvestment or default
+        }));
+      });
+      setServices(transformedServices);
     } catch (error) {
       console.error('Error fetching services:', error);
       setError('Failed to fetch services');
@@ -205,8 +220,8 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
     try {
       await Promise.all([
-        getNSEBSEStocks('NSE'),
-        getNSEBSEStocks('BSE'),
+        // getNSEBSEStocks('NSE'),
+        // getNSEBSEStocks('BSE'),
         // fetchMarketIndices(), // Uncomment if needed
         fetchServices(),
       ]);

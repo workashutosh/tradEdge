@@ -49,10 +49,11 @@ export default function Trades() {
   };
 
   const { services, loading } = useStockContext();
-  const [selectedTag, setSelectedTag] = useState<string>('Equity');
 
   const uniqueTags = [...new Set(services.map((service) => service.categoryTag))] as string[];
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
+  const [selectedTag, setSelectedTag] = useState<string>(tags[0]);
+
 
   const getTagStyle = (riskCategory: string): { color: string; icon: string } => {
     if (riskCategory.includes('Low')) return { color: colors.success, icon: 'check-circle' };

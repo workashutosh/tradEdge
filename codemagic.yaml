@@ -5,9 +5,16 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       groups:
-        - expo_credentials  # EXPO_TOKEN is here
+        - expo_credentials  # Contains EXPO_TOKEN
       vars:
         PACKAGE_NAME: "com.tradeedge"
+    triggering:
+      events:
+        - push
+        - pull_request
+      branch_patterns:
+        - pattern: main
+          include: true
     scripts:
       - name: Install nvm and Node.js 18.x
         script: |
@@ -23,9 +30,12 @@ workflows:
           npm install -g eas-cli
       - name: Build Android APK with EAS
         script: |
-          eas build --platform android --profile development --non-interactive --no-wait
+          eas build --platform android --profile development --non-interactive
+          # Fetch the APK URL from the build output and download it
+          BUILD_URL=$(eas build:list --platform android --status finished --limit 1 --json | jq -r '.[0].artifacts.buildUrl')
+          curl -o app.apk "$BUILD_URL"
     artifacts:
-      - "*.apk"
+      - app.apk  # Store the downloaded APK as an artifact
     publishing:
       email:
         recipients:

@@ -2,7 +2,7 @@ workflows:
   expo-android:
     name: Expo Android Build
     max_build_duration: 120
-    instance_type: linux_x1  # Use the smallest available instance
+    instance_type: linux_x1  
     environment:
       vars:
         PACKAGE_NAME: "com.tradeedge"

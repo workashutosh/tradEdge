@@ -32,7 +32,7 @@ export default function Profile() {
   // handle logout
   const handleLogout = async (): Promise<void> => {
     await logout();
-    router.replace('/login');
+    router.replace('/otp');
   };
 
   return (

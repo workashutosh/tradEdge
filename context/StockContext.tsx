@@ -113,7 +113,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         if (stock === "BSE") updateBSEData(formattedData);
       }
     } catch (err) {
-      console.error(`Failed to fetch ${stock} data:`, err);
+      // console.error(`Failed to fetch ${stock} data:`, err);
       setError(`Failed to fetch ${stock} data`);
     } finally {
       setLoading(false);

@@ -152,7 +152,7 @@ const SignupScreen = () => {
           await AsyncStorage.setItem('user_id', userId);
           await AsyncStorage.setItem('user_name', loginData.user_name);
 
-          router.replace('/home');
+          router.replace('/(tabs)/home');
         } catch (loginError) {
           setErrorMessage('Auto-login failed. Please log in manually.');
           setTimeout(() => {

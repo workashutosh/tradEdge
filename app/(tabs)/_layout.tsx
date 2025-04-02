@@ -14,7 +14,8 @@ export default function TabLayout() {
 
   // Redirect to signup if not logged in
   if (!isLoggedIn) {
-    return <Redirect href="/signup" />;
+    // return <Redirect href="/signup" />;
+    return <Redirect href="/otp" />;
   }
 
 

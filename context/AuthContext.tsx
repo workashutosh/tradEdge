@@ -1,4 +1,3 @@
-// AuthContext.tsx
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
@@ -7,16 +6,18 @@ import { Router } from 'expo-router';
 // Define types
 interface AuthState {
   isLoggedIn: boolean;
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
   token: string | null;
   userId: string | null;
   userName: string | null;
+  sessionId: string | null;
   loading: boolean;
   errorMessage: string;
-  isInitializing: boolean; // Add isInitializing to AuthState
+  isInitializing: boolean;
 }
 
 interface AuthContextType extends AuthState {
-  handleLogin: (whatsAppNumber: string, password: string, router: Router) => Promise<boolean>;
+  handleLogin: (loginData: LoginResponse['data'], router: Router) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -25,16 +26,34 @@ interface AuthProviderProps {
 }
 
 interface LoginResponse {
+  success: boolean;
+  statusCode: number;
+  messages: string[];
   data: {
-    access_token: string;
-    refresh_token: string;
     user_id: string;
     user_name: string;
-    messages?: string[]; // Make messages optional
+    user_role: string;
+    session_id: string;
+    access_token: string;
+    access_token_expiry: number;
+    refresh_token: string;
+    refresh_token_expiry: number;
   };
 }
 
-// Create context with default undefined value
+interface UserDetailsResponse {
+  success: boolean;
+  data: {
+    user_id: string;
+    user_name: string;
+    session_id: string;
+    user_full_name?: string;
+    user_whatsapp_number?: string;
+    user_email_id?: string;
+    // Add other fields as needed
+  };
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -42,92 +61,81 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isInitializing, setIsInitializing] = useState<boolean>(true);
 
-  // Check for existing session on app start
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
         const accessToken = await AsyncStorage.getItem('access_token');
         if (accessToken) {
+          const [storedUserId, storedUserName, storedSessionId, storedRefreshToken] = await Promise.all([
+            AsyncStorage.getItem('user_id'),
+            AsyncStorage.getItem('user_name'),
+            AsyncStorage.getItem('session_id'),
+            AsyncStorage.getItem('refresh_token'),
+          ]);
+
           setToken(accessToken);
+          setUserId(storedUserId);
+          setUserName(storedUserName);
+          setSessionId(storedSessionId);
+          setRefreshToken(storedRefreshToken);
           setIsLoggedIn(true);
-          setUserId(await AsyncStorage.getItem('user_id'));
-          setUserName(await AsyncStorage.getItem('user_name'));
-          setRefreshToken(await AsyncStorage.getItem('refresh_token'));
         }
       } catch (error) {
         console.error('Error checking login status:', error);
       } finally {
-        setIsInitializing(false); // Set to false when done
+        setIsInitializing(false);
       }
     };
     checkLoginStatus();
   }, []);
 
-  const login = async (accessToken: string): Promise<void> => {
-    try {
-      await AsyncStorage.setItem('access_token', accessToken);
-      setIsLoggedIn(true);
-      setToken(accessToken);
-    } catch (error) {
-      console.error('Error during login:', error);
-      throw error;
-    }
-  };
-
   const handleLogin = async (
-    whatsAppNumber: string,
-    password: string,
+    loginData: LoginResponse['data'],
     router: Router
   ): Promise<boolean> => {
-    if (!whatsAppNumber || !password) {
-      setErrorMessage('Please fill in all fields');
-      setTimeout(() => setErrorMessage(''), 3000);
-      return false;
-    }
-
     setLoading(true);
+    setErrorMessage('');
 
     try {
-      const loginUrl = process.env.EXPO_PUBLIC_LOGIN_URL;
-      if (!loginUrl) {
-        setErrorMessage('Login URL is not defined');
-        return false;
-      }
-
-      const response = await axios.post<LoginResponse>(loginUrl, {
-        number: whatsAppNumber,
-        password: password,
-        platform: 'mobile',
-      });
-
-      const userId = response.data.data.user_id.replace('LNUSR', '');
-
+      // Step 1: Store initial login data from response.data
       await Promise.all([
-        login(response.data.data.access_token),
-        AsyncStorage.setItem('refresh_token', response.data.data.refresh_token),
-        AsyncStorage.setItem('user_id', userId),
-        AsyncStorage.setItem('user_name', response.data.data.user_name),
+        AsyncStorage.setItem('access_token', loginData.access_token),
+        AsyncStorage.setItem('refresh_token', loginData.refresh_token),
+        AsyncStorage.setItem('user_id', loginData.user_id),
+        AsyncStorage.setItem('user_name', loginData.user_name),
+        AsyncStorage.setItem('user_role', loginData.user_role),
+        AsyncStorage.setItem('session_id', loginData.session_id),
       ]);
 
-      setUserId(userId);
-      setUserName(response.data.data.user_name);
-      
-      // console.log("redirecting to home");
+      // Set initial state
+      setToken(loginData.access_token);
+      setRefreshToken(loginData.refresh_token);
+      setUserId(loginData.user_id);
+      setUserName(loginData.user_name);
+      setSessionId(loginData.session_id);
+
+
+      setIsLoggedIn(true);
       router.replace('/(tabs)/home');
-      // console.log(AsyncStorage.getAllKeys());
+      console.log('loggedIn');
       return true;
     } catch (error) {
-      const axiosError = error as AxiosError<LoginResponse>;
-      if (axiosError.response?.data?.data?.messages?.[0] === "Too Many Incorrect Password Attempts") {
-        setErrorMessage('Too Many Incorrect Password Attempts! Try after 30 minutes');
-      } else {
-        setErrorMessage('Invalid Credentials');
+      const axiosError = error as AxiosError<UserDetailsResponse>;
+      let errorMsg = 'Error processing login';
+      console.log(error);
+
+      if ('messages' in (axiosError.response?.data || {})) {
+        errorMsg = (axiosError.response?.data as LoginResponse).messages.join(', ');
       }
+
+      setErrorMessage(errorMsg);
+      console.log(errorMsg);
       setTimeout(() => setErrorMessage(''), 3000);
       return false;
     } finally {
@@ -141,12 +149,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         'access_token',
         'refresh_token',
         'user_id',
-        'user_name'
+        'user_name',
+        'user_role',
+        'session_id',
       ]);
+
       setIsLoggedIn(false);
       setToken(null);
       setUserId(null);
       setUserName(null);
+      setSessionId(null);
       setRefreshToken(null);
     } catch (error) {
       console.error('Error during logout:', error);
@@ -156,9 +168,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     isLoggedIn,
+    setIsLoggedIn,
     token,
     userId,
     userName,
+    sessionId,
     loading,
     errorMessage,
     isInitializing,

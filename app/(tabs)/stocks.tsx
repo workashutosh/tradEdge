@@ -261,7 +261,7 @@ export default function Stocks() {
         )}
 
         {/* NSE cards Section */}
-        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background, paddingHorizontal: 0 }]}>
+        {/* <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background, paddingHorizontal: 0 }]}>
           <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
             NSE Most Active
           </ThemedText>
@@ -281,10 +281,10 @@ export default function Stocks() {
               />
             )
           }
-        </ThemedView>
+        </ThemedView> */}
 
         {/* BSE cards Section */}
-        <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background, paddingHorizontal: 0 }]}>
+        {/* <ThemedView style={[styles.sectionContainer, { backgroundColor: colors.background, paddingHorizontal: 0 }]}>
           <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>
             BSE Most Active
           </ThemedText>
@@ -304,7 +304,7 @@ export default function Stocks() {
               />
             )
           }
-        </ThemedView>
+        </ThemedView> */}
       </ScrollView>
     </SafeAreaView>
   );

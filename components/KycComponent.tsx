@@ -23,7 +23,6 @@ const KycComponent: React.FC = () => {
     shadowColor: isDark ? 'white':'black',
   };
 
-  const [isKycDone, setIsKycDone] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [isKycExpanded, setIsKycExpanded] = useState(false);
   const [aadhaarFile, setAadhaarFile] = useState<DocumentPicker.DocumentPickerResult | null>(null);

@@ -104,10 +104,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     try {
       // Step 1: Store initial login data from response.data
+      const userId= loginData.user_id.replace('LNUSR','');
+      // console.log(userId);
       await Promise.all([
         AsyncStorage.setItem('access_token', loginData.access_token),
         AsyncStorage.setItem('refresh_token', loginData.refresh_token),
-        AsyncStorage.setItem('user_id', loginData.user_id),
+        AsyncStorage.setItem('user_id', userId),
         AsyncStorage.setItem('user_name', loginData.user_name),
         AsyncStorage.setItem('user_role', loginData.user_role),
         AsyncStorage.setItem('session_id', loginData.session_id),
@@ -116,26 +118,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Set initial state
       setToken(loginData.access_token);
       setRefreshToken(loginData.refresh_token);
-      setUserId(loginData.user_id);
+      setUserId(userId);
       setUserName(loginData.user_name);
       setSessionId(loginData.session_id);
 
 
       setIsLoggedIn(true);
       router.replace('/(tabs)/home');
-      console.log('loggedIn');
+      // console.log('loggedIn');
       return true;
     } catch (error) {
       const axiosError = error as AxiosError<UserDetailsResponse>;
       let errorMsg = 'Error processing login';
-      console.log(error);
+      // console.log(error);
 
       if ('messages' in (axiosError.response?.data || {})) {
         errorMsg = (axiosError.response?.data as LoginResponse).messages.join(', ');
       }
 
       setErrorMessage(errorMsg);
-      console.log(errorMsg);
+      // console.log(errorMsg);
       setTimeout(() => setErrorMessage(''), 3000);
       return false;
     } finally {

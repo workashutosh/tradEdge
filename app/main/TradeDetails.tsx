@@ -127,7 +127,7 @@ const CardDetailsTable: React.FC<{ trade: Trade; colors: any; getTagStyle: (tag:
     </View>
     <View style={styles.detailRow}>
       <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Profit Potential</ThemedText>
-      <ThemedText style={[styles.detailValue, { color: colors.success }]}>{trade.profitPotential || 'N/A'}</ThemedText>
+      <ThemedText style={[styles.detailValue, { }]}>{trade.profitPotential || 'N/A'}</ThemedText>
     </View>
   </View>
 );
@@ -351,6 +351,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   section: {
     marginBottom: 24,

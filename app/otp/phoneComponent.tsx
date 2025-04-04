@@ -16,19 +16,7 @@ export default function PhoneInput({
   handleSubmit,
   otpButtonLoading,
 }: PhoneInputProps) {
-  
-  // This prevents keyboard from dismissing when clicking the button
-  const onButtonPress = () => {
-    // Optional: You can call this if you need to explicitly dismiss the keyboard 
-    // when you submit the form after a button press.
-    Keyboard.dismiss();
-    handleSubmit();
-  };
 
-  const validatePhoneNumber = (value: string) => {
-    const indianPhoneRegex = /^[6-9]\d{9}$/;
-    return indianPhoneRegex.test(value);
-  };
 
   const handlePhoneChange = (value: string) => {
     // Only allow numeric input
@@ -50,7 +38,7 @@ export default function PhoneInput({
           onChangeText={handlePhoneChange}
           maxLength={10}
           keyboardType="phone-pad"
-          onSubmitEditing={onButtonPress}
+          onSubmitEditing={handleSubmit}
         />
       </View>
 
@@ -68,7 +56,7 @@ export default function PhoneInput({
       {/* get otp button */}
       <TouchableOpacity
         style={[styles.button, { backgroundColor: phone.length === 10 ? '#000' : '#808080' }]}
-        onPress={onButtonPress} // Ensure this doesn't dismiss the keyboard
+        onPress={handleSubmit}
         disabled={otpButtonLoading}
       >
         {otpButtonLoading ? (

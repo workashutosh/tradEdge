@@ -47,10 +47,6 @@ export default function OtpInput({
     }
   };
 
-  const handleVerifySubmit = () => {
-    Keyboard.dismiss();
-    handleOtpSubmit();
-  };
 
   const handleResend = () => {
     Keyboard.dismiss();
@@ -88,7 +84,7 @@ export default function OtpInput({
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.button, { backgroundColor: '#000' }]} 
-          onPress={handleVerifySubmit}
+          onPress={handleOtpSubmit}
           disabled={verifyOtpButtonLoading}
         >
           {verifyOtpButtonLoading ? (

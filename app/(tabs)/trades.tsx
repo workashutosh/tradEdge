@@ -71,7 +71,7 @@ export default function Trades() {
         icon: item.icon,
         minimumInvestment: item.minimumInvestment || 'N/A',
         riskCategory: item.riskCategory || 'N/A',
-        profitPotential: item.profitPotential || 'N/A',
+        profitPotential: item.profitPotential || '15-25% p.a.',
       },
     });
   };

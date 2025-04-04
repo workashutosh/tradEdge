@@ -13,6 +13,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import NseBseAccordian from '@/components/NseBseAccordian';
 import BuyProButton from '@/components/BuyProButton';
 import MemoizedModal from '@/components/MemoizeModal';
+import CircleAnimation from '@/animation/CircleAnimation';
+import CircleBackgroundView from '@/animation/CircleAnimation';
 
 export default function HomeScreen() {
   const [username, setUsername] = useState('User');
@@ -45,6 +47,7 @@ export default function HomeScreen() {
     icon: string;
     riskCategory: string;
     minimumInvestment: string;
+    profitPotential: string;
   }
 
   interface PackagesItem {
@@ -56,6 +59,7 @@ export default function HomeScreen() {
     icon: string;
     riskCategory: string;
     minimumInvestment: string;
+    profitPotential: string;
   }
 
   useEffect(() => {
@@ -79,6 +83,7 @@ export default function HomeScreen() {
       minimumInvestment: "50000",
       riskCategory: "Low",
       icon: 'trending-up',
+      profitPotential: '15-25% p.a.',
     },
     {
       title: 'Stock Option Basic',
@@ -88,6 +93,7 @@ export default function HomeScreen() {
       minimumInvestment: "300000",
       riskCategory: "Low",
       icon: 'leaderboard',
+      profitPotential: '15-25% p.a.',
     },
     {
       title: 'Stock Future Pro',
@@ -97,6 +103,7 @@ export default function HomeScreen() {
       minimumInvestment: "300000",
       riskCategory: "Low",
       icon: 'tune',
+      profitPotential: '15-25% p.a.',
     },
     {
       title: 'Index Options Pro',
@@ -106,6 +113,7 @@ export default function HomeScreen() {
       minimumInvestment: "50000",
       riskCategory: "Low",
       icon: 'tune',
+      profitPotential: '15-25% p.a.',
     },
   ];
 
@@ -118,6 +126,7 @@ export default function HomeScreen() {
       minimumInvestment: "50000",
       riskCategory: "Low",
       icon: 'trending-up',
+      profitPotential: '15-25% p.a.',
     },
     {
       title: 'Stock Option Pro',
@@ -127,6 +136,7 @@ export default function HomeScreen() {
       minimumInvestment: "300000",
       riskCategory: "Low",
       icon: 'leaderboard',
+      profitPotential: '15-25% p.a.',
     },
     {
       title: 'Stock Future Pro',
@@ -136,6 +146,7 @@ export default function HomeScreen() {
       minimumInvestment: "300000",
       riskCategory: "Low",
       icon: 'tune',
+      profitPotential: '15-25% p.a.',
     },
     {
       title: 'Index Options Classic',
@@ -145,6 +156,7 @@ export default function HomeScreen() {
       minimumInvestment: "50000",
       riskCategory: "Low",
       icon: 'tune',
+      profitPotential: '15-25% p.a.',
     },
   ];
 
@@ -180,6 +192,7 @@ export default function HomeScreen() {
         icon: item.icon,
         riskCategory: item.riskCategory,
         minimumInvestment: item.minimumInvestment,
+        profitPotential: item.profitPotential,
       },
     });
   };
@@ -236,12 +249,54 @@ export default function HomeScreen() {
           <ThemedText style={styles.tradeCardTitle}>{item.title}</ThemedText>
           <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color={colors.text} />
         </ThemedView>
-        <ThemedView style={styles.cardBody}>
-          <ThemedText style={{ fontSize: 15, lineHeight: 18, color: 'grey' }}>{item.details[0]}</ThemedText>
-        </ThemedView>
-        <ThemedText style={[styles.cardDiscountedPrice, { alignSelf: 'flex-end' }]}>
-          ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
-        </ThemedText>
+          <CircleBackgroundView
+            size={400}
+            outerColor="rgb(50, 50, 50)"
+            innerColor="rgba(0, 0, 0, 0)"
+            duration={2000}
+            delay={100}
+            style={{
+              height: '81%',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: isDark ? 'rgb(47, 47, 47)' : 'rgb(229, 229, 229)',
+              borderRadius: 10,
+              overflow: 'hidden',
+            }}
+          >
+          <ThemedText
+            style={[
+              styles.cardDiscountedPrice,
+              {
+                alignSelf: 'center',
+                justifyContent: 'center',
+                backgroundColor: 'black',
+                borderRadius: 10,
+                marginVertical: '18%',
+                textAlignVertical: 'center',
+              },
+            ]}
+          >
+            ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}/-
+          </ThemedText>
+          <View>
+            <LinearGradient
+              colors={['rgb(255, 171, 0)', 'rgb(239, 159, 0)']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={{
+                borderWidth: 1,
+                borderColor: 'black',
+                paddingHorizontal: 15,
+                paddingVertical: 5,
+                borderRadius: 20,
+                alignSelf: 'center',
+              }}
+            >
+              <ThemedText style={{ fontWeight: '600' }}>Subscribe</ThemedText>
+            </LinearGradient>
+          </View>
+        </CircleBackgroundView>
       </TouchableOpacity>
     </ThemedView>
   );
@@ -456,10 +511,10 @@ const styles = StyleSheet.create({
   },
   cardList: { paddingBottom: 10 },
   tradeCardContainer: {
-    height: 160,
+    height: 180,
     width: '48%',
     paddingHorizontal: 10,
-    paddingVertical: 15,
+    paddingVertical: 8,
     borderWidth: 0.5,
     borderRadius: 10,
     shadowOffset: { width: 0, height: 2 },
@@ -470,7 +525,7 @@ const styles = StyleSheet.create({
   tradeCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    borderBottomWidth: 2,
+    // borderBottomWidth: 2,
     borderColor: 'grey',
     paddingBottom: 5,
     height: 30,

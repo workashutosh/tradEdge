@@ -50,22 +50,29 @@ export default function OtpLogin() {
     }
   }, [showOtpField, timer]);
 
+  
   const handlePhoneError = (msg: string) => {
     setPhoneError('Please enter a valid Indian phone number');
     setTimeout(() => setPhoneError(' '), 5000);
   };
+
 
   const handleOtpError = (msg: string) => {
     setOtpError(msg);
     setTimeout(() => setOtpError(' '), 5000);
   };
 
+
   const handleUserDetailsError = (msg: string) => {
     setUserDetailsError(msg);
     setTimeout(() => setUserDetailsError(' '), 5000);
   };
 
+
+
+
   const handleSubmit = async () => {
+    setPhoneError(' ');
     Keyboard.dismiss(); // Explicitly dismiss keyboard
     const indianPhoneRegex = /^[6-9]\d{9}$/;
     
@@ -98,6 +105,7 @@ export default function OtpLogin() {
   };
 
   const handleOtpSubmit = async () => {
+    setOtpError(' ');
     Keyboard.dismiss(); // Explicitly dismiss keyboard
     if (otp.length !== 4) {
       handleOtpError('Please enter a valid 4-digit OTP');
@@ -132,6 +140,7 @@ export default function OtpLogin() {
   const handleUserDetailsSubmit = async () => {
     Keyboard.dismiss(); // Explicitly dismiss keyboard
     setContinueButtonLoading(true);
+    setUserDetailsError(' ');
     const payload = {
       user_full_name: userName,
       user_whatsapp_number: phone,

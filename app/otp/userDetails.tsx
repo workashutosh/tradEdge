@@ -35,6 +35,8 @@ export default function UserDetails({
   };
 
   const handleSubmit = () => {
+    setNameError(" ");
+    setEmailError(" ");
     let isValid = true;
 
     if (!validateName(userName)) {

@@ -10,6 +10,7 @@ const StartPage = () => {
 
   // Redirect to the appropriate screen based on login status
   return isLoggedIn ? <Redirect href="/(tabs)/home" /> : <Redirect href="/otp" />;
+  // return <Redirect href="/main/Ticker" />;
 };
 
 export default StartPage;

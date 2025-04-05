@@ -243,34 +243,35 @@ export default function HomeScreen() {
   );
 
   const rendertradesCard = ({ item }: { item: TradeCards }) => (
-    <ThemedView style={[styles.tradeCardContainer, { shadowColor: colors.shadowColor }]}>
+    <ThemedView style={[styles.tradeCardContainer, { shadowColor: colors.shadowColor, backgroundColor: 'rgb(180, 180, 180)' }]}>
       <TouchableOpacity onPress={() => handleTradePress(item)}>
-        <ThemedView style={styles.tradeCardHeader}>
-          <ThemedText style={styles.tradeCardTitle}>{item.title}</ThemedText>
-          <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color={colors.text} />
+        <ThemedView style={[styles.tradeCardHeader, {}]}>
+          <ThemedText style={[styles.tradeCardTitle, {color: 'black'}]}>{item.title}</ThemedText>
+          <MaterialIcons style={[styles.cardIcon, {color: 'black'}]} name={item.icon} size={26} color={colors.text} />
         </ThemedView>
-          <CircleBackgroundView
-            size={400}
-            outerColor="rgb(50, 50, 50)"
-            innerColor="rgba(0, 0, 0, 0)"
-            duration={2000}
-            delay={100}
-            style={{
-              height: '81%',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: isDark ? 'rgb(47, 47, 47)' : 'rgb(229, 229, 229)',
-              borderRadius: 10,
-              overflow: 'hidden',
-            }}
-          >
+        <CircleBackgroundView
+          size={400}
+          colors={isDark?['rgb(0, 0, 0)', 'rgb(46, 46, 46)']:['rgb(0, 0, 0)', 'rgb(46, 46, 46)']}
+          duration={2000}
+          delay={400}
+          ringCount={1} // Match the image's ring count
+          style={{
+            height: '81%',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: 'rgb(69, 69, 69)',
+            borderRadius: 10,
+            overflow: 'hidden',
+          }}
+        >
           <ThemedText
             style={[
               styles.cardDiscountedPrice,
               {
                 alignSelf: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'black',
+                backgroundColor: 'green',
+                color: 'black',
                 borderRadius: 10,
                 marginVertical: '18%',
                 textAlignVertical: 'center',
@@ -515,7 +516,7 @@ const styles = StyleSheet.create({
     width: '48%',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderRadius: 10,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -526,6 +527,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     // borderBottomWidth: 2,
+    backgroundColor: 'transparent',
     borderColor: 'grey',
     paddingBottom: 5,
     height: 30,

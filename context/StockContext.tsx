@@ -220,8 +220,8 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setError(null);
     try {
       await Promise.all([
-        getNSEBSEStocks('NSE'),
-        getNSEBSEStocks('BSE'),
+        // getNSEBSEStocks('NSE'),
+        // getNSEBSEStocks('BSE'),
         // fetchMarketIndices(), // Uncomment if needed
         fetchServices(),
       ]);

@@ -26,7 +26,7 @@ export default function Profile() {
 
   // kys status
   const [isKycDone, setIsKycDone] = useState(false);
-  const { userName, logout } = useAuth();
+  const { logout } = useAuth();
   const router = useRouter();
 
   // handle logout

@@ -1,0 +1,134 @@
+{
+  "packagesItem": [
+    {
+      "title": "Equity Basic",
+      "price": "12000",
+      "details": [
+        "Get 1 Intraday tip on a daily basis",
+        "Approx. 16 - 18 Calls in a month",
+        "Tips with Proper Stop Loss & Target",
+        "Live Market Customer Support Available",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Equity",
+      "minimumInvestment": "50000",
+      "riskCategory": "Low",
+      "icon": "trending-up",
+      "profitPotential": "15-25% p.a."
+    },
+    {
+      "title": "Stock Option Basic",
+      "price": "22500",
+      "details": [
+        "Profit approx. ₹5,000 to ₹9,000 Per Lot",
+        "Get 1 Tip per day",
+        "Customer Service Support from 9 AM to 6 PM",
+        "Tips with Proper Stop Loss & Target",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Stock Option",
+      "minimumInvestment": "300000",
+      "riskCategory": "Low",
+      "icon": "leaderboard",
+      "profitPotential": "15-25% p.a."
+    },
+    {
+      "title": "Stock Future Pro",
+      "price": "45500",
+      "details": [
+        "Profit Target ₹4,000 ₹ ₹6,000 Approx",
+        "1 Tip Per Day",
+        "Complementary Short-term and BTST Trades",
+        "Tips with Proper Stop Loss & Target",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Stock Future",
+      "minimumInvestment": "300000",
+      "riskCategory": "Low",
+      "icon": "tune",
+      "profitPotential": "15-25% p.a."
+    },
+    {
+      "title": "Index Options Pro",
+      "price": "35000",
+      "details": [
+        "Trading calls via WhatsApp, SMS, and Emails",
+        "1 Tip Per Day",
+        "Required Investment ₹1,00,000",
+        "Profit approx. ₹8,000 to ₹10,000 per trade",
+        "Tips with Proper Stop Loss & Target"
+      ],
+      "categoryTag": "Index Option",
+      "minimumInvestment": "50000",
+      "riskCategory": "Low",
+      "icon": "tune",
+      "profitPotential": "15-25% p.a."
+    }
+  ],
+  "tradesCards": [
+    {
+      "title": "Equity Pro",
+      "price": "35000",
+      "details": [
+        "Get 1 to 2 Intraday tips on a daily basis",
+        "Complementary BTST and Short Term",
+        "Expiry Special alerts every weekly expiry",
+        "Live Market Customer Support Available",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Equity",
+      "minimumInvestment": "50000",
+      "riskCategory": "Low",
+      "icon": "trending-up",
+      "profitPotential": "15-25% p.a."
+    },
+    {
+      "title": "Stock Option Pro",
+      "price": "22500",
+      "details": [
+        "Profit approx. ₹5,000 to ₹9,000 Per Lot",
+        "Get 1 Tip per day",
+        "Profit approx. ₹5,000 to ₹9,000 Per Lot",
+        "Customer Service Support from 9 AM to 6 PM",
+        "Tips with Proper Stop Loss & Target",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Stock Option",
+      "minimumInvestment": "300000",
+      "riskCategory": "Low",
+      "icon": "leaderboard",
+      "profitPotential": "15-25% p.a."
+    },
+    {
+      "title": "Stock Future Pro",
+      "price": "45500",
+      "details": [
+        "Complementary Short-term and BTST Trades",
+        "1 Tip Per Day",
+        "Profit Target ₹4,000 ₹ ₹6,000 Approx",
+        "Tips with Proper Stop Loss & Target",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Stock Future",
+      "minimumInvestment": "300000",
+      "riskCategory": "Low",
+      "icon": "tune",
+      "profitPotential": "15-25% p.a."
+    },
+    {
+      "title": "Index Options Classic",
+      "price": "18000",
+      "details": [
+        "1 Tip Per Day",
+        "Required Investment ₹30,000",
+        "Profit approx. ₹2,000 to ₹4,000 per trade",
+        "Trading calls via WhatsApp, SMS, and Emails"
+      ],
+      "categoryTag": "Index Option",
+      "minimumInvestment": "50000",
+      "riskCategory": "Low",
+      "icon": "tune",
+      "profitPotential": "15-25% p.a."
+    }
+  ]
+}

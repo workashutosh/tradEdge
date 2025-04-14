@@ -121,6 +121,7 @@ export default function OtpLogin() {
         verificationId: verificationId,
       });
       handleLogin(response.data.data, router);
+      console.log("login screen ",response.data.data);
     } catch (error) {
       handleOtpError('Please check OTP and try again');
     }

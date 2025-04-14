@@ -1,3 +1,4 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
@@ -5,19 +6,16 @@ import { HapticTab } from '@/components/HapticTab';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Redirect } from 'expo-router';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { Home, Compass, User, TrendingUp, Newspaper, Crown } from 'lucide-react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { isLoggedIn } = useAuth();
 
-  // Redirect to signup if not logged in
   if (!isLoggedIn) {
-    // return <Redirect href="/signup" />;
     return <Redirect href="/otp" />;
   }
-
 
   const backgroundColor = colorScheme === 'dark' ? Colors.dark.background : Colors.light.background;
 
@@ -26,8 +24,6 @@ export default function TabLayout() {
       backgroundColor,
       ...Platform.select({
         ios: {
-          // position: 'absolute',
-          // bottom: 25,
           left: 20,
           right: 20,
           elevation: 0,
@@ -37,7 +33,7 @@ export default function TabLayout() {
           height: 60,
           paddingBottom: 2,
           paddingTop: 5,
-          elevation: 8, // Shadow for Android
+          elevation: 8,
         },
       }),
     },
@@ -88,7 +84,7 @@ export default function TabLayout() {
             fontWeight: '500',
             fontSize: 12,
             marginTop: 3,
-            color: '#ffab00' 
+            color: '#ffab00',
           },
           tabBarIcon: ({ color }) => (
             <Crown size={24} fill="#ffab00" color="#ffab00" strokeWidth={2.5} />
@@ -104,15 +100,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      {/* <Tabs.Screen
-        name="news"
-        options={{
-          title: 'News',
-          tabBarIcon: ({ color }) => (
-            <Newspaper size={24} color={color} strokeWidth={2.5} />
-          ),
-        }}
-      /> */}
       <Tabs.Screen
         name="profile"
         options={{

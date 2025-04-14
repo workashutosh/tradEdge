@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { View, Text, StyleSheet, ScrollView, Image, SafeAreaView, useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 
@@ -14,40 +15,28 @@ export default function TabTwoScreen() {
   const isDarkMode = useColorScheme() === 'dark';
 
   useEffect(() => {
-    const xhr = new XMLHttpRequest();
-    xhr.withCredentials = true;
-    
-    xhr.addEventListener('readystatechange', function () {
-      if (this.readyState === this.DONE) {
-        if (this.status === 200) {
-          try {
-            const data = JSON.parse(this.responseText);
-            // Ensure all required arrays exist, even if API doesn't provide them
-            setIpoData({
-              upcoming: data.upcoming || [],
-              active: data.active || [],
-              closed: data.closed || []
-            });
-          } catch (e) {
-            setError('Failed to parse API response');
-            setIpoData({ upcoming: [], active: [], closed: [] });
-          }
-        } else {
-          setError("Can't fetch data");
-          setIpoData({ upcoming: [], active: [], closed: [] });
-        }
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('https://indian-stock-exchange-api2.p.rapidapi.com/ipo', {
+          headers: {
+            'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
+            'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
+          },
+        });
+        const data = response.data;
+        // Ensure all required arrays exist, even if API doesn't provide them
+        setIpoData({
+          upcoming: data.upcoming || [],
+          active: data.active || [],
+          closed: data.closed || [],
+        });
+      } catch (error) {
+        setError("Can't fetch data");
+        setIpoData({ upcoming: [], active: [], closed: [] });
       }
-    });
-
-    xhr.open('GET', 'https://indian-stock-exchange-api2.p.rapidapi.com/ipo');
-    xhr.setRequestHeader('x-rapidapi-key', process.env.EXPO_PUBLIC_RAPID_API_KEY || '');
-    xhr.setRequestHeader('x-rapidapi-host', process.env.EXPO_PUBLIC_RAPID_API_HOST || '');
-    xhr.send(null);
-
-    // Cleanup function
-    return () => {
-      xhr.abort();
     };
+
+    fetchData();
   }, []);
 
   const IpoSection: React.FC<{ title: string; data?: IpoItem[] }> = ({ title, data = [] }) => (  // Default empty array if data is undefined

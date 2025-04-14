@@ -4,6 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from './ThemedText';
+import { useAuth } from '@/context/AuthContext';
 
 const KycComponent: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -31,38 +32,15 @@ const KycComponent: React.FC = () => {
   const [kycStatus, setKycStatus] = useState<string | null>(null);
   const [fetchingKycStatus, setFetchingKycStatus] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const {userDetails} = useAuth();
 
   // Check KYC status on every mount
   useEffect(() => {
     const checkKycStatus = async () => {
-      setFetchingKycStatus(true);
-      const userId = await AsyncStorage.getItem("user_id");
-      if (userId) {
-        try {
-          const response = await fetch(`https://gateway.twmresearchalert.com/kyc?user_id=${userId}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          }
-
-          const data = await response.json();
-          // console.log(data);
-          const { aadhar_name, auth, pan_name } = data.data;
-
-          setKycStatus(auth);
-        } catch (error) {
-          // console.log('Error checking KYC status:', error);
-        } finally {
-          setFetchingKycStatus(false);
-        }
-      }
+      // setKycStatus(null);
+      setKycStatus(userDetails?.auth ?? null);
+      setFetchingKycStatus(false);
     };
-
     checkKycStatus();
   }, []);
 
@@ -281,7 +259,7 @@ const KycComponent: React.FC = () => {
 
 const styles = StyleSheet.create({
   kycContainer: {
-    marginVertical: 20,
+    marginVertical: 10,
     borderRadius: 10,
     padding: 12,
     borderWidth: 2,

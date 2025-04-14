@@ -7,13 +7,10 @@ import { Router } from 'expo-router';
 interface AuthState {
   isLoggedIn: boolean;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
-  token: string | null;
-  userId: string | null;
-  userName: string | null;
-  sessionId: string | null;
   loading: boolean;
   errorMessage: string;
   isInitializing: boolean;
+  userDetails: UserDetailsResponse['data'] | null;
 }
 
 interface AuthContextType extends AuthState {
@@ -42,102 +39,123 @@ interface LoginResponse {
 }
 
 interface UserDetailsResponse {
-  success: boolean;
+  status: string; // Changed from success to status
+  message?: string;
   data: {
     user_id: string;
-    user_name: string;
-    session_id: string;
+    username: string; // Changed from user_name to username
+    session_id?: string;
     user_full_name?: string;
     user_whatsapp_number?: string;
     user_email_id?: string;
-    // Add other fields as needed
+    auth?: string;
+    aadhar_name?: string;
+    pan_name?: string;
+    kyc_id?: string;
+    submit_date?: string | null;
+    user_active?: string;
+    user_pass?: string | null;
   };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
-  const [isInitializing, setIsInitializing] = useState<boolean>(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [userDetails, setUserDetails] = useState<UserDetailsResponse['data'] | null>(null);
+  const [userDetailsError, setUserDetailsError] = useState('');
+  const [userDetailsLoading, setUserDetailsLoading] = useState(false);
+
+  const getUserDetails = async (userId: string | null) => {
+    if (!userId) {
+      // console.log('No userId provided for getUserDetails');
+      return;
+    }
+
+    setUserDetailsLoading(true);
+    setUserDetailsError('');
+
+    try {
+      // console.log('Fetching user details for userId:', userId);
+      const response = await axios.get<UserDetailsResponse>(
+        `https://gateway.twmresearchalert.com/kyc?user_id=${userId}`
+      );
+
+      // console.log('API Response:', JSON.stringify(response.data, null, 2));
+
+      if (response.data.status === 'success') { // Changed from response.data.success
+        setUserDetails(response.data.data);
+        await AsyncStorage.setItem('user_details', JSON.stringify(response.data.data));
+        // console.log('User details stored successfully:', response.data.data);
+      } else {
+        setUserDetailsError(response.data.message || 'Failed to fetch user details');
+        // console.log('API returned status: failure:', response.data.message);
+      }
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      setUserDetailsError(
+        (axiosError.response?.data as UserDetailsResponse)?.message || 'An error occurred while fetching user details'
+      );
+      // console.error('Error fetching user details:', axiosError.message);
+    } finally {
+      setUserDetailsLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
         const accessToken = await AsyncStorage.getItem('access_token');
+        // console.log('Access token found:', !!accessToken);
         if (accessToken) {
-          const [storedUserId, storedUserName, storedSessionId, storedRefreshToken] = await Promise.all([
-            AsyncStorage.getItem('user_id'),
-            AsyncStorage.getItem('user_name'),
-            AsyncStorage.getItem('session_id'),
-            AsyncStorage.getItem('refresh_token'),
-          ]);
-
-          setToken(accessToken);
-          setUserId(storedUserId);
-          setUserName(storedUserName);
-          setSessionId(storedSessionId);
-          setRefreshToken(storedRefreshToken);
-          setIsLoggedIn(true);
+          const userId = await AsyncStorage.getItem('user_id');
+          // console.log('User ID found:', userId);
+          if (userId) {
+            await getUserDetails(userId);
+            setIsLoggedIn(true);
+          } else {
+            // console.log('No user_id found in AsyncStorage');
+          }
+        } else {
+          // console.log('No access_token found, user not logged in');
         }
       } catch (error) {
-        console.error('Error checking login status:', error);
+        // console.error('Error checking login status:', error);
       } finally {
         setIsInitializing(false);
       }
     };
+
     checkLoginStatus();
   }, []);
 
-  const handleLogin = async (
-    loginData: LoginResponse['data'],
-    router: Router
-  ): Promise<boolean> => {
+  const handleLogin = async (loginData: LoginResponse['data'], router: Router): Promise<boolean> => {
     setLoading(true);
     setErrorMessage('');
 
     try {
-      // Step 1: Store initial login data from response.data
-      const userId= loginData.user_id.replace('LNUSR','');
-      // console.log(userId);
-      await Promise.all([
-        AsyncStorage.setItem('access_token', loginData.access_token),
-        AsyncStorage.setItem('refresh_token', loginData.refresh_token),
-        AsyncStorage.setItem('user_id', userId),
-        AsyncStorage.setItem('user_name', loginData.user_name),
-        AsyncStorage.setItem('user_role', loginData.user_role),
-        AsyncStorage.setItem('session_id', loginData.session_id),
-      ]);
+      const userId = loginData.user_id.replace('LNUSR', '');
+      // console.log('User ID:', userId);
 
-      // Set initial state
-      setToken(loginData.access_token);
-      setRefreshToken(loginData.refresh_token);
-      setUserId(userId);
-      setUserName(loginData.user_name);
-      setSessionId(loginData.session_id);
+      await AsyncStorage.setItem('access_token', loginData.access_token);
+      await AsyncStorage.setItem('user_id', userId);
 
+      await getUserDetails(userId);
 
       setIsLoggedIn(true);
       router.replace('/(tabs)/home');
-      // console.log('loggedIn');
       return true;
     } catch (error) {
       const axiosError = error as AxiosError<UserDetailsResponse>;
-      let errorMsg = 'Error processing login';
-      // console.log(error);
-
-      if ('messages' in (axiosError.response?.data || {})) {
-        errorMsg = (axiosError.response?.data as LoginResponse).messages.join(', ');
-      }
+      const errorMsg =
+        'messages' in (axiosError.response?.data || {})
+          ? ((axiosError.response?.data as unknown) as LoginResponse).messages.join(', ')
+          : 'Error processing login';
 
       setErrorMessage(errorMsg);
-      // console.log(errorMsg);
       setTimeout(() => setErrorMessage(''), 3000);
       return false;
     } finally {
@@ -147,23 +165,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async (): Promise<void> => {
     try {
-      await AsyncStorage.multiRemove([
-        'access_token',
-        'refresh_token',
-        'user_id',
-        'user_name',
-        'user_role',
-        'session_id',
-      ]);
-
+      await AsyncStorage.multiRemove(['user_details', 'access_token', 'user_id']);
+      setUserDetails(null);
       setIsLoggedIn(false);
-      setToken(null);
-      setUserId(null);
-      setUserName(null);
-      setSessionId(null);
-      setRefreshToken(null);
+      // console.log('Logged out successfully');
     } catch (error) {
-      console.error('Error during logout:', error);
+      // console.error('Error during logout:', error);
       throw error;
     }
   };
@@ -171,10 +178,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     isLoggedIn,
     setIsLoggedIn,
-    token,
-    userId,
-    userName,
-    sessionId,
+    userDetails,
     loading,
     errorMessage,
     isInitializing,
@@ -182,16 +186,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

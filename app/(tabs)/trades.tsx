@@ -78,8 +78,6 @@ export default function Trades() {
 
   const filteredServices = services.map((service) => ({
     ...service,
-    // Adding dummy data for fields not present in the original ServiceItem
-    // minimumInvestment: '₹10,000', // Dummy data
     profitPotential: '15-25% p.a.', // Dummy data
   })).filter((item) => item.categoryTag === selectedTag);
 

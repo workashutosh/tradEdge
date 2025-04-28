@@ -5,8 +5,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useRouter } from 'expo-router';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import KycComponent from '../../components/KycComponent'; // Import the component
+import Header from '@/components/Header';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/context/AuthContext';
+import UserDetails from '../otp/userDetails';
+import Transactions from '@/components/Transactions';
 
 export default function Profile() {
   const colorScheme = useColorScheme();
@@ -26,7 +29,7 @@ export default function Profile() {
 
   // kys status
   const [isKycDone, setIsKycDone] = useState(false);
-  const { logout } = useAuth();
+  const { logout, userDetails } = useAuth();
   const router = useRouter();
 
   // handle logout
@@ -37,21 +40,11 @@ export default function Profile() {
 
   return (
     <SafeAreaView style={[styles.safeArea, isDark ? styles.backgroundDark : styles.backgroundLight]}>
-      <View style={[styles.header]}>
-        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Profile</Text>
-        <TouchableOpacity
-          style={[styles.logoutButton, { backgroundColor: colors.primary }]}
-          onPress={handleLogout}
-        >
-          <Text style={[styles.logoutButtonText, { color: "white" }]}>
-            Logout
-          </Text>
-          <FontAwesome name="sign-out" size={16} color="white" style={styles.logoutIcon} />
-        </TouchableOpacity>
-      </View>
+      <Header title={"Hi "+ userDetails?.user_full_name || "User"} showLogoutButton={true}/>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Other profile content can go here */}
         <KycComponent />
+        <Transactions />
         {/* <Text>Hello</Text> */}
         <ThemedView style={[{paddingBottom: 70, backgroundColor: colors.background}]}>
           
@@ -89,21 +82,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 7,
-    borderRadius: 5,
-    justifyContent: 'center',
-    height: 30,
-  },
-  logoutButtonText: {
-    fontSize: 16,
-    // alignSelf: 'center'
-  },
-  logoutIcon: {
-    marginLeft: 5,
+    paddingHorizontal: 10,
   },
 });

@@ -24,7 +24,7 @@ import NseBseAccordian from '@/components/NseBseAccordian';
 import MemoizedModal from '@/components/MemoizeModal';
 import ExplorePackageCard from '@/components/home/explorePackageCard';
 import TradeCard from '@/components/home/tradeCard';
-import Header from '@/components/home/header';
+import Header from '@/components/Header';
 import data from '@/data.json';
 import KycComponent from '@/components/KycComponent';
 import { useAuth } from '@/context/AuthContext';
@@ -118,7 +118,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <Header username={username} colors={colors} setIsPopupVisible={setIsPopupVisible} />
+      <Header title={"Hi "+userDetails?.user_full_name || "User"} showBuyProButton={true} />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {!isKYCComplete &&
@@ -220,7 +220,10 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
+  safeArea: {
+    flex: 1,
+    // backgroundColor: 'red',
+  },
   container: { flex: 1 },
   loadingContainer: {
     flex: 1,
@@ -229,8 +232,8 @@ const styles = StyleSheet.create({
   },
   websiteRedirectContainer: {
     marginHorizontal: 10,
-    marginTop: 15,
-    paddingVertical: 30,
+    marginTop: 10,
+    paddingVertical: 25,
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,

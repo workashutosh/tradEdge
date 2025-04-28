@@ -16,6 +16,7 @@ interface MarketIndicesData {
 }
 
 interface ServiceItem {
+  package_id: string;
   title: string;
   price: string;
   details: string[];
@@ -23,6 +24,7 @@ interface ServiceItem {
   icon: string;
   riskCategory: string;
   minimumInvestment: string;
+  profitPotential: string;
 }
 
 interface StockContextType {
@@ -78,45 +80,62 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const getNSEBSEStocks = async (stock: 'NSE' | 'BSE') => {
+    // try {
+    //   setLoading(true);
+    //   setError(null);
+    //   const response = await fetch(
+    //     `https://indian-stock-exchange-api2.p.rapidapi.com/${stock}_most_active`,
+    //     {
+    //       method: 'GET',
+    //       headers: {
+    //         'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
+    //         'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
+    //       },
+    //     }
+    //   );
+
+    //   if (!response.ok) {
+    //     throw new Error(`HTTP error! status: ${response.status}`);
+    //   }
+
+    //   const data = await response.json();
+    //   // console.log(`${stock} Data:`, data); // Debug log
+    //   if (data.error) {
+    //     throw new Error(`Error fetching ${stock} most active stocks: ${data.error}`);
+    //   } else {
+    //     const formattedData: StockData[] = data.map((stock: any) => ({
+    //       ticker: stock.ticker,
+    //       price: stock.price,
+    //       netChange: stock.net_change,
+    //       percentChange: stock.percent_change,
+    //       high: stock.high,
+    //       low: stock.low,
+    //     }));
+    //     if (stock === "NSE") updateNSEData(formattedData);
+    //     if (stock === "BSE") updateBSEData(formattedData);
+    //   }
+    // } catch (err) {
+    //   // console.error(`Failed to fetch ${stock} data:`, err);
+    //   setError(`Failed to fetch ${stock} data`);
+    // } finally {
+    //   setLoading(false);
+    // }
+    const url = 'https://indian-stock-exchange-api2.p.rapidapi.com/stock?name=sensex';
+    const options = {
+      method: 'GET',
+      headers: {
+        'x-rapidapi-key': '7670ef5b00msh61aa95da79995d7p1fae1ajsna99a67851f30',
+        'x-rapidapi-host': 'indian-stock-exchange-api2.p.rapidapi.com'
+      }
+    };
+
     try {
-      setLoading(true);
-      setError(null);
-      const response = await fetch(
-        `https://indian-stock-exchange-api2.p.rapidapi.com/${stock}_most_active`,
-        {
-          method: 'GET',
-          headers: {
-            'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
-            'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
+      const response = await fetch(url, options);
+      // const result = await response.text();
       const data = await response.json();
-      // console.log(`${stock} Data:`, data); // Debug log
-      if (data.error) {
-        throw new Error(`Error fetching ${stock} most active stocks: ${data.error}`);
-      } else {
-        const formattedData: StockData[] = data.map((stock: any) => ({
-          ticker: stock.ticker,
-          price: stock.price,
-          netChange: stock.net_change,
-          percentChange: stock.percent_change,
-          high: stock.high,
-          low: stock.low,
-        }));
-        if (stock === "NSE") updateNSEData(formattedData);
-        if (stock === "BSE") updateBSEData(formattedData);
-      }
-    } catch (err) {
-      // console.error(`Failed to fetch ${stock} data:`, err);
-      setError(`Failed to fetch ${stock} data`);
-    } finally {
-      setLoading(false);
+      console.log(data.percentChange);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -159,7 +178,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const fetchServices = async () => {
+  const fetchPackages = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -175,37 +194,38 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
 
       const data = await response.json();
-      // Assuming the API returns an array of package objects directly (no 'status' or 'data' wrapper)
+      
+      // Transform the API response into the required format
       const transformedServices: ServiceItem[] = data.data.flatMap((type: any) => {
-        const items =
-          type.subtypes.length > 0
-            ? type.subtypes
-            : [
-                {
-                  subtype_name: type.type_name,
-                  price: type.price,
-                  details: type.details || [],
-                  minimumInvestment: type.minimumInvestment,
-                  riskCategory: type.riskCategory,
-                },
-              ];
-
-        return items.map((item: {
-          subtype_name: string;
-          price: number | null;
-          details: string[];
-          minimumInvestment: string;
-          riskCategory: string;
-        }) => ({
-          title: item.subtype_name,
-          price: item.price ? item.price : 'Contact for pricing',
-          details: (item.details || ['Details not available']).map(detail => detail.replace(/\?/g, '₹')),
+        // If there are subtypes, map them
+        if (type.subtypes && type.subtypes.length > 0) {
+          return type.subtypes.map((subtype: any) => ({
+            package_id: subtype.subtype_id,
+            title: subtype.subtype_name,
+            price: subtype.price?.toString() || 'Contact for pricing',
+            details: (subtype.details || ['Details not available']).map((detail: string) => detail.replace(/\?/g, '₹')),
+            categoryTag: type.type_name,
+            icon: getIconForCategory(type.type_name),
+            riskCategory: (subtype.riskCategory || 'N/A').replace(/^\w/, (c: string) => c.toUpperCase()),
+            minimumInvestment: subtype.minimumInvestment || 'N/A',
+            profitPotential: '15-25% p.a.'
+          }));
+        }
+        
+        // If no subtypes, create a single item from the type
+        return [{
+          package_id: type.type_id,
+          title: type.type_name,
+          price: type.price?.toString() || 'Contact for pricing',
+          details: (type.details || ['Details not available']).map((detail: string) => detail.replace(/\?/g, '₹')),
           categoryTag: type.type_name,
           icon: getIconForCategory(type.type_name),
-          riskCategory: (item.riskCategory || 'N/A').replace(/^\w/, c => c.toUpperCase()),
-          minimumInvestment: item.minimumInvestment || 'N/A', // Use provided minimumInvestment or default
-        }));
+          riskCategory: 'N/A',
+          minimumInvestment: 'N/A',
+          profitPotential: '15-25% p.a.'
+        }];
       });
+
       setServices(transformedServices);
     } catch (error) {
       console.error('Error fetching services:', error);
@@ -223,7 +243,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // getNSEBSEStocks('NSE'),
         // getNSEBSEStocks('BSE'),
         // fetchMarketIndices(), // Uncomment if needed
-        fetchServices(),
+        fetchPackages(),
       ]);
     } catch (error) {
       console.error('Error fetching all data:', error);

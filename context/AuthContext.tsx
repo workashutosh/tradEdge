@@ -16,6 +16,8 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   handleLogin: (loginData: LoginResponse['data'], router: Router) => Promise<boolean>;
   logout: () => Promise<void>;
+  userTransactions: any[]; // Expose transactions in the context
+  getUserTransactions: (userId: string | null) => Promise<void>; // Add getUserTransactions to the context
 }
 
 interface AuthProviderProps {
@@ -68,6 +70,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userDetails, setUserDetails] = useState<UserDetailsResponse['data'] | null>(null);
   const [userDetailsError, setUserDetailsError] = useState('');
   const [userDetailsLoading, setUserDetailsLoading] = useState(false);
+  const [userTransactions, setUserTransactions] = useState<any[]>([]); // State to store transactions
+  const [transactionsError, setTransactionsError] = useState('');
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   const getUserDetails = async (userId: string | null) => {
     if (!userId) {
@@ -105,6 +110,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const getUserTransactions = async (userId: string | null) => {
+    if (!userId) {
+      console.error('No userId provided for getUserTransactions');
+      return;
+    }
+
+    setTransactionsLoading(true);
+    setTransactionsError('');
+
+    try {
+      console.log('Fetching transactions for userId:', userId);
+      const response = await axios.get(
+        `https://tradedge-server.onrender.com/api/userTransactionsById?user_id=${userId}`
+        // `http://192.168.1.40:5000/api/userTransactionsById?user_id=${userId}`
+      );
+
+      // console.log('API Response:', response.data.transactions);
+
+      if (response.data.transactions.status === 'success') {
+        console.log("Successsssssssss")
+        setUserTransactions(response.data.transactions.data.packages || []);
+        console.log('User transactions fetched successfully:', response.data.transactions.data);
+      } else {
+        setTransactionsError(response.data.message || 'Failed to fetch transactions');
+        console.error('API returned status:', response.data.message);
+      }
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      setTransactionsError(
+        (axiosError.response?.data as { message?: string })?.message || 'An error occurred while fetching transactions'
+      );
+      console.error('Error fetching transactions:', axiosError.message);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -115,6 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // console.log('User ID found:', userId);
           if (userId) {
             await getUserDetails(userId);
+            await getUserTransactions(userId); // Fetch transactions after login
             setIsLoggedIn(true);
           } else {
             // console.log('No user_id found in AsyncStorage');
@@ -144,6 +187,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await AsyncStorage.setItem('user_id', userId);
 
       await getUserDetails(userId);
+      await getUserTransactions(userId); // Fetch transactions after login
 
       setIsLoggedIn(true);
       router.replace('/(tabs)/home');
@@ -184,6 +228,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isInitializing,
     handleLogin,
     logout,
+    userTransactions, // Expose transactions in the context
+    getUserTransactions
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

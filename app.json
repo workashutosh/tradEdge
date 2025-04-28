@@ -1,11 +1,12 @@
 {
   "expo": {
     "name": "TradEdge",
-    "slug": "TradEdge",
+    "slug": "tradedge",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
-    "scheme": "myapp",
+    "scheme": "tradedge",
+    "deepLinking": true,
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -46,8 +47,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "bf787d5c-da82-4276-80b8-3e589ed13da2"
+        "projectId": "e5e91b75-0756-4b28-a4d2-f0505a866272"
       }
-    }
+    },
+    "owner": "najaf17"
   }
 }

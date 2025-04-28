@@ -14,8 +14,10 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useStockContext } from '@/context/StockContext';
 import { router } from 'expo-router';
+import Header from '@/components/Header';
 
 type ServiceItem = {
+  package_id: string;
   title: string;
   price: string;
   details: string[];
@@ -61,9 +63,11 @@ export default function Trades() {
   };
 
   const handleTradePress = (item: ServiceItem) => {
+    console.log(item);
     router.push({
       pathname: '/main/TradeDetails',
       params: {
+        package_id: item.package_id,
         title: item.title,
         price: item.price,
         details: JSON.stringify(item.details),
@@ -91,64 +95,58 @@ export default function Trades() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header, { backgroundColor: colors.background }]}>
-        <Text style={[styles.headerTitle, isDark && styles.textDark]}>Trades</Text>
-      </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Tags Bar */}
-        <View style={styles.tagSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
-            {tags.map((tag, index) => (
-              <TouchableOpacity
-                key={index}
-                onPress={() => setSelectedTag(tag)}
+      <Header title={"Trades"} showBuyProButton={true} />
+      
+      {/* Fixed Tags Bar */}
+      <View style={[styles.tagSection, { backgroundColor: colors.background }]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
+          {tags.map((tag, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => setSelectedTag(tag)}
+              style={[
+                styles.tagButton,
+                {
+                  backgroundColor: selectedTag === tag ? colors.selectedTagBackground : colors.tagBackground,
+                  borderColor: colors.border,
+                },
+              ]}
+            >
+              <ThemedText
                 style={[
-                  styles.tagButton,
-                  {
-                    backgroundColor: selectedTag === tag ? colors.selectedTagBackground : colors.tagBackground,
-                    borderColor: colors.border,
-                  },
+                  styles.tradeTagText,
+                  { color: selectedTag === tag ? (isDark ? 'black' : 'white') : isDark ? '#cccccc' : '#666666' },
                 ]}
               >
-                <ThemedText
-                  style={[
-                    styles.tradeTagText,
-                    { color: selectedTag === tag ? isDark ? 'black' : 'white' : isDark ? '#cccccc' : '#666666' },
-                  ]}
-                >
-                  {tag}
-                </ThemedText>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Services Content */}
+                {tag}
+              </ThemedText>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+  
+      {/* Scrollable Content */}
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: 10 }]}>
         {filteredServices.length > 0 ? (
           filteredServices.map((item, idx) => (
             <ThemedView key={idx} style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
               <TouchableOpacity onPress={() => handleTradePress(item)}>
                 <View style={[styles.card, { backgroundColor: colors.card }]}>
-                  {/* Card Header (Name) */}
-                  <View style={[styles.cardHeader, {borderBottomColor: colors.text}]}>
-                    {/* <MaterialIcons name={item.icon} size={24} color={colors.buttonPrimary} /> */}
+                  <View style={[styles.cardHeader, { borderBottomColor: colors.text }]}>
                     <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
                   </View>
-
-                  {/* Card Details (Minimum Investment, Risk Category, Profit Potential) */}
-                  <View style={[styles.cardDetails, {borderBottomColor: colors.text}]}>
-                    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
-                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
-                        Min Investment
-                      </ThemedText>
+                  <View style={[styles.cardDetails, { borderBottomColor: colors.text }]}>
+                    <View style={[styles.detailRow, { borderRightWidth: 1, borderRightColor: colors.text }]}>
+                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Min Investment</ThemedText>
                       <ThemedText style={[styles.detailValue, { color: colors.text }]}>
-                      ₹ {item.minimumInvestment ? new Intl.NumberFormat('en-IN').format(Number(item.minimumInvestment)) : 'N/A'}
+                        ₹{' '}
+                        {item.minimumInvestment
+                          ? new Intl.NumberFormat('en-IN').format(Number(item.minimumInvestment))
+                          : 'N/A'}
                       </ThemedText>
                     </View>
-                    <View style={[styles.detailRow, {borderRightWidth: 1, borderRightColor: colors.text}]}>
-                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
-                        Risk Category
-                      </ThemedText>
+                    <View style={[styles.detailRow, { borderRightWidth: 1, borderRightColor: colors.text }]}>
+                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Risk Category</ThemedText>
                       <View style={styles.riskTag}>
                         <MaterialIcons
                           name={getTagStyle(item.riskCategory).icon}
@@ -166,17 +164,11 @@ export default function Trades() {
                       </View>
                     </View>
                     <View style={styles.detailRow}>
-                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>
-                        Profit Potential
-                      </ThemedText>
-                      <ThemedText style={[styles.detailValue, { color: colors.text }]}>
-                        {item.profitPotential}
-                      </ThemedText>
+                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Profit Potential</ThemedText>
+                      <ThemedText style={[styles.detailValue, { color: colors.text }]}>{item.profitPotential}</ThemedText>
                     </View>
                   </View>
-
-                  {/* Buttons (Enquire and Buy) */}
-                  <View style={[styles.buttonRow, {borderTopColor: colors.text}]}>
+                  <View style={[styles.buttonRow, { borderTopColor: colors.text }]}>
                     <TouchableOpacity
                       style={[styles.actionButton, { backgroundColor: colors.buttonPrimary }]}
                       onPress={() => handleTradePress(item)}
@@ -225,7 +217,8 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
   },
   tagSection: {
-    marginBottom: 24,
+    paddingTop: 10,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: 20,
@@ -235,6 +228,8 @@ const styles = StyleSheet.create({
   tagScroll: {
     flexDirection: 'row',
     paddingHorizontal: 10,
+    paddingBottom: 10,
+    // backgroundColor: 'red'
   },
   tagButton: {
     paddingVertical: 6,

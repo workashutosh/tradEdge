@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { View, Text, StyleSheet, ScrollView, Image, SafeAreaView, useColorScheme } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
+import Header from '@/components/Header';
 
 export default function TabTwoScreen() {
   interface IpoItem {
@@ -79,9 +80,10 @@ export default function TabTwoScreen() {
 
   return (
     <SafeAreaView style={[styles.safeArea, isDarkMode ? styles.backgroundDark : styles.backgroundLight]}>
-      <View style={[styles.header]}>
+      {/* <View style={[styles.header]}>
         <Text style={[styles.headerTitle, isDarkMode && styles.textDark]}>IPO Listings</Text>
-      </View>
+      </View> */}
+      <Header title={"Listings"} showBuyProButton={true}/>
       {error && (
         <Text style={[styles.errorText]}>
           Error: {error}

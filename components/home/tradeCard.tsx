@@ -9,6 +9,7 @@ import CircleBackgroundView from '@/animation/CircleAnimation';
 import { router } from 'expo-router';
 
 interface TradeCards {
+  package_id: string;
   title: string;
   price: string;
   details: string[];
@@ -33,6 +34,7 @@ export default function TradeCard({ item, colors, isDark }: TradeCardProps) {
     router.push({
       pathname: '/main/TradeDetails',
       params: {
+        package_id: item.package_id,
         title: item.title,
         price: item.price,
         details: JSON.stringify(item.details),
@@ -74,8 +76,8 @@ export default function TradeCard({ item, colors, isDark }: TradeCardProps) {
                 alignSelf: 'center',
                 justifyContent: 'center',
                 backgroundColor: 'green',
-                color: 'black',
-                borderRadius: 10,
+                color: 'white',
+                borderRadius: 5,
                 marginVertical: '18%',
                 textAlignVertical: 'center',
               },

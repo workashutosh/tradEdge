@@ -23,8 +23,6 @@ const RootLayoutContent: React.FC = () => {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="otp/index" options={{ headerShown: false }} />
-        {/* <Stack.Screen name="signup/index" options={{ headerShown: false }} />
-        <Stack.Screen name="login/index" options={{ headerShown: false }} /> */}
       </Stack>
       <StatusBar backgroundColor={isDark ? '#121212' : '#f7f7f7'} />
     </>

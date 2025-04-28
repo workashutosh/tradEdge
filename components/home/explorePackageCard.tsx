@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 
 interface PackagesItem {
+  package_id: string;
   title: string;
   price: string;
   details: string[];
@@ -33,6 +34,7 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
     router.push({
       pathname: '/main/TradeDetails',
       params: {
+        package_id: item.package_id,
         title: item.title,
         price: item.price,
         details: JSON.stringify(item.details),

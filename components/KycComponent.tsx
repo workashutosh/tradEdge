@@ -14,7 +14,7 @@ const KycComponent: React.FC = () => {
     text: isDark ? '#ffffff' : '#333333',
     card: isDark ? '#1e1e1e' : '#ffffff',
     border: isDark ? '#333333' : '#e0e0e0',
-    error: '#ff4444',
+    error: 'rgb(255, 0, 0)',
     primary: '#6200ee',
     success: '#00c853',
     warning: '#ffab00',
@@ -178,7 +178,8 @@ const KycComponent: React.FC = () => {
 
   if (kycStatus === "N") {
     return (
-      <View style={[styles.kycContainer, { backgroundColor: colors.error, borderColor: colors.error, shadowColor: colors.shadowColor }]}>
+      <View style={[styles.kycContainer, {flexDirection: 'row', alignItems: 'center', backgroundColor: colors.error, borderColor: colors.error, shadowColor: colors.shadowColor }]}>
+        <Ionicons name="alert-circle-outline" size={24} color="white" style={{ marginRight: 8 }} />
         <Text style={[styles.kycStatusText, { }]}>Unverified contact support center</Text>
       </View>
     );

@@ -11,7 +11,7 @@ interface BuyProButtonProps {
 const BuyProButton: React.FC<BuyProButtonProps> = ({ setIsPopupVisible }) => {
   return (
     <TouchableOpacity style={styles.buttonContainer} activeOpacity={0.8}
-    onPress={() => {
+      onPress={() => {
         setIsPopupVisible(true);
       }}
     >

@@ -18,6 +18,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useStockContext } from '@/context/StockContext';
+import Header from '@/components/Header';
 
 const { width } = Dimensions.get('window');
 
@@ -214,9 +215,10 @@ export default function Stocks() {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={[styles.header]}>
+      {/* <View style={[styles.header]}>
         <Text style={[styles.headerTitle, isDark && styles.textDark]}>Stock Search</Text>
-      </View>
+      </View> */}
+      <Header title={"Stocks"} showBuyProButton={true}/>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.searchContainer}>
           <TextInput
@@ -328,6 +330,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 4,
+    paddingTop: 10,
   },
   searchContainer: {
     flexDirection: 'row',

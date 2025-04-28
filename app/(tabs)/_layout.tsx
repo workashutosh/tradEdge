@@ -91,7 +91,7 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="explore"
         options={{
           title: 'IPO',
@@ -99,7 +99,7 @@ export default function TabLayout() {
             <Compass size={24} color={color} strokeWidth={2.5} />
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="profile"
         options={{

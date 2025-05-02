@@ -10,12 +10,12 @@ import {
   TouchableOpacity,
   useColorScheme,
   ActivityIndicator,
+  ImageBackground,
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useStockContext } from '@/context/StockContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -27,60 +27,34 @@ import TradeCard from '@/components/home/tradeCard';
 import Header from '@/components/Header';
 import data from '@/data.json';
 import KycComponent from '@/components/KycComponent';
-import { useAuth } from '@/context/AuthContext';
+import { useStockContext } from '@/context/StockContext';
+import { useUser } from '@/context/UserContext';
+import { useTheme } from '@/utils/theme';
 
 export default function HomeScreen() {
-  const { userDetails, isInitializing, isLoggedIn } = useAuth();
-  const [username, setUsername] = useState('User');
+  const userContext = useUser();
+
   const [isPopupVisible, setIsPopupVisible] = useState(false);
-  const [isKYCComplete, setIsKYCComplete] = useState(false);
-  const { NSEData, BSEData } = useStockContext();
+  const { NSEData, BSEData, packages } = useStockContext(); // Get packages from StockContext
+
+  const explorePackagesId = ["17", "3", "10", "9"];
+  const bestTradesId = ["2", "4", "11", "8"];
 
   const insets = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const colors = useTheme();
 
-  const colors = {
-    background: isDark ? '#121212' : '#f5f7fa',
-    headerBackground: isDark ? '#1e1e1e' : '#ffffff',
-    headerBorderBottom: isDark ? '#2d2d2d' : '#eef1f5',
-    text: isDark ? '#ffffff' : '#333333',
-    buttonBackground: isDark ? '#ffffff' : '#000000',
-    buttonText: isDark ? '#000000' : '#ffffff',
-    card: isDark ? '#1e1e1e' : '#ffffff',
-    border: isDark ? '#333333' : '#e0e0e0',
-    shadowColor: isDark ? 'rgb(128, 128, 128)' : 'rgb(0, 0, 0)',
-  };
+  // Filter packages for Explore Packages and Best Trades
+  const explorePackages = packages.filter((pkg) =>
+    explorePackagesId.includes(pkg.package_id)
+  );
 
-  useEffect(() => {
-    const loadUsernameAndKYCStatus = async () => {
-      try {
-        if (userDetails) {
-          // console.log('User Details from AuthContext:', userDetails);
-          setUsername(userDetails.user_full_name || 'User'); // Changed to username
-          // setIsKYCComplete(userDetails.auth === 'Y');
-          setIsKYCComplete(userDetails.auth === "Y");
-          return;
-        }
+  const bestTrades = packages.filter((pkg) =>
+    bestTradesId.includes(pkg.package_id)
+  );
 
-        const storedDetails = await AsyncStorage.getItem('user_details');
-        // console.log('User Details from AsyncStorage:', storedDetails);
-        if (storedDetails) {
-          const parsedDetails = JSON.parse(storedDetails);
-          setUsername(parsedDetails.username || 'User'); // Changed to username
-          setIsKYCComplete(parsedDetails.auth === 'Y');
-        } else {
-          // console.log('No user details found in AsyncStorage');
-        }
-      } catch (error) {
-        // console.error('Error loading user details:', error);
-      }
-    };
+  const refundOfferPackage = packages.find(pkg => pkg.package_id === '10000')
+  console.log(refundOfferPackage);
 
-    if (!isInitializing) {
-      loadUsernameAndKYCStatus();
-    }
-  }, [userDetails, isInitializing]);
 
   const shimmerAnim = useRef(new Animated.Value(-200)).current;
 
@@ -100,7 +74,7 @@ export default function HomeScreen() {
     setIsPopupVisible(false);
   }, []);
 
-  if (isInitializing) {
+  if (userContext.isInitializing) {
     return (
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
@@ -111,21 +85,62 @@ export default function HomeScreen() {
     );
   }
 
-  if (!isLoggedIn) {
+  if (!userContext.isLoggedIn) {
     router.replace('/otp');
     return null;
   }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <Header title={"Hi "+userDetails?.user_full_name || "User"} showBuyProButton={true} />
+      <Header title={"Hi " + (userContext.userDetails?.user_full_name || "User")} showBuyProButton={true} />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {!isKYCComplete &&
+        {userContext.userDetails && (userContext.userDetails.auth === null || userContext.userDetails.auth === 'N') && (
           <ThemedView style={{ marginHorizontal: 10, backgroundColor: 'transparent' }}>
             <KycComponent />
           </ThemedView>
-        }
+        )}
+
+
+        <ThemedView style={{ marginHorizontal: 10, marginTop: 0, backgroundColor: 'transparent' }}>
+          <TouchableOpacity
+            onPress={() => {
+              router.push({
+                  pathname: '/main/TradeDetails',
+                  params: {
+                    package_id: "10000",
+                  },
+                });
+              }}
+            style={[styles.refundOfferCard]}
+          >
+            <ImageBackground
+              source={require('@/assets/images/refundframe1.png')} // Replace with your image path
+              style={styles.refundOfferImageBackground}
+              imageStyle={{ borderRadius: 10, objectFit: 'cover' }} // Ensures the image respects the card's border radius
+            >
+              <View style={{height: 200}}></View>
+              {/* <LinearGradient
+                colors={['rgba(0, 0, 0, 0.6)', 'rgba(0, 0, 0, 0.3)']} // Semi-transparent gradient overlay
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.refundOfferGradient}
+              >
+                <View>
+                  <ThemedText style={styles.refundOfferHeader}>Limited time offer</ThemedText>
+                  <ThemedText style={styles.refundOfferTitle}>
+                    <ThemedText style={{ color: '#00ff00' }}>Refundable Pack</ThemedText> @10,000/-
+                  </ThemedText>
+                  <ThemedText style={styles.refundOfferSubtitle}>
+                    Premium package @ 10,000 for New Customers
+                  </ThemedText>
+                </View>
+                <MaterialIcons name="arrow-forward" size={28} color="white" />
+              </LinearGradient> */}
+            </ImageBackground>
+          </TouchableOpacity>
+        </ThemedView>
+
         <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor }]}>
           <ThemedText style={{ fontSize: 15, color: 'white' }}>Your Trusted Research Analyst</ThemedText>
           <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>
@@ -146,17 +161,19 @@ export default function HomeScreen() {
                     { transform: [{ translateX: shimmerAnim }, { rotate: '35deg' }] },
                   ]}
                 />
-                <ThemedText style={styles.buttonText}>Start only with ₹ 1,999/-</ThemedText>
+                <ThemedText style={styles.buttonText}>Explore</ThemedText>
               </View>
             </TouchableOpacity>
             <Image style={styles.tradedgeLogo} source={require('@/assets/images/logoWhite.png')} />
           </ThemedView>
         </ThemedView>
 
+
+        {/* Explore Packages Section */}
         <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
           <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
-            data={[...data.packagesItem, { isShowMore: true }]}
+            data={[...explorePackages, { isShowMore: true }]} // Use filtered explorePackages
             renderItem={({ item }) => {
               if ('isShowMore' in item && item.isShowMore) {
                 return (
@@ -169,7 +186,13 @@ export default function HomeScreen() {
                   </TouchableOpacity>
                 );
               } else if (!('isShowMore' in item)) {
-                return <ExplorePackageCard item={item} shimmerAnim={shimmerAnim} colors={colors} />;
+                return (
+                  <ExplorePackageCard
+                    item={item}
+                    shimmerAnim={shimmerAnim}
+                    colors={colors}
+                  />
+                );
               }
               return null;
             }}
@@ -180,6 +203,7 @@ export default function HomeScreen() {
           />
         </ThemedView>
 
+        {/* Best Trades Section */}
         <LinearGradient
           colors={['rgb(28, 28, 28)', 'rgb(143, 234, 214)']}
           start={{ x: 0, y: 0 }}
@@ -200,12 +224,12 @@ export default function HomeScreen() {
             </ThemedView>
             <View style={styles.gridContainer}>
               <View style={styles.gridRow}>
-                {TradeCard({ item: data.tradesCards[0], colors, isDark })}
-                {TradeCard({ item: data.tradesCards[1], colors, isDark })}
+                {bestTrades[0] && <TradeCard item={bestTrades[0]} />}
+                {bestTrades[1] && <TradeCard item={bestTrades[1]} />}
               </View>
               <View style={styles.gridRow}>
-                {TradeCard({ item: data.tradesCards[2], colors, isDark })}
-                {TradeCard({ item: data.tradesCards[3], colors, isDark })}
+                {bestTrades[2] && <TradeCard item={bestTrades[2]} />}
+                {bestTrades[3] && <TradeCard item={bestTrades[3]} />}
               </View>
             </View>
           </ThemedView>
@@ -326,5 +350,36 @@ const styles = StyleSheet.create({
     height: '100%',
     marginRight: 10,
     gap: 5,
+  },
+  refundOfferCard: {
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  refundOfferGradient: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderRadius: 10,
+  },
+  refundOfferHeader: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'white',
+  },
+  refundOfferTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 5,
+  },
+  refundOfferSubtitle: {
+    fontSize: 14,
+    color: 'white',
+    marginTop: 5,
+  },
+  refundOfferImageBackground: {
+    flex: 1,
+    justifyContent: 'center',
   },
 });

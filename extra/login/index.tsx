@@ -5,13 +5,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons'; // Import the icon set
 import { Pressable } from 'react-native';
 import { ScrollView } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 
 const LoginScreen = () => {
   const [whatsAppNumber, setWhatsAppNumber] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
-  const { handleLogin, loading, errorMessage } = useAuth();
+  const { handleLogin, loading, errorMessage } = useUser();
   const router = useRouter();
 
   const onLoginPress = async (): Promise<void> => {

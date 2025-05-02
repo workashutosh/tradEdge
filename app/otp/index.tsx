@@ -8,13 +8,13 @@ import PhoneInput from './phoneComponent';
 import OtpInput from './otpComponent';
 import UserDetails from './userDetails';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 import { useRouter } from 'expo-router';
 import { TouchableWithoutFeedback } from 'react-native';
 
 export default function OtpLogin() {
   const router = useRouter();
-  const { handleLogin } = useAuth();
+  const { handleLogin } = useUser();
 
   const [phone, setPhone] = useState<string>('');
   const [userName, setUserName] = useState<string>('');

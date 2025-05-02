@@ -19,6 +19,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { useStockContext } from '@/context/StockContext';
 import Header from '@/components/Header';
+import {  useTheme } from '@/utils/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -47,19 +48,13 @@ export default function Stocks() {
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const colorScheme = useColorScheme();
 
+  const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const colors = {
-    background: isDark ? '#121212' : '#f7f7f7',
-    text: isDark ? '#ffffff' : '#333333',
-    card: isDark ? '#1e1e1e' : '#ffffff',
-    border: isDark ? '#333333' : '#e0e0e0',
-    error: '#ff4444',
-    primary: '#6200ee',
-    success: '#00c853',
-    warning: '#ffab00',
-    shadowColor: isDark ?"rgb(128, 128, 128)" :"rgb(0, 0, 0)",
+
+  // get theme colors from useTheme hook
+  const themeColors = useTheme();
+  const colors = {...themeColors,
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7'
   };

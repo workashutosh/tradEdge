@@ -5,7 +5,7 @@ import { ThemedView } from '@/components/ThemedView';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { router } from 'expo-router';
 import BuyProButton from '@/components/BuyProButton';
-import { useAuth } from '@/context/AuthContext'; // Import the useAuth hook
+import { useUser } from '@/context/UserContext'; // Import the useUser hook
 
 interface HeaderProps {
   showBuyProButton?: boolean; // Optional prop to control BuyProButton visibility
@@ -30,7 +30,7 @@ export default function Header({showBuyProButton = false, showLogoutButton = fal
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
   };
 
-  const { userDetails, logout } = useAuth(); // Access userDetails from AuthContext
+  const { userDetails, logout } = useUser(); // Access userDetails from UserContext
   const [isPopupVisible, setIsPopupVisible] = useState(false); // Manage popup visibility state
 
   // handle logout

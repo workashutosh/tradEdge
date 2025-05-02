@@ -2,10 +2,10 @@ import React from 'react';
 import { FlatList, StyleSheet, useColorScheme } from 'react-native';
 import { ThemedView } from '../components/ThemedView';
 import { ThemedText } from '../components/ThemedText';
-import { useAuth } from '../context/AuthContext';
+import { useUser } from '../context/UserContext';
 
 const Transactions = () => {
-  const { userTransactions } = useAuth();
+  const { userTransactions } = useUser();
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -54,7 +54,7 @@ const Transactions = () => {
         keyExtractor={(item) => item.transactionId}
         renderItem={renderRow}
         contentContainerStyle={styles.tableBody}
-        nestedScrollEnabled={true}
+        nestedScrollEnabled={true} // Enable nested scrolling
       />
     </ThemedView>
   );

@@ -7,8 +7,11 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useStockContext } from '@/context/StockContext';
 
-interface PackagesItem {
+interface Package {
+  type_id: string;
+  type_name: string;
   package_id: string;
   title: string;
   price: string;
@@ -21,7 +24,7 @@ interface PackagesItem {
 }
 
 interface ExplorePackageCardProps {
-  item: PackagesItem;
+  item: Package;
   shimmerAnim: Animated.Value;
   colors: {
     shadowColor: string;
@@ -30,19 +33,22 @@ interface ExplorePackageCardProps {
 }
 
 export default function ExplorePackageCard({ item, shimmerAnim, colors }: ExplorePackageCardProps) {
+
+  // const { packages } = useStockContext();
+
   const handleTradePress = () => {
     router.push({
       pathname: '/main/TradeDetails',
       params: {
         package_id: item.package_id,
-        title: item.title,
-        price: item.price,
-        details: JSON.stringify(item.details),
-        categoryTag: item.categoryTag,
-        icon: item.icon,
-        riskCategory: item.riskCategory,
-        minimumInvestment: item.minimumInvestment,
-        profitPotential: item.profitPotential,
+        // title: item.title,
+        // price: item.price,
+        // details: JSON.stringify(item.details),
+        // categoryTag: item.categoryTag,
+        // icon: item.icon,
+        // riskCategory: item.riskCategory,
+        // minimumInvestment: item.minimumInvestment,
+        // profitPotential: item.profitPotential,
       },
     });
   };
@@ -73,9 +79,9 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
             ]}
           />
           <ThemedView style={{ borderRadius: 5, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, backgroundColor: 'transparent' }}>
-            <ThemedText style={[styles.cardPrice, { textDecorationLine: 'line-through', color: 'white' }]}>
+            {/* <ThemedText style={[styles.cardPrice, { textDecorationLine: 'line-through', color: 'white' }]}>
               ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
-            </ThemedText>
+            </ThemedText> */}
             <LinearGradient
               colors={['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.24)', 'rgba(255, 255, 255, 0.8)']}
               start={{ x: 0, y: 0 }}
@@ -83,7 +89,8 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
               style={{ borderRadius: 10 }}
             >
               <ThemedText style={[styles.cardDiscountedPrice, { marginLeft: 8, color: 'black' }]}>
-                ₹ 1,999/-
+                {/* ₹ 1,999/- */}
+                ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
               </ThemedText>
             </LinearGradient>
           </ThemedView>

@@ -1,0 +1,151 @@
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SafeAreaView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  Linking,
+} from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useTheme } from "@/utils/theme"
+
+export default function ReferralScreen() {
+  
+  const colors = useTheme();
+  const referralCode = '3M60AVJSWTN9';
+
+  const handleCopyCode = () => {
+    Clipboard.setStringAsync(referralCode);
+    Alert.alert('Copied!', 'Referral code copied to clipboard.');
+  };
+
+  const handleInviteFriends = () => {
+    const message = `Download Tradedge app. Use my referral code ${referralCode}`;
+    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+
+    Linking.openURL(whatsappUrl).catch(() => {
+      Alert.alert('Error', 'WhatsApp is not installed on your device.');
+    });
+  };
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.imageContainer}>
+        <Image
+          source={require('@/assets/images/refer.png')} // Replace with your image path
+          style={styles.image}
+        />
+      </View>
+
+      <Text style={[styles.title, { color: colors.text }]}>Refer your friend</Text>
+      <Text style={[styles.subtitle, { color: colors.text }]}>
+        Share this code with your friend and help them discover Tradedge!
+      </Text>
+
+      <View style={[styles.referralCodeContainer, { backgroundColor: colors.card }]}>
+        <Text style={[styles.referralCode, { color: colors.text }]}>{referralCode}</Text>
+        <TouchableOpacity onPress={handleCopyCode}>
+          <MaterialIcons name="content-copy" size={24} color={colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={[styles.inviteText, { color: colors.text }]}>
+        Invite your friends to join and grow together.
+      </Text>
+
+      <TouchableOpacity
+        style={[styles.inviteButton, { backgroundColor: colors.buttonPrimary }]}
+        onPress={handleInviteFriends}
+      >
+        <Text style={styles.inviteButtonText}>Invite Friends</Text>
+      </TouchableOpacity>
+
+      <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
+        <View style={styles.statItem}>
+          <Text style={[styles.statLabel, { color: colors.text }]}>Total Referral Count</Text>
+          <Text style={[styles.statValue, { color: colors.text }]}>0</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Text style={[styles.statLabel, { color: colors.text }]}>Subscription Count</Text>
+          <Text style={[styles.statValue, { color: colors.text }]}>0</Text>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  imageContainer: {
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    height: 300,
+    resizeMode: 'contain',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  referralCodeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  referralCode: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  inviteText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  inviteButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  inviteButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  statsCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});

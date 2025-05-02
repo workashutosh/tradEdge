@@ -3,24 +3,25 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
 import { Router } from 'expo-router';
 
-// Define types
-interface AuthState {
+
+interface UserContextType {
   isLoggedIn: boolean;
-  setIsLoggedIn: (isLoggedIn: boolean) => void;
-  loading: boolean;
+  userDetails: UserDetailsResponse['data'] | null;
+  userDetailsLoading: boolean;
+  userDetailsError: string;
+  loginLoading: boolean;
   errorMessage: string;
   isInitializing: boolean;
-  userDetails: UserDetailsResponse['data'] | null;
-}
-
-interface AuthContextType extends AuthState {
+  userTransactions: any[]; // Expose transactions in the context
+  transactionsLoading: boolean;
+  transactionsError: string;
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
   handleLogin: (loginData: LoginResponse['data'], router: Router) => Promise<boolean>;
   logout: () => Promise<void>;
-  userTransactions: any[]; // Expose transactions in the context
   getUserTransactions: (userId: string | null) => Promise<void>; // Add getUserTransactions to the context
 }
 
-interface AuthProviderProps {
+interface UserProviderProps {
   children: ReactNode;
 }
 
@@ -60,11 +61,11 @@ interface UserDetailsResponse {
   };
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const UseContext = createContext<UserContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loginLoading, setLoginLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isInitializing, setIsInitializing] = useState(true);
   const [userDetails, setUserDetails] = useState<UserDetailsResponse['data'] | null>(null);
@@ -73,7 +74,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [userTransactions, setUserTransactions] = useState<any[]>([]); // State to store transactions
   const [transactionsError, setTransactionsError] = useState('');
   const [transactionsLoading, setTransactionsLoading] = useState(false);
+  
 
+  // Check login status on initial load
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem('access_token');
+        // console.log('Access token found:', !!accessToken);
+        if (accessToken) {
+          const userId = await AsyncStorage.getItem('user_id');
+          // console.log('User ID found:', userId);
+          if (userId) {
+            await getUserDetails(userId);
+            await getUserTransactions(userId); // Fetch transactions after login
+            setIsLoggedIn(true);
+          } else {
+            // console.log('No user_id found in AsyncStorage');
+          }
+        } else {
+          // console.log('No access_token found, user not logged in');
+        }
+      } catch (error) {
+        // console.error('Error checking login status:', error);
+      } finally {
+        setIsInitializing(false);
+      }
+    };
+
+    checkLoginStatus();
+  }, []);
+
+
+
+  // get user details
   const getUserDetails = async (userId: string | null) => {
     if (!userId) {
       // console.log('No userId provided for getUserDetails');
@@ -110,6 +144,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+
+
+  // get user transactions
   const getUserTransactions = async (userId: string | null) => {
     if (!userId) {
       console.error('No userId provided for getUserTransactions');
@@ -147,36 +184,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      try {
-        const accessToken = await AsyncStorage.getItem('access_token');
-        // console.log('Access token found:', !!accessToken);
-        if (accessToken) {
-          const userId = await AsyncStorage.getItem('user_id');
-          // console.log('User ID found:', userId);
-          if (userId) {
-            await getUserDetails(userId);
-            await getUserTransactions(userId); // Fetch transactions after login
-            setIsLoggedIn(true);
-          } else {
-            // console.log('No user_id found in AsyncStorage');
-          }
-        } else {
-          // console.log('No access_token found, user not logged in');
-        }
-      } catch (error) {
-        // console.error('Error checking login status:', error);
-      } finally {
-        setIsInitializing(false);
-      }
-    };
 
-    checkLoginStatus();
-  }, []);
-
+  // handle login
   const handleLogin = async (loginData: LoginResponse['data'], router: Router): Promise<boolean> => {
-    setLoading(true);
+    setLoginLoading(true);
     setErrorMessage('');
 
     try {
@@ -203,10 +214,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setTimeout(() => setErrorMessage(''), 3000);
       return false;
     } finally {
-      setLoading(false);
+      setLoginLoading(false);
     }
   };
 
+
+  // handle logout
   const logout = async (): Promise<void> => {
     try {
       await AsyncStorage.multiRemove(['user_details', 'access_token', 'user_id']);
@@ -219,26 +232,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const value: AuthContextType = {
+
+
+  const value: UserContextType = {
     isLoggedIn,
-    setIsLoggedIn,
     userDetails,
-    loading,
+    userDetailsLoading,
+    userDetailsError,
+    loginLoading,
     errorMessage,
     isInitializing,
+    userTransactions,
+    transactionsLoading,
+    transactionsError,
+    setIsLoggedIn,
     handleLogin,
     logout,
-    userTransactions, // Expose transactions in the context
     getUserTransactions
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return <UseContext.Provider value={value}>{children}</UseContext.Provider>;
 };
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
+export const useUser = (): UserContextType => {
+  const context = useContext(UseContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useUser must be used within an AuthProvider');
   }
   return context;
 };

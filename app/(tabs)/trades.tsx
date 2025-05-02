@@ -15,8 +15,11 @@ import { ThemedView } from '@/components/ThemedView';
 import { useStockContext } from '@/context/StockContext';
 import { router } from 'expo-router';
 import Header from '@/components/Header';
+import { useTheme } from '@/utils/theme';
 
-type ServiceItem = {
+type Package = {
+  type_id: string;
+  type_name: string;
   package_id: string;
   title: string;
   price: string;
@@ -31,28 +34,14 @@ type ServiceItem = {
 const { width } = Dimensions.get('window');
 
 export default function Trades() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  // const colorScheme = useColorScheme();
+  // const isDark = colorScheme === 'dark';
 
-  const colors = {
-    background: isDark ? '#121212' : '#f7f7f7',
-    text: isDark ? '#ffffff' : '#333333',
-    card: isDark ? '#1e1e1e' : '#ffffff',
-    border: isDark ? '#333333' : '#e0e0e0',
-    primary: '#00BCD4',
-    buttonPrimary: 'rgb(44, 145, 5)',
-    shadowColor: isDark ? 'white' : 'black',
-    selectedTagBackground: isDark? 'white':'black',
-    tagBackground: isDark ? '#333333' : '#e0e0e0',
-    success: '#00c853',
-    warning: '#ffab00',
-    error: '#ff4444',
-    buttonSecondary: '#00BCD4', // For the "Enquire" button
-  };
+  const colors = useTheme();
 
-  const { services, loading } = useStockContext();
+  const { packages, loading } = useStockContext();
 
-  const uniqueTags = [...new Set(services.map((service) => service.categoryTag))] as string[];
+  const uniqueTags = [...new Set(packages.map((pack) => pack.categoryTag))] as string[];
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
   const [selectedTag, setSelectedTag] = useState<string>(tags[0]);
 
@@ -62,27 +51,19 @@ export default function Trades() {
     return { color: colors.error, icon: 'error' };
   };
 
-  const handleTradePress = (item: ServiceItem) => {
+  const handleTradePress = (item: Package) => {
     console.log(item);
     router.push({
       pathname: '/main/TradeDetails',
       params: {
         package_id: item.package_id,
-        title: item.title,
-        price: item.price,
-        details: JSON.stringify(item.details),
-        categoryTag: item.categoryTag,
-        icon: item.icon,
-        minimumInvestment: item.minimumInvestment || 'N/A',
-        riskCategory: item.riskCategory || 'N/A',
-        profitPotential: item.profitPotential || '15-25% p.a.',
       },
     });
   };
 
-  const filteredServices = services.map((service) => ({
-    ...service,
-    profitPotential: '15-25% p.a.', // Dummy data
+  const filteredServices = packages.map((pack) => ({
+    ...pack,
+    // profitPotential: '15-25% p.a.', // Dummy data
   })).filter((item) => item.categoryTag === selectedTag);
 
   if (loading) {
@@ -112,14 +93,14 @@ export default function Trades() {
                 },
               ]}
             >
-              <ThemedText
+                <ThemedText
                 style={[
                   styles.tradeTagText,
-                  { color: selectedTag === tag ? (isDark ? 'black' : 'white') : isDark ? '#cccccc' : '#666666' },
+                  { color: selectedTag === tag ? colors.selectedTagText : colors.tagText },
                 ]}
-              >
+                >
                 {tag}
-              </ThemedText>
+                </ThemedText>
             </TouchableOpacity>
           ))}
         </ScrollView>

@@ -4,7 +4,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ThemedText } from './ThemedText';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 
 const KycComponent: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -32,7 +32,7 @@ const KycComponent: React.FC = () => {
   const [kycStatus, setKycStatus] = useState<string | null>(null);
   const [fetchingKycStatus, setFetchingKycStatus] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
-  const {userDetails} = useAuth();
+  const {userDetails} = useUser();
 
   // Check KYC status on every mount
   useEffect(() => {

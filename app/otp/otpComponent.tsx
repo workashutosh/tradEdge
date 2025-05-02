@@ -5,26 +5,26 @@ import { Keyboard } from 'react-native';
 
 interface OtpInputProps {
   otpDigits: string[];
-  setOtpDigits: (digits: string[]) => void;
-  setOtp: (otp: string) => void;
   otpError: string;
-  handleOtpSubmit: () => void;
-  handleResendOtp: () => void;
   timer: number;
   isResendEnabled: boolean;
   verifyOtpButtonLoading: boolean;
+  setOtpDigits: (digits: string[]) => void;
+  handleOtpSubmit: () => void;
+  handleResendOtp: () => void;
+  setOtp: (otp: string) => void;
 }
 
 export default function OtpInput({
   otpDigits,
-  setOtpDigits,
-  setOtp,
   otpError,
-  handleOtpSubmit,
-  handleResendOtp,
   timer,
   isResendEnabled,
   verifyOtpButtonLoading,
+  setOtpDigits,
+  setOtp,
+  handleOtpSubmit,
+  handleResendOtp,
 }: OtpInputProps) {
   const otpInputRefs = useRef<(TextInput | null)[]>([]);
 

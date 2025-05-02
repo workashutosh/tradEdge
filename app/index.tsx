@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 
 const StartPage = () => {
-  const { isLoggedIn, isInitializing } = useAuth();
+  const { isLoggedIn, isInitializing } = useUser();
 
   if (isInitializing) {
     return null; // Let RootLayout handle the loading state

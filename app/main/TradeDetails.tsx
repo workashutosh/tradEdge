@@ -14,11 +14,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import SliderButton from '@/components/SliderButton';
 import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useStockContext } from '@/context/StockContext';
+import { useTheme } from '@/utils/theme';
 
 interface Trade {
+  type_id: string;
+  type_name: string;
   package_id: string;
   title: string;
   price: string;
@@ -38,39 +42,35 @@ const getISTDate = () => {
 };
 
 export default function TradeDetails() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const params = useLocalSearchParams();
-  const { userDetails, isInitializing, isLoggedIn } = useAuth();
 
-  const [isRedirecting, setIsRedirecting] = useState(false);
-  
+  const { userDetails } = useUser();
+  const { packages } = useStockContext(); // Get packages from StockContext
+  const params = useLocalSearchParams(); // Get params from the route
 
-  const trade: Trade = {
-    package_id: params.package_id as string,
-    title: params.title as string,
-    price: params.price as string,
-    details: params.details ? JSON.parse(params.details as string) : [],
-    categoryTag: params.categoryTag as string,
-    icon: params.icon as string,
-    riskCategory: params.riskCategory as string,
-    minimumInvestment: params.minimumInvestment as string,
-    profitPotential: params.profitPotential as string,
-  };
-
+  const themeColors=useTheme();
   const colors = {
-    background: isDark ? '#121212' : '#f7f7f7',
-    text: isDark ? '#ffffff' : '#333333',
-    border: isDark ? '#333333' : '#e0e0e0',
-    primary: '#00BCD4',
-    buttonPrimary: '#00b300',
-    success: '#00c853',
-    warning: '#ffab00',
-    error: '#ff4444',
-    cardBackground: isDark ? '#1e1e1e' : '#ffffff',
+    ...themeColors,
     gradientStart: '#00b300',
     gradientEnd: '#00c853',
   };
+
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  // Fetch the trade details using package_id
+  const trade = packages.find((pkg) => pkg.package_id === params.package_id);
+
+  if (!trade) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ThemedText style={[{ color: colors.text }]}>
+            Trade details not found.
+          </ThemedText>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
 
   const getTagStyle = (riskCategory: string): { borderColor: string; icon: string } => {
     if (riskCategory.includes('Low')) return { borderColor: colors.success, icon: 'check-circle' };
@@ -82,60 +82,44 @@ export default function TradeDetails() {
     const transaction_id = `TXN_${Date.now()}`;
     const payment_date = getISTDate();
 
-    // if(userDetails?.auth!=="Y"){
-    //   alert("Please complete KYC to proceed buying package.");
-    //   router.replace('/(tabs)/home')
-    //   return;
-    // }
-    
     try {
-
-      await AsyncStorage.setItem('transactionDetails', JSON.stringify({
-        package_id: trade.package_id,
-        user_id: userDetails?.user_id,
-        amount: trade.price,
-        payment_date: payment_date,
-        transaction_id: transaction_id,
-      }));
+      await AsyncStorage.setItem(
+        'transactionDetails',
+        JSON.stringify({
+          package_id: trade.package_id,
+          user_id: userDetails?.user_id,
+          amount: trade.price,
+          payment_date: payment_date,
+          transaction_id: transaction_id,
+        })
+      );
 
       setIsRedirecting(true);
-      const result=await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-      // const result=await axios.post('http://192.168.1.40:5000/api/paymentURL', {
-        // user_whatsapp_number: userDetails?.user_whatsapp_number,
-        // redirectUrl: "http://192.168.1.40:5000/api/paymentResponse"
-        // redirectUrl: "tradedge://paymentResult?status=SUCCESS&txnId=TXN12345",
+      const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
         redirectUrl: `tradedge://paymentResult`,
-        // redirectUrl: `exp://192.168.1.40:8081/--/paymentResult`,
+      // const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
+      //   redirectUrl: `exp://192.168.1.40:8081/--/paymentResult`,
         amount: Number(trade.price),
         user_id: userDetails?.user_id,
         package_id: trade.package_id,
         transaction_id: transaction_id,
         payment_date: payment_date,
       });
-      const response=result.data;
-      // console.log("Payment URL response:", response);
-      console.log("✔️  Payment URL generated");
-      const paymentUrl = response.redirectUrl; // Adjust based on your API response structure
-      // console.log("Payment URL:", paymentUrl);
+      const response = result.data;
+      console.log('✔️  Payment URL generated');
+      const paymentUrl = response.redirectUrl;
 
       Linking.openURL(paymentUrl).catch((err) => {
         console.error('Error opening URL:', err);
         alert('Failed to open the URL. Please try again later.');
       });
-      
     } catch (error) {
-      if (error instanceof Error) {
-        console.error('Error opening URL:', error.message);
-      } else {
-        console.error('Error opening URL:', error);
-      }
-      console.error('Full Axios error:', (error as any).toJSON?.() || error);
+      console.error('Error during payment:', error);
       alert('Failed to open the URL. Please try again later.');
     } finally {
       setIsRedirecting(false);
     }
   };
-
 
   if (isRedirecting) {
     return (
@@ -165,11 +149,7 @@ export default function TradeDetails() {
       </ScrollView>
 
       <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
-        <SliderButton
-          name="Subscribe"
-          colors={colors}
-          onPress={handlePayment}
-        />
+        <SliderButton name="Subscribe" colors={colors} onPress={handlePayment} />
       </View>
     </SafeAreaView>
   );
@@ -332,11 +312,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    // shadowColor: '#000',
+    // shadowOffset: { width: 0, height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // elevation: 2,
   },
   detailRow: {
     flex: 1,

@@ -7,8 +7,11 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import CircleBackgroundView from '@/animation/CircleAnimation';
 import { router } from 'expo-router';
+import { useTheme } from '@/utils/theme' 
 
 interface TradeCards {
+  type_id: string;
+  type_name: string;
   package_id: string;
   title: string;
   price: string;
@@ -22,27 +25,15 @@ interface TradeCards {
 
 interface TradeCardProps {
   item: TradeCards;
-  colors: {
-    shadowColor: string;
-    text: string;
-  };
-  isDark: boolean;
 }
 
-export default function TradeCard({ item, colors, isDark }: TradeCardProps) {
+export default function TradeCard({ item }: TradeCardProps) {
+  const colors = useTheme();
   const handleTradePress = () => {
     router.push({
       pathname: '/main/TradeDetails',
       params: {
         package_id: item.package_id,
-        title: item.title,
-        price: item.price,
-        details: JSON.stringify(item.details),
-        categoryTag: item.categoryTag,
-        icon: item.icon,
-        riskCategory: item.riskCategory,
-        minimumInvestment: item.minimumInvestment,
-        profitPotential: item.profitPotential,
       },
     });
   };

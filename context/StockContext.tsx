@@ -15,7 +15,9 @@ interface MarketIndicesData {
   percentChange: number;
 }
 
-interface ServiceItem {
+interface Package {
+  type_id: string;
+  type_name: string;
   package_id: string;
   title: string;
   price: string;
@@ -31,7 +33,7 @@ interface StockContextType {
   NSEData: StockData[];
   BSEData: StockData[];
   marketIndices: MarketIndicesData[];
-  services: ServiceItem[];
+  packages: Package[];
   loading: boolean;
   error: string | null;
   updateNSEData: (data: StockData[]) => void;
@@ -41,13 +43,15 @@ interface StockContextType {
   fetchAllData: () => Promise<void>;
 }
 
+
 const StockContext = createContext<StockContextType | undefined>(undefined);
+
 
 export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [NSEData, setNSEData] = useState<StockData[]>([]);
   const [BSEData, setBSEData] = useState<StockData[]>([]);
   const [marketIndices, setMarketIndices] = useState<MarketIndicesData[]>([]);
-  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,12 +60,6 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const updateNSEData = (data: StockData[]) => setNSEData(data);
   const updateBSEData = (data: StockData[]) => setBSEData(data);
   const updateMarketIndices = (data: MarketIndicesData[]) => setMarketIndices(data);
-
-  // const getRandomRiskCategory = () => {
-  //   const randomTags = ['Low', 'Moderate', 'High'];
-  //   const shuffled = randomTags.sort(() => 0.5 - Math.random());
-  //   return shuffled.slice(0, 1);
-  // };
 
   const getIconForCategory = (category: string) => {
     switch (category) {
@@ -139,45 +137,47 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
-  const fetchMarketIndices = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const results: MarketIndicesData[] = [];
-      for (const st of stocks) {
-        const response = await fetch(`https://indian-stock-exchange-api2.p.rapidapi.com/stock?name=${st}`, {
-          method: 'GET',
-          headers: {
-            'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
-            'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
-          },
-        });
+  // const fetchMarketIndices = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     const results: MarketIndicesData[] = [];
+  //     for (const st of stocks) {
+  //       const response = await fetch(`https://indian-stock-exchange-api2.p.rapidapi.com/stock?name=${st}`, {
+  //         method: 'GET',
+  //         headers: {
+  //           'x-rapidapi-key': process.env.EXPO_PUBLIC_RAPID_API_KEY || '',
+  //           'x-rapidapi-host': process.env.EXPO_PUBLIC_RAPID_API_HOST || '',
+  //         },
+  //       });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! status: ${response.status}`);
+  //       }
 
-        const data = await response.json();
-        if (data.error) {
-          console.error(`Stock not found: ${st}`);
-          continue;
-        }
+  //       const data = await response.json();
+  //       if (data.error) {
+  //         console.error(`Stock not found: ${st}`);
+  //         continue;
+  //       }
 
-        const stockData: MarketIndicesData = {
-          ticker: st.toUpperCase(),
-          percentChange: data.percentChange,
-        };
-        results.push(stockData);
-      }
-      setMarketIndices(results);
-    } catch (error) {
-      console.error('Error fetching market indices:', error);
-      setError('Failed to fetch market indices');
-    } finally {
-      setLoading(false);
-    }
-  };
+  //       const stockData: MarketIndicesData = {
+  //         ticker: st.toUpperCase(),
+  //         percentChange: data.percentChange,
+  //       };
+  //       results.push(stockData);
+  //     }
+  //     setMarketIndices(results);
+  //   } catch (error) {
+  //     console.error('Error fetching market indices:', error);
+  //     setError('Failed to fetch market indices');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
+
+  // fetch packages from API
   const fetchPackages = async () => {
     try {
       setLoading(true);
@@ -196,10 +196,12 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const data = await response.json();
       
       // Transform the API response into the required format
-      const transformedServices: ServiceItem[] = data.data.flatMap((type: any) => {
+      const transformedPackages: Package[] = data.data.flatMap((type: any) => {
         // If there are subtypes, map them
         if (type.subtypes && type.subtypes.length > 0) {
           return type.subtypes.map((subtype: any) => ({
+            type_id: type.type_id,
+            type_name: type.type_name,
             package_id: subtype.subtype_id,
             title: subtype.subtype_name,
             price: subtype.price?.toString() || 'Contact for pricing',
@@ -214,6 +216,8 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         // If no subtypes, create a single item from the type
         return [{
+          type_id: type.type_id,
+          type_name: type.type_name,
           package_id: type.type_id,
           title: type.type_name,
           price: type.price?.toString() || 'Contact for pricing',
@@ -226,15 +230,30 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }];
       });
 
-      setServices(transformedServices);
+      setPackages([...transformedPackages, {
+        type_id: '10000',
+        type_name: 'Offer',
+        package_id: '10000',
+        title: 'Refund offer',
+        price: '10000',
+        details: ['Profit Gaurantee', 'Refund if no profit', 'If we fail to generate atleast one profitable trade in 7 days period we will refund the amount.', 'If you engage in self-trading or any other trading activity that is not part of our recommendations, we will not be responsible for providing a refund.', 'If you fail to book or realize any profits generated by our services during the specified period, we will not be responsible for providing a refund.' ],
+        categoryTag: 'Custom Category',
+        icon: 'star',
+        riskCategory: 'Low',
+        minimumInvestment: 'N/A',
+        profitPotential: '10-20% p.a.',
+      }]);
+
     } catch (error) {
-      console.error('Error fetching services:', error);
-      setError('Failed to fetch services');
+      console.error('Error fetching packages:', error);
+      setError('Failed to fetch packages');
     } finally {
       setLoading(false);
     }
   };
 
+
+  // function to fetch all data at once
   const fetchAllData = async () => {
     setLoading(true);
     setError(null);
@@ -253,29 +272,36 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+
+  // Fetch all data when the component mounts
   useEffect(() => {
     fetchAllData();
   }, []);
 
+
+
+  const value={
+    NSEData,
+    BSEData,
+    marketIndices,
+    packages,
+    loading,
+    error,
+    updateNSEData,
+    updateBSEData,
+    updateMarketIndices,
+    getNSEBSEStocks,
+    fetchAllData
+  }
+
   return (
-    <StockContext.Provider value={{ 
-      NSEData, 
-      BSEData, 
-      marketIndices, 
-      services, 
-      loading, 
-      error,
-      updateNSEData, 
-      updateBSEData, 
-      updateMarketIndices,
-      getNSEBSEStocks,
-      fetchAllData
-    }}>
+    <StockContext.Provider value={value}>
       {children}
     </StockContext.Provider>
   );
 };
 
+// Export the context and provider
 export const useStockContext = () => {
   const context = useContext(StockContext);
   if (!context) {

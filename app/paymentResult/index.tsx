@@ -4,7 +4,7 @@ import { Text, View, StyleSheet, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '@/context/AuthContext';
+import { useUser } from '@/context/UserContext';
 
 const formatIndianRupee = (amount: number) => {
   const formatter = new Intl.NumberFormat('en-IN', {
@@ -25,7 +25,7 @@ const getISTDate = () => {
 
 const PaymentResultScreen = () => {
   const route = useRoute();
-  const { getUserTransactions }=useAuth();
+  const { getUserTransactions }=useUser();
 
   const [transaction_id, setTransactionId] = useState<string | null>(null);
   const [package_id, setPackageId] = useState<string | null>(null);
@@ -85,13 +85,14 @@ const PaymentResultScreen = () => {
   useEffect(() => {
     const fetchPaymentStatus = async () => {
       if (!transaction_id) {
-        setStatus('FAILURE');
+        // setStatus('FAILURE');
         setLoading(false);
         return;
       }
 
       try {
         const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
+        // const response = await axios.get(`http://192.168.1.40:5000/api/paymentStatus`, {
           params: { transaction_id },
         });
 

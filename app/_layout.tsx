@@ -1,12 +1,12 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, View, StatusBar, useColorScheme } from 'react-native';
-import { AuthProvider, useAuth } from '../context/AuthContext';
+import { AuthProvider, useUser } from '../context/UserContext';
 import { StockProvider } from '@/context/StockContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const RootLayoutContent: React.FC = () => {
-  const { isInitializing } = useAuth();
+  const { isInitializing } = useUser();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
 

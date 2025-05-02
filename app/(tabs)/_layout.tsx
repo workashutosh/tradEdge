@@ -6,12 +6,12 @@ import { HapticTab } from '@/components/HapticTab';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Redirect } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
-import { Home, Compass, User, TrendingUp, Newspaper, Crown } from 'lucide-react-native';
+import { useUser } from '@/context/UserContext';
+import { Home, Compass, User, TrendingUp, Speech, Crown } from 'lucide-react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn } = useUser();
 
   if (!isLoggedIn) {
     return <Redirect href="/otp" />;
@@ -100,6 +100,24 @@ export default function TabLayout() {
           ),
         }}
       /> */}
+      <Tabs.Screen
+        name="myPackages"
+        options={{
+          title: 'Packs',
+          tabBarIcon: ({ color }) => (
+            <Compass size={24} color={color} strokeWidth={2.5} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="referral"
+        options={{
+          title: 'Refer',
+          tabBarIcon: ({ color }) => (
+            <Speech size={24} color={color} strokeWidth={2.5} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="profile"
         options={{

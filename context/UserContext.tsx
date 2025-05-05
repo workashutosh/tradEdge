@@ -15,6 +15,7 @@ interface UserContextType {
   userTransactions: any[]; // Expose transactions in the context
   transactionsLoading: boolean;
   transactionsError: string;
+  purchasedPackagesId: string[]; // Expose purchasedPackagesId
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   handleLogin: (loginData: LoginResponse['data'], router: Router) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -74,6 +75,7 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [userTransactions, setUserTransactions] = useState<any[]>([]); // State to store transactions
   const [transactionsError, setTransactionsError] = useState('');
   const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [purchasedPackagesId, setPurchasedPackagesId] = useState<string[]>([]); // New state
   
 
   // Check login status on initial load
@@ -159,16 +161,19 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
     try {
       console.log('Fetching transactions for userId:', userId);
       const response = await axios.get(
-        `https://tradedge-server.onrender.com/api/userTransactionsById?user_id=${userId}`
-        // `http://192.168.1.40:5000/api/userTransactionsById?user_id=${userId}`
+        `http://192.168.1.40:5000/api/userTransactionsById?user_id=${userId}`
       );
 
-      // console.log('API Response:', response.data.transactions);
-
       if (response.data.transactions.status === 'success') {
-        console.log("Successsssssssss")
-        setUserTransactions(response.data.transactions.data.packages || []);
-        console.log('User transactions fetched successfully:', response.data.transactions.data);
+        console.log('Success fetching transactions');
+        const packages = response.data.transactions.data.packages || [];
+        setUserTransactions(packages);
+
+        // Extract and store purchased package IDs
+        const packageIds = packages.map((pkg: any) => pkg.package_details.subtype_id);
+        setPurchasedPackagesId(packageIds);
+
+        console.log('Purchased package IDs:', packageIds);
       } else {
         setTransactionsError(response.data.message || 'Failed to fetch transactions');
         console.error('API returned status:', response.data.message);
@@ -245,10 +250,11 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
     userTransactions,
     transactionsLoading,
     transactionsError,
+    purchasedPackagesId, // Expose purchasedPackagesId
     setIsLoggedIn,
     handleLogin,
     logout,
-    getUserTransactions
+    getUserTransactions,
   };
 
   return <UseContext.Provider value={value}>{children}</UseContext.Provider>;

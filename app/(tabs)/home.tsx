@@ -30,6 +30,7 @@ import KycComponent from '@/components/KycComponent';
 import { useStockContext } from '@/context/StockContext';
 import { useUser } from '@/context/UserContext';
 import { useTheme } from '@/utils/theme';
+import { WebView } from 'react-native-webview'; // Import WebView
 
 export default function HomeScreen() {
   const userContext = useUser();
@@ -37,8 +38,8 @@ export default function HomeScreen() {
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const { NSEData, BSEData, packages } = useStockContext(); // Get packages from StockContext
 
-  const explorePackagesId = ["17", "3", "10", "9"];
-  const bestTradesId = ["2", "4", "11", "8"];
+  const explorePackagesId = ["7", "3", "10", "9"];
+  const bestTradesId = ["2", "4", "11", "9"];
 
   const insets = useSafeAreaInsets();
   const colors = useTheme();
@@ -52,7 +53,7 @@ export default function HomeScreen() {
     bestTradesId.includes(pkg.package_id)
   );
 
-  const refundOfferPackage = packages.find(pkg => pkg.package_id === '10000')
+  const refundOfferPackage = packages.find(pkg => pkg.package_id === "1")
   console.log(refundOfferPackage);
 
 
@@ -95,12 +96,62 @@ export default function HomeScreen() {
       <Header title={"Hi " + (userContext.userDetails?.user_full_name || "User")} showBuyProButton={true} />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* TradingView Widget */}
+        <ThemedView style={{ marginHorizontal: 10, marginTop: 10, backgroundColor: 'transparent' }}>
+          <WebView
+            style={{ height: 300, borderRadius: 10, overflow: 'hidden' }}
+            source={{
+              html: `
+                <!-- TradingView Widget BEGIN -->
+                <div class="tradingview-widget-container">
+                  <div class="tradingview-widget-container__widget"></div>
+                  <div class="tradingview-widget-copyright">
+                    <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                      <span class="blue-text">Track all markets on TradingView</span>
+                    </a>
+                  </div>
+                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
+                  {
+                    "symbols": [
+                      {
+                        "proName": "FX_IDC:EURUSD",
+                        "title": "EUR to USD"
+                      },
+                      {
+                        "proName": "BITSTAMP:BTCUSD",
+                        "title": "Bitcoin"
+                      },
+                      {
+                        "proName": "BITSTAMP:ETHUSD",
+                        "title": "Ethereum"
+                      },
+                      {
+                        "description": "Tesla",
+                        "proName": "NASDAQ:TSLA"
+                      }
+                    ],
+                    "isTransparent": false,
+                    "showSymbolLogo": true,
+                    "colorTheme": "dark",
+                    "locale": "en"
+                  }
+                  </script>
+                </div>
+                <!-- TradingView Widget END -->
+              `,
+            }}
+            originWhitelist={['*']}
+            javaScriptEnabled={true}
+            domStorageEnabled={true}
+          />
+        </ThemedView>
+
+        {/* KYC Component */}
         {userContext.userDetails && (userContext.userDetails.auth === null || userContext.userDetails.auth === 'N') && (
           <ThemedView style={{ marginHorizontal: 10, backgroundColor: 'transparent' }}>
             <KycComponent />
           </ThemedView>
         )}
-
 
         <ThemedView style={{ marginHorizontal: 10, marginTop: 0, backgroundColor: 'transparent' }}>
           <TouchableOpacity
@@ -120,33 +171,18 @@ export default function HomeScreen() {
               imageStyle={{ borderRadius: 10, objectFit: 'cover' }} // Ensures the image respects the card's border radius
             >
               <View style={{height: 200}}></View>
-              {/* <LinearGradient
-                colors={['rgba(0, 0, 0, 0.6)', 'rgba(0, 0, 0, 0.3)']} // Semi-transparent gradient overlay
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.refundOfferGradient}
-              >
-                <View>
-                  <ThemedText style={styles.refundOfferHeader}>Limited time offer</ThemedText>
-                  <ThemedText style={styles.refundOfferTitle}>
-                    <ThemedText style={{ color: '#00ff00' }}>Refundable Pack</ThemedText> @10,000/-
-                  </ThemedText>
-                  <ThemedText style={styles.refundOfferSubtitle}>
-                    Premium package @ 10,000 for New Customers
-                  </ThemedText>
-                </View>
-                <MaterialIcons name="arrow-forward" size={28} color="white" />
-              </LinearGradient> */}
             </ImageBackground>
           </TouchableOpacity>
         </ThemedView>
 
         <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor }]}>
-          <ThemedText style={{ fontSize: 15, color: 'white' }}>Your Trusted Research Analyst</ThemedText>
-          <ThemedText style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>
+          <ThemedText type="subtitle" style={{ fontSize: 15, color: 'white' }}>
+            Your Trusted Research Analyst
+          </ThemedText>
+          <ThemedText type="title" style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>
             Pay for Successful Research Calls
           </ThemedText>
-          <ThemedText style={{ fontSize: 15, color: 'white' }}>
+          <ThemedText type="default" style={{ fontSize: 15, color: 'white' }}>
             Start your wealth creation journey!
           </ThemedText>
           <ThemedView style={styles.websiteRedirectContainerBottom}>
@@ -161,7 +197,9 @@ export default function HomeScreen() {
                     { transform: [{ translateX: shimmerAnim }, { rotate: '35deg' }] },
                   ]}
                 />
-                <ThemedText style={styles.buttonText}>Explore</ThemedText>
+                <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                  Explore
+                </ThemedText>
               </View>
             </TouchableOpacity>
             <Image style={styles.tradedgeLogo} source={require('@/assets/images/logoWhite.png')} />
@@ -171,7 +209,7 @@ export default function HomeScreen() {
 
         {/* Explore Packages Section */}
         <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
+          <ThemedText type="title" style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
             data={[...explorePackages, { isShowMore: true }]} // Use filtered explorePackages
             renderItem={({ item }) => {
@@ -181,7 +219,7 @@ export default function HomeScreen() {
                     style={styles.showMoreContainer}
                     onPress={() => router.replace('/(tabs)/trades')}
                   >
-                    <ThemedText style={{ color: colors.text }}>See More</ThemedText>
+                    <ThemedText type="link" style={{ color: colors.text }}>See More</ThemedText>
                     <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
                   </TouchableOpacity>
                 );
@@ -212,12 +250,12 @@ export default function HomeScreen() {
         >
           <ThemedView style={styles.bestTradesContainer}>
             <ThemedView style={styles.bestTradesSectionHeader}>
-              <ThemedText style={{ color: 'white', fontWeight: '600', fontSize: 22 }}>
+              <ThemedText type="title" style={{ color: 'white', fontWeight: '600', fontSize: 22 }}>
                 Best Trades
               </ThemedText>
               <View style={{ flexDirection: 'row' }}>
                 <BadgeCheck size={24} color="rgb(9, 196, 9)" style={{ marginRight: 3 }} />
-                <ThemedText style={{ color: 'white', fontWeight: 'bold', alignSelf: 'center' }}>
+                <ThemedText type="defaultSemiBold" style={{ color: 'white', fontWeight: 'bold', alignSelf: 'center' }}>
                   SEBI Reg
                 </ThemedText>
               </View>

@@ -137,14 +137,20 @@ export default function Stocks() {
         colors={[colors.gradientStart, colors.gradientEnd]}
         style={[styles.card, { backgroundColor: colors.card }]}
       >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Company Overview</Text>
+        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
+          Company Overview
+        </ThemedText>
         <View style={styles.infoRow}>
           <MaterialIcons name="business" size={20} color={colors.text} />
-          <Text style={[styles.value, { color: colors.text, marginLeft: 8 }]}>{stockData.companyName}</Text>
+          <ThemedText type="default" style={[styles.value, { color: colors.text, marginLeft: 8 }]}>
+            {stockData.companyName}
+          </ThemedText>
         </View>
         <View style={styles.infoRow}>
           <MaterialIcons name="work" size={20} color={colors.text} />
-          <Text style={[styles.value, { color: colors.text, marginLeft: 8 }]}>{stockData.industry}</Text>
+          <ThemedText type="default" style={[styles.value, { color: colors.text, marginLeft: 8 }]}>
+            {stockData.industry}
+          </ThemedText>
         </View>
       </LinearGradient>
     );
@@ -157,27 +163,43 @@ export default function Stocks() {
         colors={[colors.gradientStart, colors.gradientEnd]}
         style={[styles.card, { backgroundColor: colors.card }]}
       >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Current Price</Text>
+        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
+          Current Price
+        </ThemedText>
         <View style={styles.priceContainer}>
           <View style={styles.exchangePrice}>
-            <Text style={[styles.exchangeLabel, { color: colors.text }]}>BSE</Text>
-            <Text style={[styles.priceValue, { color: colors.text }]}>₹{stockData.currentPrice.BSE}</Text>
+            <ThemedText type="subtitle" style={[styles.exchangeLabel, { color: colors.text }]}>
+              BSE
+            </ThemedText>
+            <ThemedText type="defaultSemiBold" style={[styles.priceValue, { color: colors.text }]}>
+              ₹{stockData.currentPrice.BSE}
+            </ThemedText>
           </View>
           <View style={styles.exchangePrice}>
-            <Text style={[styles.exchangeLabel, { color: colors.text }]}>NSE</Text>
-            <Text style={[styles.priceValue, { color: colors.text }]}>₹{stockData.currentPrice.NSE}</Text>
+            <ThemedText type="subtitle" style={[styles.exchangeLabel, { color: colors.text }]}>
+              NSE
+            </ThemedText>
+            <ThemedText type="defaultSemiBold" style={[styles.priceValue, { color: colors.text }]}>
+              ₹{stockData.currentPrice.NSE}
+            </ThemedText>
           </View>
         </View>
         <View style={styles.priceMetrics}>
-          <Text style={[styles.metric, { color: colors.text }]}>
+          <ThemedText type="default" style={[styles.metric, { color: colors.text }]}>
             52W High: ₹{stockData.yearHigh}
-          </Text>
-          <Text style={[styles.metric, { color: colors.text }]}>
+          </ThemedText>
+          <ThemedText type="default" style={[styles.metric, { color: colors.text }]}>
             52W Low: ₹{stockData.yearLow}
-          </Text>
-          <Text style={[styles.metric, { color: stockData.percentChange > 0 ? colors.success : colors.error }]}>
+          </ThemedText>
+          <ThemedText
+            type="defaultSemiBold"
+            style={[
+              styles.metric,
+              { color: stockData.percentChange > 0 ? colors.success : colors.error },
+            ]}
+          >
             Change: {stockData.percentChange}%
-          </Text>
+          </ThemedText>
         </View>
       </LinearGradient>
     );
@@ -190,17 +212,21 @@ export default function Stocks() {
         colors={[colors.gradientStart, colors.gradientEnd]}
         style={[styles.card, { backgroundColor: colors.card }]}
       >
-        <Text style={[styles.cardTitle, { color: colors.text }]}>Moving Averages</Text>
+        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
+          Moving Averages
+        </ThemedText>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {stockData.stockTechnicalData.map((data, index) => (
             <View key={index} style={styles.technicalCard}>
-              <Text style={[styles.daysText, { color: colors.text }]}>{data.days} Days</Text>
-              <Text style={[styles.maPrice, { color: colors.text }]}>
+              <ThemedText type="subtitle" style={[styles.daysText, { color: colors.text }]}>
+                {data.days} Days
+              </ThemedText>
+              <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
                 BSE: ₹{parseFloat(data.bsePrice).toFixed(2)}
-              </Text>
-              <Text style={[styles.maPrice, { color: colors.text }]}>
+              </ThemedText>
+              <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
                 NSE: ₹{parseFloat(data.nsePrice).toFixed(2)}
-              </Text>
+              </ThemedText>
             </View>
           ))}
         </ScrollView>

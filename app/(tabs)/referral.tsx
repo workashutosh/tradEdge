@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
@@ -9,6 +8,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
 import * as Clipboard from 'expo-clipboard';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useTheme } from "@/utils/theme"
@@ -16,15 +16,15 @@ import { useTheme } from "@/utils/theme"
 export default function ReferralScreen() {
   
   const colors = useTheme();
-  const referralCode = '3M60AVJSWTN9';
+  const referrerCode = '3M60AVJSWTN9';
 
   const handleCopyCode = () => {
-    Clipboard.setStringAsync(referralCode);
+    Clipboard.setStringAsync(referrerCode);
     Alert.alert('Copied!', 'Referral code copied to clipboard.');
   };
 
   const handleInviteFriends = () => {
-    const message = `Download Tradedge app. Use my referral code ${referralCode}`;
+    const message = `Download Tradedge app. Use my referral code ${referrerCode}`;
     const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
 
     Linking.openURL(whatsappUrl).catch(() => {
@@ -41,37 +41,51 @@ export default function ReferralScreen() {
         />
       </View>
 
-      <Text style={[styles.title, { color: colors.text }]}>Refer your friend</Text>
-      <Text style={[styles.subtitle, { color: colors.text }]}>
+      <ThemedText type="subtitle" style={[styles.title, { color: colors.text }]}>
+        Refer your friend
+      </ThemedText>
+      <ThemedText type="default" style={[styles.subtitle, { color: colors.text }]}>
         Share this code with your friend and help them discover Tradedge!
-      </Text>
+      </ThemedText>
 
       <View style={[styles.referralCodeContainer, { backgroundColor: colors.card }]}>
-        <Text style={[styles.referralCode, { color: colors.text }]}>{referralCode}</Text>
+        <ThemedText type="defaultSemiBold" style={[styles.referrerCode, { color: colors.text }]}>
+          {referrerCode}
+        </ThemedText>
         <TouchableOpacity onPress={handleCopyCode}>
           <MaterialIcons name="content-copy" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      <Text style={[styles.inviteText, { color: colors.text }]}>
+      <ThemedText type="default" style={[styles.inviteText, { color: colors.text }]}>
         Invite your friends to join and grow together.
-      </Text>
+      </ThemedText>
 
       <TouchableOpacity
         style={[styles.inviteButton, { backgroundColor: colors.buttonPrimary }]}
         onPress={handleInviteFriends}
       >
-        <Text style={styles.inviteButtonText}>Invite Friends</Text>
+        <ThemedText type="defaultSemiBold" style={styles.inviteButtonText}>
+          Invite Friends
+        </ThemedText>
       </TouchableOpacity>
 
       <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.text }]}>Total Referral Count</Text>
-          <Text style={[styles.statValue, { color: colors.text }]}>0</Text>
+          <ThemedText type="subtitle" style={[styles.statLabel, { color: colors.text }]}>
+            Total Referral Count
+          </ThemedText>
+          <ThemedText type="defaultSemiBold" style={[styles.statValue, { color: colors.text }]}>
+            0
+          </ThemedText>
         </View>
         <View style={styles.statItem}>
-          <Text style={[styles.statLabel, { color: colors.text }]}>Subscription Count</Text>
-          <Text style={[styles.statValue, { color: colors.text }]}>0</Text>
+          <ThemedText type="subtitle" style={[styles.statLabel, { color: colors.text }]}>
+            Subscription Count
+          </ThemedText>
+          <ThemedText type="defaultSemiBold" style={[styles.statValue, { color: colors.text }]}>
+            0
+          </ThemedText>
         </View>
       </View>
     </SafeAreaView>
@@ -92,8 +106,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
   },
@@ -110,7 +122,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 16,
   },
-  referralCode: {
+  referrerCode: {
     fontSize: 18,
     fontWeight: 'bold',
   },

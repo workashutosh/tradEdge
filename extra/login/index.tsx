@@ -182,7 +182,7 @@ export const styles = StyleSheet.create({
     color: '#FF4444',
     marginBottom: 15,
     textAlign: 'center',
-    fontFamily: 'San Francisco',
+    fontFamily: 'Kanchenjunga',
   },
 });
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Keyboard } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { ThemedText } from '@/components/ThemedText'; // Import ThemedText
 
 interface PhoneInputProps {
   phone: string;
@@ -16,8 +17,6 @@ export default function PhoneInput({
   handleSubmit,
   otpButtonLoading,
 }: PhoneInputProps) {
-
-
   const handlePhoneChange = (value: string) => {
     // Only allow numeric input
     const numericValue = value.replace(/[^0-9]/g, '');
@@ -28,7 +27,7 @@ export default function PhoneInput({
     <View style={{ width: '100%' }}>
       <View style={styles.inputContainer}>
         <View style={styles.countryCode}>
-          <Text style={styles.countryCodeText}>+91</Text>
+          <ThemedText type="default" style={styles.countryCodeText}>+91</ThemedText>
         </View>
         <TextInput
           style={styles.textInput}
@@ -39,21 +38,22 @@ export default function PhoneInput({
           maxLength={10}
           keyboardType="phone-pad"
           onSubmitEditing={handleSubmit}
+          editable={!otpButtonLoading}
         />
       </View>
 
-      {/* error section */}
+      {/* Error Section */}
       {phoneError && phoneError !== ' ' ? (
-        <Text style={styles.errorText}>{phoneError}</Text>
+        <ThemedText type="defaultSemiBold" style={styles.errorText}>{phoneError}</ThemedText>
       ) : null}
 
-      {/* terms section */}
-      <Text style={styles.termsText}>
+      {/* Terms Section */}
+      <ThemedText type="default" style={styles.termsText}>
         By Proceeding I accept all the{' '}
-        <Text style={styles.termsLink}>terms and conditions</Text> of Tradege
-      </Text>
+        <ThemedText type="link" style={styles.termsLink}>terms and conditions</ThemedText> of Tradege
+      </ThemedText>
 
-      {/* get otp button */}
+      {/* Get OTP Button */}
       <TouchableOpacity
         style={[styles.button, { backgroundColor: phone.length === 10 ? '#000' : '#808080' }]}
         onPress={handleSubmit}
@@ -62,9 +62,14 @@ export default function PhoneInput({
         {otpButtonLoading ? (
           <ActivityIndicator size="small" color="#fff" />
         ) : (
-          <Text style={styles.buttonText}>Get OTP</Text>
+          <ThemedText type="defaultSemiBold" style={styles.buttonText}>Get OTP</ThemedText>
         )}
       </TouchableOpacity>
+
+      {/* Footer Section */}
+      <ThemedText type="default" style={styles.footerText}>
+        Verified by <ThemedText type="defaultSemiBold" style={{ fontSize: 12 }}>1 lakh+</ThemedText> customers
+      </ThemedText>
     </View>
   );
 }
@@ -92,19 +97,16 @@ const styles = StyleSheet.create({
     borderRightColor: '#ddd',
   },
   countryCodeText: {
-    fontFamily: 'Quicksand',
     fontSize: 16,
     color: '#333',
   },
   textInput: {
     flex: 1,
-    fontFamily: 'Quicksand',
     fontSize: 16,
     color: '#000',
     paddingHorizontal: 15,
   },
   termsText: {
-    fontFamily: 'Quicksand',
     fontSize: 12,
     color: '#fff',
     textAlign: 'center',
@@ -114,6 +116,7 @@ const styles = StyleSheet.create({
   termsLink: {
     color: '#00FF00',
     textDecorationLine: 'underline',
+    fontSize: 12,
   },
   button: {
     borderRadius: 10,
@@ -122,14 +125,12 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   buttonText: {
-    fontFamily: 'Quicksand',
     fontSize: 20,
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
   },
   errorText: {
-    fontFamily: 'Quicksand',
     fontSize: 16,
     fontWeight: 'bold',
     color: 'rgb(249, 74, 74)',
@@ -137,5 +138,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: '100%',
     paddingHorizontal: 5,
+  },
+  footerText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#fff',
+    paddingTop: 10,
   },
 });

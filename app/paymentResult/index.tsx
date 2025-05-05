@@ -1,6 +1,7 @@
 import { useRoute } from '@react-navigation/native';
 import React, { useEffect, useState } from 'react';
 import { Text, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { ThemedText } from '@/components/ThemedText';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -66,8 +67,8 @@ const PaymentResultScreen = () => {
 
   const updateDB = async (paymentState: string, payment_method: string) => {
     try {
-      // const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
-      const updateStatusResponse = await axios.post(`https://tradedge-server.onrender.com/api/addPaymentindb`, {
+      const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
+      // const updateStatusResponse = await axios.post(`https://tradedge-server.onrender.com/api/addPaymentindb`, {
         package_id: package_id,
         user_id: user_id,
         amount: amount,
@@ -91,8 +92,8 @@ const PaymentResultScreen = () => {
       }
 
       try {
-        const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
-        // const response = await axios.get(`http://192.168.1.40:5000/api/paymentStatus`, {
+        // const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
+        const response = await axios.get(`http://192.168.1.40:5000/api/paymentStatus`, {
           params: { transaction_id },
         });
 
@@ -158,12 +159,16 @@ const PaymentResultScreen = () => {
           exiting={SlideOutDown.duration(500)}
           style={styles.successContainer}
         >
-          <Text style={styles.successText}>Payment Successful!</Text>
-          <Text style={styles.detailsText}>Transaction ID: {transactionDetails?.transaction_id}</Text>
-          <Text style={styles.detailsText}>Payment Mode: {transactionDetails?.payment_method}</Text>
-          <Text style={styles.detailsText}>
+          <ThemedText type="defaultSemiBold" style={styles.successText}>Payment Successful!</ThemedText>
+          <ThemedText type="default" style={styles.detailsText}>
+            Transaction ID: {transactionDetails?.transaction_id}
+          </ThemedText>
+          <ThemedText type="default" style={styles.detailsText}>
+            Payment Mode: {transactionDetails?.payment_method}
+          </ThemedText>
+          <ThemedText type="default" style={styles.detailsText}>
             Amount: {transactionDetails?.amount ? formatIndianRupee(Number(transactionDetails.amount) / 100) : 'N/A'}
-          </Text>
+          </ThemedText>
         </Animated.View>
       )}
       {status === 'FAILURE' && (
@@ -172,8 +177,8 @@ const PaymentResultScreen = () => {
           exiting={FadeOut.duration(500)}
           style={styles.failureContainer}
         >
-          <Text style={styles.failureText}>Payment Failed</Text>
-          <Text style={styles.detailsText}>Please try again.</Text>
+          <ThemedText type="defaultSemiBold" style={styles.failureText}>Payment Failed</ThemedText>
+          <ThemedText type="default" style={styles.detailsText}>Please try again.</ThemedText>
         </Animated.View>
       )}
     </View>

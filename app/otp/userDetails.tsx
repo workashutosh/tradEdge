@@ -3,13 +3,15 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator 
 import { Keyboard } from 'react-native';
 
 interface UserDetailsProps {
-  onSubmit: () => void;
   userName: string;
-  setUserName: (userName: string)=>void;
   userEmail: string;
-  setUserEmail: (userEmail: string)=>void;
-  continueButtonLoading: boolean;
+  referrerCode: string;
   userDetailsError: string;
+  continueButtonLoading: boolean;
+  onSubmit: () => void;
+  setUserName: (userName: string)=>void;
+  setUserEmail: (userEmail: string)=>void;
+  setReferrerCode: (referrerCode: string)=>void;
 }
 
 export default function UserDetails({
@@ -18,6 +20,8 @@ export default function UserDetails({
   setUserName,
   userEmail,
   setUserEmail,
+  referrerCode,
+  setReferrerCode,
   continueButtonLoading,
   userDetailsError,
   
@@ -75,6 +79,8 @@ export default function UserDetails({
         placeholderTextColor="#999"
         value={userName}
         onChangeText={setUserName}
+        editable={!continueButtonLoading}
+
       />
       {/* Name error */}
       <Text style={styles.errorText}>{nameError ? nameError:' '}</Text>
@@ -87,8 +93,24 @@ export default function UserDetails({
         onChangeText={setUserEmail}
         keyboardType="email-address"
         autoCapitalize="none"
+        editable={!continueButtonLoading}
+
       />
       {/* Email error */}
+      <Text style={styles.errorText}>{emailError ? emailError:' '}</Text>
+
+      <TextInput
+        style={styles.textInput}
+        placeholder="Enter Referral Code (Optional)"
+        placeholderTextColor="#999"
+        value={referrerCode}
+        onChangeText={setReferrerCode}
+        keyboardType="default"
+        autoCapitalize="none"
+        editable={!continueButtonLoading}
+
+      />
+      {/* Referrer error */}
       <Text style={styles.errorText}>{emailError ? emailError:' '}</Text>
 
       {/* error section */}
@@ -118,7 +140,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     width: '100%',
     height: 50,
-    fontFamily: 'Quicksand',
+    fontFamily: 'Kanchenjunga',
     fontSize: 16,
     color: '#000',
     paddingHorizontal: 15,
@@ -131,14 +153,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   buttonText: {
-    fontFamily: 'Quicksand',
+    fontFamily: 'Kanchenjunga',
     fontSize: 20,
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
   },
   errorText: {
-    fontFamily: 'Quicksand',
+    fontFamily: 'Kanchenjunga',
     fontSize: 14,
     fontWeight: 'bold',
     color: 'rgb(249, 74, 74)',

@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { ActivityIndicator } from 'react-native';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Keyboard } from 'react-native';
+import { View, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
+import { ThemedText } from '@/components/ThemedText'; // Import ThemedText
 
 interface OtpInputProps {
   otpDigits: string[];
@@ -47,7 +47,6 @@ export default function OtpInput({
     }
   };
 
-
   const handleResend = () => {
     Keyboard.dismiss();
     handleResendOtp();
@@ -75,35 +74,35 @@ export default function OtpInput({
         ))}
       </View>
 
-      {/* error section */}
+      {/* Error Section */}
       {otpError && otpError !== ' ' ? (
-        <Text style={styles.errorText}>{otpError}</Text>
+        <ThemedText type="defaultSemiBold" style={styles.errorText}>{otpError}</ThemedText>
       ) : null}
 
-      {/* verify otp button */}
+      {/* Verify OTP Button */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[styles.button, { backgroundColor: '#000' }]} 
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: '#000' }]}
           onPress={handleOtpSubmit}
           disabled={verifyOtpButtonLoading}
         >
           {verifyOtpButtonLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Verify OTP</Text>
+            <ThemedText type="defaultSemiBold" style={styles.buttonText}>Verify OTP</ThemedText>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* resend otp */}
+      {/* Resend OTP */}
       <TouchableOpacity
         style={[styles.resendButton]}
         onPress={handleResend}
         disabled={!isResendEnabled}
       >
-        <Text style={styles.resendButtonText}>
+        <ThemedText type="default" style={styles.resendButtonText}>
           Resend OTP {isResendEnabled ? '' : `in (${timer}s)`}
-        </Text>
+        </ThemedText>
       </TouchableOpacity>
     </>
   );
@@ -121,7 +120,7 @@ const styles = StyleSheet.create({
     height: 55,
     backgroundColor: '#fff',
     borderRadius: 10,
-    fontFamily: 'Quicksand',
+    fontFamily: 'Kanchenjunga',
     fontSize: 20,
     color: '#000',
     textAlign: 'center',
@@ -143,26 +142,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   buttonText: {
-    fontFamily: 'Quicksand',
     fontSize: 20,
     color: '#fff',
     textAlign: 'center',
     fontWeight: 'bold',
   },
   resendButton: {
-    // paddingVertical: 4,
     paddingHorizontal: 20,
     marginBottom: 30,
     width: 250,
   },
   resendButtonText: {
-    fontFamily: 'Quicksand',
     fontSize: 16,
     color: '#fff',
     textAlign: 'center',
   },
   errorText: {
-    fontFamily: 'Quicksand',
     fontSize: 14,
     fontWeight: 'bold',
     color: 'rgb(249, 74, 74)',

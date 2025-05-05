@@ -11,6 +11,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'expo-router';
 import { TouchableWithoutFeedback } from 'react-native';
+import { ThemedText } from '@/components/ThemedText'; // Import ThemedText
 
 export default function OtpLogin() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function OtpLogin() {
   const [phone, setPhone] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [referrerCode, setReferrerCode ] = useState<string>('');
 
   const [otp, setOtp] = useState<string>('');
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '']);
@@ -67,8 +69,6 @@ export default function OtpLogin() {
     setUserDetailsError(msg);
     setTimeout(() => setUserDetailsError(' '), 5000);
   };
-
-
 
 
   const handleSubmit = async () => {
@@ -149,6 +149,7 @@ export default function OtpLogin() {
       user_email_id: userEmail,
       user_position: 3,
       user_active: 'Y',
+      ...(referrerCode && { referred_by: referrerCode }),
     };
 
     try {
@@ -179,7 +180,7 @@ export default function OtpLogin() {
   if (!fontsLoaded) {
     return (
       <View>
-        <Text>Loading...</Text>
+        <ThemedText type="default">Loading...</ThemedText>
       </View>
     );
   }
@@ -198,15 +199,15 @@ export default function OtpLogin() {
           <View style={[{ flexDirection: 'column', alignItems: 'center', paddingTop: 40 }]}>
             <Image source={require('../../assets/images/logo.png')} style={[styles.logo]} />
             <View style={[{ alignItems: 'center' }]}>
-              <Text style={{ fontSize: 40, fontFamily: 'Quicksand', fontWeight: 'bold' }}>
-                <Text style={{ color: '#4666C8' }}>Hey</Text> There!
-              </Text>
-              <Text style={{ fontSize: 30, fontFamily: 'Quicksand' }}>
-                Welcome to <Text style={{ fontWeight: 'bold', color: '#4666C8' }}>Tradedge</Text>
-              </Text>
-              <Text style={{ fontSize: 30, fontFamily: 'Quicksand' }}>
-                Get <Text style={{ fontWeight: 'bold', color: '#4666C8' }}>3 Free</Text> trades
-              </Text>
+              <ThemedText type="title" style={{ color: '#000' }}>
+                <ThemedText type="title" style={{ color: '#4666C8' }}>Hey</ThemedText> There!
+              </ThemedText>
+              <ThemedText type="subtitle" style={{ color: '#000' }}>
+                Welcome to <ThemedText type="subtitle" style={{ fontWeight: 'bold', color: '#4666C8' }}>Tradedge</ThemedText>
+              </ThemedText>
+              <ThemedText type="subtitle" style={{ color: '#000' }}>
+                Get <ThemedText type="subtitle" style={{ fontWeight: 'bold', color: '#4666C8' }}>3 Free</ThemedText> trades
+              </ThemedText>
             </View>
           </View>
     
@@ -219,6 +220,8 @@ export default function OtpLogin() {
           >
             <View style={{ flex: 1, justifyContent: 'flex-end' }}>
               <View style={{ 
+                // height: showUserDetails ? (os==='ios'? dimHeight * 0.45: dimHeight * 0.5) 
+                //                         : (os==='ios'? dimHeight * 0.38: dimHeight * 0.42), 
                 height: showUserDetails ? (os==='ios'? dimHeight * 0.45: dimHeight * 0.5) 
                                         : (os==='ios'? dimHeight * 0.38: dimHeight * 0.42), 
                 width: '100%' 
@@ -236,8 +239,8 @@ export default function OtpLogin() {
                     paddingTop: 30,
                   }}
                 >
-                  <Text style={styles.title}>Let's Get Started</Text>
-                  <Text style={styles.subtitle}>Follow Simple steps to get into Tradege</Text>
+                  <ThemedText type="subtitle" style={{color: 'white'}}>Let's Get Started</ThemedText>
+                  <ThemedText type="default" style={{color: 'white', paddingBottom: 4}}>Follow Simple steps to get into Tradege</ThemedText>
     
                   {showUserDetails ? (
                     <UserDetails
@@ -246,6 +249,8 @@ export default function OtpLogin() {
                       setUserName={setUserName}
                       userEmail={userEmail}
                       setUserEmail={setUserEmail}
+                      referrerCode={referrerCode}
+                      setReferrerCode={setReferrerCode}
                       continueButtonLoading={continueButtonLoading}
                       userDetailsError={userDetailsError}
                     />
@@ -271,9 +276,9 @@ export default function OtpLogin() {
                     />
                   )}
     
-                  <Text style={styles.footerText}>
+                  {/* <Text style={styles.footerText}>
                     Verified by <Text style={[{ fontWeight: 'bold' }]}>1 lakh+</Text> customers
-                  </Text>
+                  </Text> */}
                 </LinearGradient>
               </View>
             </View>
@@ -290,26 +295,5 @@ const styles = StyleSheet.create({
     height: 150,
     marginBottom: 0,
   },
-  title: {
-    fontFamily: 'Quicksand',
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontFamily: 'Quicksand',
-    fontSize: 16,
-    color: '#fff',
-    marginBottom: 10,
-  },
-  footerText: {
-    textAlign: 'center',
-    fontFamily: 'Quicksand',
-    fontSize: 12,
-    color: '#fff',
-    position: 'absolute',
-    bottom: 25,
-    paddingHorizontal: 10,
-  },
+  // Removed title and subtitle styles since they are now handled by ThemedText
 });

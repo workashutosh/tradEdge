@@ -42,12 +42,11 @@ const getISTDate = () => {
 };
 
 export default function TradeDetails() {
-
-  const { userDetails } = useUser();
+  const { userDetails, purchasedPackagesId } = useUser();
   const { packages } = useStockContext(); // Get packages from StockContext
   const params = useLocalSearchParams(); // Get params from the route
 
-  const themeColors=useTheme();
+  const themeColors = useTheme();
   const colors = {
     ...themeColors,
     gradientStart: '#00b300',
@@ -71,7 +70,7 @@ export default function TradeDetails() {
     );
   }
 
-
+  
   const getTagStyle = (riskCategory: string): { borderColor: string; icon: string } => {
     if (riskCategory.includes('Low')) return { borderColor: colors.success, icon: 'check-circle' };
     return { borderColor: colors.error, icon: 'error' };
@@ -95,10 +94,10 @@ export default function TradeDetails() {
       );
 
       setIsRedirecting(true);
-      const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-        redirectUrl: `tradedge://paymentResult`,
-      // const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
-      //   redirectUrl: `exp://192.168.1.40:8081/--/paymentResult`,
+// const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
+      //   redirectUrl: `tradedge://paymentResult`,
+      const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
+        redirectUrl: `exp://192.168.1.40:8081/--/paymentResult`,
         amount: Number(trade.price),
         user_id: userDetails?.user_id,
         package_id: trade.package_id,
@@ -125,7 +124,9 @@ export default function TradeDetails() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ThemedText style={[styles.category, { color: colors.text }]}>Redirecting...</ThemedText>
+          <ThemedText type="subtitle" style={{ color: colors.text }}>
+            Redirecting...
+          </ThemedText>
         </View>
       </SafeAreaView>
     );
@@ -137,7 +138,9 @@ export default function TradeDetails() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <ThemedText style={[styles.category, { color: colors.text }]}>{trade.categoryTag}</ThemedText>
+        <ThemedText type="title" style={{ color: colors.text }}>
+          {trade.categoryTag}
+        </ThemedText>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -149,7 +152,13 @@ export default function TradeDetails() {
       </ScrollView>
 
       <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
-        <SliderButton name="Subscribe" colors={colors} onPress={handlePayment} />
+        {purchasedPackagesId.includes(trade.package_id) ? (
+          <ThemedText type="defaultSemiBold" style={{ color: colors.success }}>
+            Subscribed
+          </ThemedText>
+        ) : (
+          <SliderButton name="Subscribe" colors={colors} onPress={handlePayment} />
+        )}
       </View>
     </SafeAreaView>
   );
@@ -305,6 +314,11 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
+  subscribedText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
   cardDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -324,7 +338,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   detailLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     opacity: 0.7,
     marginBottom: 4,

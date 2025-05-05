@@ -8,7 +8,9 @@ import {
   SafeAreaView,
   Dimensions,
   Text,
-} from 'react-native';
+  Button,
+  Linking
+ } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -16,7 +18,9 @@ import { useStockContext } from '@/context/StockContext';
 import { router } from 'expo-router';
 import Header from '@/components/Header';
 import { useTheme } from '@/utils/theme';
-
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import { LinearGradient } from 'expo-linear-gradient';
+import { GradientText } from '@/components/GradientText';
 type Package = {
   type_id: string;
   type_name: string;
@@ -77,7 +81,7 @@ export default function Trades() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title={"Trades"} showBuyProButton={true} />
-      
+
       {/* Fixed Tags Bar */}
       <View style={[styles.tagSection, { backgroundColor: colors.background }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
@@ -93,82 +97,109 @@ export default function Trades() {
                 },
               ]}
             >
-                <ThemedText
+              <ThemedText
+                type="defaultSemiBold"
                 style={[
                   styles.tradeTagText,
                   { color: selectedTag === tag ? colors.selectedTagText : colors.tagText },
                 ]}
-                >
+              >
                 {tag}
-                </ThemedText>
+              </ThemedText>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
-  
+
       {/* Scrollable Content */}
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: 10 }]}>
         {filteredServices.length > 0 ? (
           filteredServices.map((item, idx) => (
             <ThemedView key={idx} style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
-              <TouchableOpacity onPress={() => handleTradePress(item)}>
-                <View style={[styles.card, { backgroundColor: colors.card }]}>
-                  <View style={[styles.cardHeader, { borderBottomColor: colors.text }]}>
-                    <ThemedText style={[styles.cardTitle, { color: colors.text }]}>{item.title}</ThemedText>
+              <View style={[styles.card, { backgroundColor: colors.card }]}>
+                {/* Header Section */}
+                <View style={styles.cardHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <GradientText
+                      text={item.title}
+                      style={styles.cardTitle}
+                      colors={['#04810E', '#039D74']} // Gradient colors
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                    />
+                    <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} />
                   </View>
-                  <View style={[styles.cardDetails, { borderBottomColor: colors.text }]}>
-                    <View style={[styles.detailRow, { borderRightWidth: 1, borderRightColor: colors.text }]}>
-                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Min Investment</ThemedText>
-                      <ThemedText style={[styles.detailValue, { color: colors.text }]}>
-                        ₹{' '}
-                        {item.minimumInvestment
-                          ? new Intl.NumberFormat('en-IN').format(Number(item.minimumInvestment))
-                          : 'N/A'}
-                      </ThemedText>
-                    </View>
-                    <View style={[styles.detailRow, { borderRightWidth: 1, borderRightColor: colors.text }]}>
-                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Risk Category</ThemedText>
-                      <View style={styles.riskTag}>
-                        <MaterialIcons
-                          name={getTagStyle(item.riskCategory).icon}
-                          size={14}
-                          color={getTagStyle(item.riskCategory).color}
-                        />
-                        <ThemedText
-                          style={[
-                            styles.detailValue,
-                            { color: getTagStyle(item.riskCategory).color },
-                          ]}
-                        >
-                          {item.riskCategory}
-                        </ThemedText>
-                      </View>
-                    </View>
-                    <View style={styles.detailRow}>
-                      <ThemedText style={[styles.detailLabel, { color: colors.text }]}>Profit Potential</ThemedText>
-                      <ThemedText style={[styles.detailValue, { color: colors.text }]}>{item.profitPotential}</ThemedText>
-                    </View>
+                  <ThemedText type="subtitle" style={[styles.cardSubtitle, {}]}>
+                    Tradedge Package
+                  </ThemedText>
+                </View>
+
+                {/* Details Section */}
+                <View style={styles.cardDetails}>
+                  <View style={styles.detailBox}>
+                    <FontAwesome name="check-circle" size={12} color={colors.success} style={styles.detailIcon} />
+                    <ThemedText type="subtitle" style={styles.detailLabel}>
+                      Min Investment
+                    </ThemedText>
+                    <ThemedText type="defaultSemiBold" style={styles.detailValue}>
+                      ₹ {new Intl.NumberFormat('en-IN').format(Number(item.minimumInvestment))}
+                    </ThemedText>
                   </View>
-                  <View style={[styles.buttonRow, { borderTopColor: colors.text }]}>
-                    <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.buttonPrimary }]}
-                      onPress={() => handleTradePress(item)}
-                    >
-                      <ThemedText style={styles.actionButtonText}>Enquire</ThemedText>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionButton, { backgroundColor: colors.buttonPrimary }]}
-                      onPress={() => handleTradePress(item)}
-                    >
-                      <ThemedText style={styles.actionButtonText}>Buy</ThemedText>
-                    </TouchableOpacity>
+                  <View style={styles.detailBox}>
+                    <FontAwesome name="check-circle" size={12} color={colors.success} style={styles.detailIcon} />
+                    <ThemedText type="subtitle" style={styles.detailLabel}>
+                      Risk Category
+                    </ThemedText>
+                    <ThemedText type="defaultSemiBold" style={styles.detailValue}>
+                      {item.riskCategory || 'N/A'}
+                    </ThemedText>
+                  </View>
+                  <View style={styles.detailBox}>
+                    <FontAwesome name="check-circle" size={12} color={colors.success} style={styles.detailIcon} />
+                    <ThemedText type="subtitle" style={styles.detailLabel}>
+                      Profit Potential
+                    </ThemedText>
+                    <ThemedText type="defaultSemiBold" style={styles.detailValue}>
+                      {item.profitPotential || 'N/A'}
+                    </ThemedText>
                   </View>
                 </View>
-              </TouchableOpacity>
+
+                {/* Buttons Section */}
+                <View style={styles.buttonRow}>
+                  {/* Enquiry Button */}
+                  <TouchableOpacity
+                    style={[styles.enquiryButton, { backgroundColor: colors.text }]}
+                    onPress={() => Linking.openURL('tel:7400330785')} // Open the phone dialer with the number
+                  >
+                    <FontAwesome name="phone" size={14} color={colors.card} style={{ marginRight: 5 }} />
+                    <ThemedText type="defaultSemiBold" style={[styles.buttonText, { color: colors.card }]}>
+                      Enquiry
+                    </ThemedText>
+                  </TouchableOpacity>
+
+                  {/* Buy Button with Gradient */}
+                  <TouchableOpacity
+                    onPress={() => handleTradePress(item)}
+                    style={{ flex: 1 }} // Ensure the entire button is clickable
+                  >
+                    <LinearGradient
+                      colors={['#04810E', '#039D74']} // Gradient colors
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[styles.buyButton]} // Apply gradient to the button
+                    >
+                      <ThemedText type="defaultSemiBold" style={[styles.buttonText, { color: colors.card }]}>
+                        Buy
+                      </ThemedText>
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </ThemedView>
           ))
         ) : (
-          <ThemedText style={[styles.noItemsText, { color: colors.text }]}>
+          <ThemedText type="default" style={[styles.noItemsText, { color: colors.text }]}>
             No packages available for this category.
           </ThemedText>
         )}
@@ -225,13 +256,11 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     marginBottom: 16,
-    marginHorizontal: 6,
-    borderWidth: 1,
-    borderColor: '#3498db',
+    marginHorizontal: 12,
     borderRadius: 12,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 4,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
     elevation: 5,
   },
   card: {
@@ -240,60 +269,70 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
-    paddingBottom: 8,
+    marginBottom: 16,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 8,
+  },
+  cardSubtitle: {
+    color: 'grey',
+    fontSize: 14,
+    fontWeight: '500',
   },
   cardDetails: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    // borderBottomWidth: 1,
-    marginBottom: 8,
-  },
-  detailRow: {
-    flex: 1,
-    flexDirection: 'column',
     justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  detailBox: {
+    width: '32%',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    paddingBottom: 6,
     alignItems: 'center',
-    // marginBottom: 8,
-    // paddingBottom: 8,
-
+  },
+  detailIcon: {
+    alignSelf: 'flex-end',
+    marginRight: 2,
+    marginTop: 2,
   },
   detailLabel: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '300',
+    marginBottom: 0,
+    textAlign: 'center',
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  riskTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
+    textAlign: 'center',
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
+    justifyContent: 'space-between',
   },
-  actionButton: {
-    // flex: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 5,
+  enquiryButton: {
+    flex: 1 / 2,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginRight: 8,
   },
-  actionButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
+  buyButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  buttonText: {
+    fontSize: 14,
     fontWeight: '600',
   },
   noItemsText: {

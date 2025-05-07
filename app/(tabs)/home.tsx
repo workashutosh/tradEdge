@@ -8,37 +8,32 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
-  useColorScheme,
   ActivityIndicator,
   ImageBackground,
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { BadgeCheck } from 'lucide-react-native';
-import NseBseAccordian from '@/components/NseBseAccordian';
 import MemoizedModal from '@/components/MemoizeModal';
 import ExplorePackageCard from '@/components/home/explorePackageCard';
 import TradeCard from '@/components/home/tradeCard';
 import Header from '@/components/Header';
-import data from '@/data.json';
 import KycComponent from '@/components/KycComponent';
 import { useStockContext } from '@/context/StockContext';
 import { useUser } from '@/context/UserContext';
 import { useTheme } from '@/utils/theme';
-import { WebView } from 'react-native-webview'; // Import WebView
 
 export default function HomeScreen() {
   const userContext = useUser();
-
+  
   const [isPopupVisible, setIsPopupVisible] = useState(false);
   const { NSEData, BSEData, packages } = useStockContext(); // Get packages from StockContext
 
-  const explorePackagesId = ["7", "3", "10", "9"];
+  const explorePackagesId = ["5", "3", "10", "9"];
   const bestTradesId = ["2", "4", "11", "9"];
 
   const insets = useSafeAreaInsets();
@@ -53,7 +48,7 @@ export default function HomeScreen() {
     bestTradesId.includes(pkg.package_id)
   );
 
-  const refundOfferPackage = packages.find(pkg => pkg.package_id === "1")
+  const refundOfferPackage = packages.find(pkg => pkg.package_id === "10000")
   console.log(refundOfferPackage);
 
 
@@ -71,9 +66,6 @@ export default function HomeScreen() {
     return () => animation.stop();
   }, [shimmerAnim]);
 
-  const handleCloseModal = useCallback(() => {
-    setIsPopupVisible(false);
-  }, []);
 
   if (userContext.isInitializing) {
     return (
@@ -96,65 +88,16 @@ export default function HomeScreen() {
       <Header title={"Hi " + (userContext.userDetails?.user_full_name || "User")} showBuyProButton={true} />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* TradingView Widget */}
-        <ThemedView style={{ marginHorizontal: 10, marginTop: 10, backgroundColor: 'transparent' }}>
-          <WebView
-            style={{ height: 300, borderRadius: 10, overflow: 'hidden' }}
-            source={{
-              html: `
-                <!-- TradingView Widget BEGIN -->
-                <div class="tradingview-widget-container">
-                  <div class="tradingview-widget-container__widget"></div>
-                  <div class="tradingview-widget-copyright">
-                    <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
-                      <span class="blue-text">Track all markets on TradingView</span>
-                    </a>
-                  </div>
-                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-tickers.js" async>
-                  {
-                    "symbols": [
-                      {
-                        "proName": "FX_IDC:EURUSD",
-                        "title": "EUR to USD"
-                      },
-                      {
-                        "proName": "BITSTAMP:BTCUSD",
-                        "title": "Bitcoin"
-                      },
-                      {
-                        "proName": "BITSTAMP:ETHUSD",
-                        "title": "Ethereum"
-                      },
-                      {
-                        "description": "Tesla",
-                        "proName": "NASDAQ:TSLA"
-                      }
-                    ],
-                    "isTransparent": false,
-                    "showSymbolLogo": true,
-                    "colorTheme": "dark",
-                    "locale": "en"
-                  }
-                  </script>
-                </div>
-                <!-- TradingView Widget END -->
-              `,
-            }}
-            originWhitelist={['*']}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
-        </ThemedView>
-
         {/* KYC Component */}
         {userContext.userDetails && (userContext.userDetails.auth === null || userContext.userDetails.auth === 'N') && (
-          <ThemedView style={{ marginHorizontal: 10, backgroundColor: 'transparent' }}>
+          <ThemedView style={{ marginHorizontal: 8 }}>
             <KycComponent />
           </ThemedView>
         )}
 
         <ThemedView style={{ marginHorizontal: 10, marginTop: 0, backgroundColor: 'transparent' }}>
           <TouchableOpacity
+            activeOpacity={0.7}
             onPress={() => {
               router.push({
                   pathname: '/main/TradeDetails',
@@ -175,7 +118,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </ThemedView>
 
-        <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor }]}>
+        <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor, backgroundColor: colors.vgreen }]}>
+          
           <ThemedText type="subtitle" style={{ fontSize: 15, color: 'white' }}>
             Your Trusted Research Analyst
           </ThemedText>
@@ -187,6 +131,7 @@ export default function HomeScreen() {
           </ThemedText>
           <ThemedView style={styles.websiteRedirectContainerBottom}>
             <TouchableOpacity
+              activeOpacity={0.7}
               onPress={() => router.replace('/(tabs)/trades')}
               style={styles.buttonContainer}
             >
@@ -216,6 +161,7 @@ export default function HomeScreen() {
               if ('isShowMore' in item && item.isShowMore) {
                 return (
                   <TouchableOpacity
+                    activeOpacity={0.7}
                     style={styles.showMoreContainer}
                     onPress={() => router.replace('/(tabs)/trades')}
                   >
@@ -253,7 +199,7 @@ export default function HomeScreen() {
               <ThemedText type="title" style={{ color: 'white', fontWeight: '600', fontSize: 22 }}>
                 Best Trades
               </ThemedText>
-              <View style={{ flexDirection: 'row' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                 <BadgeCheck size={24} color="rgb(9, 196, 9)" style={{ marginRight: 3 }} />
                 <ThemedText type="defaultSemiBold" style={{ color: 'white', fontWeight: 'bold', alignSelf: 'center' }}>
                   SEBI Reg
@@ -276,7 +222,6 @@ export default function HomeScreen() {
         <ThemedView style={{ backgroundColor: colors.background, paddingBottom: 70 }} />
       </ScrollView>
 
-      <MemoizedModal isVisible={isPopupVisible} onClose={handleCloseModal} colors={colors} />
     </SafeAreaView>
   );
 }
@@ -299,7 +244,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 10,
     marginBottom: 20,
-    backgroundColor: 'rgb(30, 106, 0)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -317,10 +261,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   redirectionButton: {
-    backgroundColor: 'rgb(44, 145, 5)',
+    backgroundColor: '#388E3C', // Modern green
     paddingHorizontal: 18,
     borderRadius: 6,
-    shadowColor: 'rgb(44, 145, 5)',
+    shadowColor: '#388E3C',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
@@ -329,7 +273,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   buttonText: {
-    color: 'white',
+    color: '#FFFFFF', // White text for contrast
     fontWeight: 'bold',
     fontSize: 16,
     paddingVertical: 10,
@@ -338,7 +282,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     width: 15,
     height: '200%',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Subtle shimmer
     opacity: 0.7,
   },
   tradedgeLogo: {
@@ -399,21 +343,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 15,
     borderRadius: 10,
+    backgroundColor: '#4CAF50', // Green gradient
   },
   refundOfferHeader: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#E0F2F1', // Light teal text
   },
   refundOfferTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#FFFFFF', // White text
     marginTop: 5,
   },
   refundOfferSubtitle: {
     fontSize: 14,
-    color: 'white',
+    color: '#E0F2F1', // Light teal text
     marginTop: 5,
   },
   refundOfferImageBackground: {

@@ -10,7 +10,7 @@ import {
   Text,
   Button,
   Linking
- } from 'react-native';
+} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -21,6 +21,7 @@ import { useTheme } from '@/utils/theme';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GradientText } from '@/components/GradientText';
+import { BadgeIndianRupeeIcon } from 'lucide-react-native';
 type Package = {
   type_id: string;
   type_name: string;
@@ -88,6 +89,7 @@ export default function Trades() {
           {tags.map((tag, index) => (
             <TouchableOpacity
               key={index}
+              activeOpacity={0.8}
               onPress={() => setSelectedTag(tag)}
               style={[
                 styles.tagButton,
@@ -115,11 +117,16 @@ export default function Trades() {
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: 10 }]}>
         {filteredServices.length > 0 ? (
           filteredServices.map((item, idx) => (
-            <ThemedView key={idx} style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
-              <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <TouchableOpacity
+              key={idx}
+              onPress={() => handleTradePress(item)} // Make the whole card clickable
+              activeOpacity={0.7} // Ensure the card click doesn't interfere with button clicks
+              style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}
+            >
+              <ThemedView style={[styles.card, { backgroundColor: colors.card }]}>
                 {/* Header Section */}
                 <View style={styles.cardHeader}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <GradientText
                       text={item.title}
                       style={styles.cardTitle}
@@ -127,9 +134,11 @@ export default function Trades() {
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
                     />
-                    <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} />
+                    {/* <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} /> */}
+                    <BadgeIndianRupeeIcon size={24} color={colors.success} style={{ marginLeft: 5 }} />
+                    
                   </View>
-                  <ThemedText type="subtitle" style={[styles.cardSubtitle, {}]}>
+                  <ThemedText type="subtitle" style={[styles.cardSubtitle]}>
                     Tradedge Package
                   </ThemedText>
                 </View>
@@ -171,6 +180,7 @@ export default function Trades() {
                   <TouchableOpacity
                     style={[styles.enquiryButton, { backgroundColor: colors.text }]}
                     onPress={() => Linking.openURL('tel:7400330785')} // Open the phone dialer with the number
+                    activeOpacity={0.7}
                   >
                     <FontAwesome name="phone" size={14} color={colors.card} style={{ marginRight: 5 }} />
                     <ThemedText type="defaultSemiBold" style={[styles.buttonText, { color: colors.card }]}>
@@ -182,6 +192,7 @@ export default function Trades() {
                   <TouchableOpacity
                     onPress={() => handleTradePress(item)}
                     style={{ flex: 1 }} // Ensure the entire button is clickable
+                    activeOpacity={0.7} // Ensure the button click doesn't interfere with card click
                   >
                     <LinearGradient
                       colors={['#04810E', '#039D74']} // Gradient colors
@@ -195,8 +206,8 @@ export default function Trades() {
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
-              </View>
-            </ThemedView>
+              </ThemedView>
+            </TouchableOpacity>
           ))
         ) : (
           <ThemedText type="default" style={[styles.noItemsText, { color: colors.text }]}>
@@ -246,7 +257,7 @@ const styles = StyleSheet.create({
   tagButton: {
     paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: 20,
+    borderRadius: 10,
     borderWidth: 1,
     marginRight: 8,
   },

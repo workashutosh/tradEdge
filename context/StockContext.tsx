@@ -213,21 +213,8 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             profitPotential: '15-25% p.a.'
           }));
         }
-        
-        // If no subtypes, create a single item from the type
-        return [{
-          type_id: type.type_id,
-          type_name: type.type_name,
-          package_id: type.type_id,
-          title: type.type_name,
-          price: type.price?.toString() || 'Contact for pricing',
-          details: (type.details || ['Details not available']).map((detail: string) => detail.replace(/\?/g, '₹')),
-          categoryTag: type.type_name,
-          icon: getIconForCategory(type.type_name),
-          riskCategory: 'N/A',
-          minimumInvestment: 'N/A',
-          profitPotential: '15-25% p.a.'
-        }];
+
+        return [];
       });
 
       setPackages([...transformedPackages, {

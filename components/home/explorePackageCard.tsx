@@ -8,6 +8,7 @@ import { Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useStockContext } from '@/context/StockContext';
+import { GradientText } from '../GradientText';
 
 interface Package {
   type_id: string;
@@ -55,9 +56,9 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
 
   return (
     <ThemedView style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
-      <TouchableOpacity onPress={handleTradePress}>
+      <TouchableOpacity onPress={handleTradePress} activeOpacity={0.7}>
         <ThemedView style={styles.cardHeader}>
-          <ThemedText style={styles.cardTitle}>{item.title}</ThemedText>
+          <GradientText text={item.title} style={styles.cardTitle} colors={['#04810E', '#039D74']} />
           <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color="green" />
         </ThemedView>
         <ThemedView style={styles.cardBody}>
@@ -104,10 +105,11 @@ const styles = StyleSheet.create({
   cardContainer: {
     height: 210,
     width: 250,
-    borderColor: 'green',
+    borderColor: '#4CAF50', // Vibrant green border
     marginHorizontal: 8,
     borderWidth: 1,
     borderRadius: 10,
+    shadowColor: '#00000033', // Subtle shadow
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -132,32 +134,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-    backgroundColor: 'rgb(30, 106, 0)',
+    backgroundColor: '#388E3C', // Dark green footer
     overflow: 'hidden',
   },
   cardTitle: {
     fontWeight: '700',
     fontSize: 18,
     width: '85%',
+    color: '#212121', // Dark gray text
   },
   cardIcon: { width: '15%' },
   cardPrice: {
     fontSize: 20,
     fontWeight: '700',
     padding: 5,
-    color: 'green',
+    color: '#4CAF50', // Vibrant green price
   },
   cardDiscountedPrice: {
     fontSize: 20,
     fontWeight: '700',
     padding: 5,
-    color: 'green',
+    color: '#4CAF50', // Vibrant green discounted price
   },
   shimmer: {
     position: 'absolute',
     width: 15,
     height: '200%',
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Subtle shimmer
     opacity: 0.7,
   },
 });

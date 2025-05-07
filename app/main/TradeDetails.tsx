@@ -94,10 +94,10 @@ export default function TradeDetails() {
       );
 
       setIsRedirecting(true);
-// const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-      //   redirectUrl: `tradedge://paymentResult`,
-      const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
-        redirectUrl: `exp://192.168.1.40:8081/--/paymentResult`,
+      const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
+        redirectUrl: `tradedge://paymentResult`,
+      // const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
+      //   redirectUrl: `exp://192.168.1.40:8081/--/paymentResult`,
         amount: Number(trade.price),
         user_id: userDetails?.user_id,
         package_id: trade.package_id,
@@ -135,10 +135,10 @@ export default function TradeDetails() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
           <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <ThemedText type="title" style={{ color: colors.text }}>
+        <ThemedText type="subtitle" style={{ color: colors.text }}>
           {trade.categoryTag}
         </ThemedText>
         <View style={styles.headerSpacer} />
@@ -167,7 +167,7 @@ export default function TradeDetails() {
 // Component Definitions (unchanged)
 const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <LinearGradient
-    colors={[colors.gradientStart, colors.gradientEnd]}
+    colors={['#04810E', '#039D74']}
     start={{ x: 0, y: 0 }}
     end={{ x: 1, y: 1 }}
     style={styles.cardHeader}
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

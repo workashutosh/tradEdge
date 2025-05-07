@@ -85,6 +85,7 @@ export default function OtpInput({
           style={[styles.button, { backgroundColor: '#000' }]}
           onPress={handleOtpSubmit}
           disabled={verifyOtpButtonLoading}
+          activeOpacity={0.7}
         >
           {verifyOtpButtonLoading ? (
             <ActivityIndicator size="small" color="#fff" />
@@ -99,6 +100,7 @@ export default function OtpInput({
         style={[styles.resendButton]}
         onPress={handleResend}
         disabled={!isResendEnabled}
+        activeOpacity={0.7}
       >
         <ThemedText type="default" style={styles.resendButtonText}>
           Resend OTP {isResendEnabled ? '' : `in (${timer}s)`}

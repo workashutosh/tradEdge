@@ -1,37 +1,31 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, useColorScheme, Text } from 'react-native';
+import { TouchableOpacity, StyleSheet, useColorScheme, Modal } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { router } from 'expo-router';
 import BuyProButton from '@/components/BuyProButton';
-import { useUser } from '@/context/UserContext'; // Import the useUser hook
+import { useUser } from '@/context/UserContext';
+import { useTheme } from '@/utils/theme';
 
 interface HeaderProps {
-  showBuyProButton?: boolean; // Optional prop to control BuyProButton visibility
+  showBuyProButton?: boolean;
   showLogoutButton?: boolean;
-  title: string; // Optional prop to control Logout button visibility
+  title: string;
 }
 
-export default function Header({showBuyProButton = false, showLogoutButton = false, title }: HeaderProps) {
-
+export default function Header({ showBuyProButton = false, showLogoutButton = false, title }: HeaderProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const themeColors = useTheme();
   const colors = {
-    background: isDark ? '#121212' : '#f7f7f7',
-    text: isDark ? '#ffffff' : '#333333',
-    card: isDark ? '#1e1e1e' : '#ffffff',
-    border: isDark ? '#333333' : '#e0e0e0',
-    error: '#ff4444',
-    primary: '#6200ee',
-    success: '#00c853',
-    warning: '#ffab00',
+    ...themeColors,
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
   };
 
-  const { userDetails, logout } = useUser(); // Access userDetails from UserContext
-  const [isPopupVisible, setIsPopupVisible] = useState(false); // Manage popup visibility state
+  const { userDetails, logout } = useUser();
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
 
   // handle logout
   const handleLogout = async (): Promise<void> => {
@@ -40,30 +34,55 @@ export default function Header({showBuyProButton = false, showLogoutButton = fal
   };
 
   return (
-    <View style={[styles.header, {backgroundColor: colors.background, shadowColor: colors.text}]}>
+    <ThemedView style={[styles.header, { backgroundColor: colors.background, shadowColor: colors.text }]}>
       <ThemedView style={[styles.profileContainer, { backgroundColor: 'transparent' }]}>
-        <TouchableOpacity
-          onPress={() => router.replace('/(tabs)/profile')}
-        >
+        <TouchableOpacity onPress={() => router.replace('/(tabs)/profile')}>
           <FontAwesome name="user-circle-o" size={28} color={colors.text} />
         </TouchableOpacity>
         <ThemedText style={[styles.greetingText, { color: colors.text }]}>
           {title}
         </ThemedText>
       </ThemedView>
-      {showBuyProButton && <BuyProButton setIsPopupVisible={setIsPopupVisible} />}
+      {showBuyProButton && (
+        <>
+          <BuyProButton setIsPopupVisible={setIsPopupVisible} />
+          <Modal
+            visible={isPopupVisible}
+            transparent
+            animationType="slide"
+            onRequestClose={() => setIsPopupVisible(false)}
+          >
+            <ThemedView style={modalStyles.overlay}>
+              <ThemedView style={[modalStyles.modalContent, { backgroundColor: colors.card }]}>
+                <ThemedText style={[modalStyles.modalTitle, { color: colors.text }]}>Upgrade to Pro</ThemedText>
+                <ThemedText style={[modalStyles.modalText, { color: colors.text }]}>
+                  Coming soon! Stay tuned for exciting features and enhancements.
+                </ThemedText>
+                <TouchableOpacity
+                  style={[modalStyles.closeButton, { backgroundColor: colors.primary }]}
+                  onPress={() => setIsPopupVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <ThemedText style={{ color: colors.buttonText, fontWeight: 'bold' }}>Close</ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+            </ThemedView>
+          </Modal>
+        </>
+      )}
       {showLogoutButton && (
         <TouchableOpacity
           style={[styles.logoutButton, { backgroundColor: colors.primary }]}
           onPress={handleLogout}
+          activeOpacity={0.7}
         >
-          <Text style={[styles.logoutButtonText, { color: "white" }]}>
+          <ThemedText style={[styles.logoutButtonText, { color: "white" }]}>
             Logout
-          </Text>
+          </ThemedText>
           <FontAwesome name="sign-out" size={16} color="white" style={styles.logoutIcon} />
         </TouchableOpacity>
       )}
-    </View>
+    </ThemedView>
   );
 }
 
@@ -76,7 +95,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     zIndex: 1,
-    // shadowColor: 'black',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -91,23 +109,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  popup: {
-    position: 'absolute',
-    top: 50,
-    right: 10,
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 8,
-    shadowColor: 'black',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  popupText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -118,9 +119,40 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     fontSize: 16,
-    // alignSelf: 'center'
   },
   logoutIcon: {
     marginLeft: 5,
+  },
+});
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    borderRadius: 14,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 6,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  closeButton: {
+    marginTop: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 32,
+    borderRadius: 8,
   },
 });

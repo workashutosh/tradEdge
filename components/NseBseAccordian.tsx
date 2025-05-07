@@ -101,6 +101,7 @@ const NseBseAccordian: React.FC = () => {
         <TouchableOpacity
           style={[styles.expandButton, { }]}
           onPress={toggleAccordion}
+          activeOpacity={0.7}
         >
           <Ionicons
             name={isExpanded ? 'chevron-up' : 'chevron-down'}

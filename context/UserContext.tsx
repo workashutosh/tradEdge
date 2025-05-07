@@ -170,10 +170,18 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
         setUserTransactions(packages);
 
         // Extract and store purchased package IDs
-        const packageIds = packages.map((pkg: any) => pkg.package_details.subtype_id);
+        const packageIds = packages
+          .filter((pkg: any) =>
+            parseFloat(pkg.payment_history?.[0]?.amount) === parseFloat(pkg.package_details.package_price) &&
+            pkg.payment_history?.[0]?.payment_status === 'completed'
+          )
+          .map((pkg: any) => pkg.package_details.subtype_id);
         setPurchasedPackagesId(packageIds);
 
+
         console.log('Purchased package IDs:', packageIds);
+
+
       } else {
         setTransactionsError(response.data.message || 'Failed to fetch transactions');
         console.error('API returned status:', response.data.message);

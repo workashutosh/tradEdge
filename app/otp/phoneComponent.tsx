@@ -58,6 +58,7 @@ export default function PhoneInput({
         style={[styles.button, { backgroundColor: phone.length === 10 ? '#000' : '#808080' }]}
         onPress={handleSubmit}
         disabled={otpButtonLoading}
+        activeOpacity={0.7}
       >
         {otpButtonLoading ? (
           <ActivityIndicator size="small" color="#fff" />

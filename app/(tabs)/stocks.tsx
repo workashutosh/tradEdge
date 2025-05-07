@@ -257,6 +257,7 @@ export default function Stocks() {
           <TouchableOpacity 
             style={[styles.searchButton, { backgroundColor: colors.primary }]}
             onPress={searchStock}
+            activeOpacity={0.7}
           >
             <MaterialIcons name="search" size={24} color="#ffffff" />
           </TouchableOpacity>

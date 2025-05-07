@@ -6,10 +6,7 @@ import {
     TouchableOpacity,
     SafeAreaView,
     View,
-    useColorScheme,
-    Linking
 } from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/context/UserContext';
@@ -19,6 +16,8 @@ import { ThemedText } from '@/components/ThemedText';
 import { router } from 'expo-router';
 import Header from '@/components/Header';
 import { useTheme } from '@/utils/theme'
+import { GradientText } from '@/components/GradientText';
+import { BadgeCheck, BadgeIndianRupeeIcon } from 'lucide-react-native';
 
 interface Package {
     package_id: string;
@@ -26,17 +25,16 @@ interface Package {
 
 export default function MyPackages() {
 
-
     const [packagesId, setPackagesId] = useState<Package[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const { userTransactions } = useUser();
+    const { userTransactions, purchasedPackagesId } = useUser();
     const { packages } = useStockContext();
     const colors = useTheme();
 
 
     useEffect(() => {
-        // Extract subtype_id from userTransactions and store in packagesId
+        // Extract subtype_id(package_id) from userTransactions and store in packagesId
         const extractedPackagesId = userTransactions.map((transaction) => ({
             package_id: transaction.package_details.subtype_id,
         }));
@@ -45,18 +43,9 @@ export default function MyPackages() {
     }, [userTransactions]);
 
     const purchasedPackages = packages.filter((pkg) =>
-        packagesId.some((p) => p.package_id === pkg.package_id)
+        purchasedPackagesId.some((p) => p === pkg.package_id)
     );
 
-
-    const handlePackagePress = (item: any) => {
-        router.push({
-            pathname: '/main/TradeDetails',
-            params: {
-                package_id: item.package_id,
-            },
-        });
-    };
 
     const handleTradePress = (item: any) => {
         router.push({
@@ -86,6 +75,17 @@ export default function MyPackages() {
         );
     }
 
+    const formattedDate = (item: string) => {
+        return new Date(item.replace(' ', 'T')).toLocaleString('en-IN', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+    }
+
+
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -95,14 +95,30 @@ export default function MyPackages() {
                 keyExtractor={(item) => item.package_id}
                 contentContainerStyle={{ paddingTop: 16 }} // Add padding at the top
                 renderItem={({ item }) => (
-                    <ThemedView key={item.package_id} style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
-                        <View style={[styles.card, { backgroundColor: colors.card }]}>
-                            {/* Icon and Title */}
+                    <TouchableOpacity
+                        key={item.package_id}
+                        onPress={() => handleTradePress(item)} // Make the whole card clickable
+                        activeOpacity={0.7} // Ensure the card click doesn't interfere with button clicks
+                        style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}
+                    >
+                        <ThemedView style={[styles.card, { backgroundColor: colors.card }]}>
+                            {/* Header Section */}
                             <View style={styles.cardHeader}>
-                                <MaterialIcons name="bar-chart" size={32} color={colors.primary} />
-                                <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
-                                    {item.title}
-                                </ThemedText>
+                                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                    <GradientText
+                                        text={item.title}
+                                        style={styles.cardTitle}
+                                        colors={['#04810E', '#039D74']} // Gradient colors
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 0 }}
+                                    />
+                                    {/* <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} /> */}
+                                    <BadgeIndianRupeeIcon size={24} color={colors.success} style={{ marginLeft: 5 }} />
+
+                                </View>
+                                {/* <ThemedText type="subtitle" style={[styles.cardTitle]}>
+                                    Tradedge Package
+                                </ThemedText> */}
                             </View>
 
                             {/* Details Section */}
@@ -136,34 +152,23 @@ export default function MyPackages() {
                                 </View>
                             </View>
 
-                            {/* Purchase Date */}
-                            <View>
-                                <ThemedText type="default" style={{ color: colors.text }}>
-                                    {`Date: ${
-                                        userTransactions.find(
-                                            (transaction) => transaction.package_details.subtype_id === item.package_id
-                                        )?.purchase_info?.purchase_date || 'N/A'
-                                    }`}
-                                </ThemedText>
-                            </View>
-
                             {/* Buttons Section */}
                             <View style={styles.buttonRow}>
-                                {/* Enquiry Button */}
-                                <TouchableOpacity
-                                    style={[styles.enquiryButton, { backgroundColor: colors.text }]}
-                                    onPress={() => Linking.openURL('tel:7400330785')} // Open the phone dialer with the number
-                                >
-                                    <FontAwesome name="phone" size={14} color={colors.card} style={{ marginRight: 5 }} />
-                                    <ThemedText type="defaultSemiBold" style={[styles.buttonText, { color: colors.card }]}>
-                                        Enquiry
+
+                                {/* Purchase Date */}
+                                <View>
+                                    <ThemedText type="default" style={{ color: colors.text }}>
+                                        {`${formattedDate(userTransactions.find(
+                                            (transaction) => transaction.package_details.subtype_id === item.package_id
+                                        )?.purchase_info?.purchase_date || 'N/A')} `}
                                     </ThemedText>
-                                </TouchableOpacity>
+                                </View>
 
                                 {/* Buy Button with Gradient */}
                                 <TouchableOpacity
                                     onPress={() => handleTradePress(item)}
-                                    style={{ flex: 1 }} // Ensure the entire button is clickable
+                                    style={{}} // Ensure the entire button is clickable
+                                    activeOpacity={0.7}
                                 >
                                     <LinearGradient
                                         colors={['#04810E', '#039D74']} // Gradient colors
@@ -172,13 +177,13 @@ export default function MyPackages() {
                                         style={[styles.buyButton]} // Apply gradient to the button
                                     >
                                         <ThemedText type="defaultSemiBold" style={[styles.buttonText, { color: colors.card }]}>
-                                            Buy
+                                            Details
                                         </ThemedText>
                                     </LinearGradient>
                                 </TouchableOpacity>
                             </View>
-                        </View>
-                    </ThemedView>
+                        </ThemedView>
+                    </TouchableOpacity>
                 )}
             />
         </SafeAreaView>
@@ -207,13 +212,11 @@ const styles = StyleSheet.create({
     },
     cardContainer: {
         marginBottom: 16,
-        marginHorizontal: 10,
-        borderWidth: 1,
-        borderColor: '#3498db',
+        marginHorizontal: 12,
         borderRadius: 12,
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.5,
-        shadowRadius: 4,
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
         elevation: 5,
     },
     card: {
@@ -222,46 +225,52 @@ const styles = StyleSheet.create({
     },
     cardHeader: {
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
-        paddingBottom: 8,
-        // borderBottomWidth: 1,
+        marginBottom: 16,
     },
     cardTitle: {
         fontSize: 18,
         fontWeight: 'bold',
     },
-    cardDetails: {
-        flexDirection: 'row',
-        justifyContent: 'space-evenly',
-        marginBottom: 8,
-        borderBottomWidth: 1,
-    },
-    detailRow: {
-        flex: 1,
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    detailLabel: {
+    cardSubtitle: {
+        color: 'grey',
         fontSize: 14,
         fontWeight: '500',
+    },
+    cardDetails: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 16,
+    },
+    detailBox: {
+        flex: 1,
+        maxWidth: '32%',
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        borderRadius: 8,
+        paddingBottom: 6,
+        alignItems: 'center',
+    },
+    detailIcon: {
+        alignSelf: 'flex-end',
+        marginRight: 2,
+        marginTop: 2,
+    },
+    detailLabel: {
+        fontSize: 12,
+        fontWeight: '300',
+        marginBottom: 0,
+        textAlign: 'center',
     },
     detailValue: {
         fontSize: 14,
         fontWeight: '600',
     },
-    riskTag: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3,
-    },
     buttonRow: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
-        gap: 8,
-        paddingTop: 8,
-        // borderTopWidth: 1,
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     actionButton: {
         paddingHorizontal: 10,
@@ -274,15 +283,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    detailBox: {
-        flex: 1,
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    detailIcon: {
-        marginBottom: 4,
-    },
     enquiryButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -291,8 +291,8 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
     buyButton: {
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 20,
+        paddingVertical: 8,
         borderRadius: 5,
         alignItems: 'center',
     },

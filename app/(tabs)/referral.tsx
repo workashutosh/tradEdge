@@ -52,7 +52,9 @@ export default function ReferralScreen() {
         <ThemedText type="defaultSemiBold" style={[styles.referrerCode, { color: colors.text }]}>
           {referrerCode}
         </ThemedText>
-        <TouchableOpacity onPress={handleCopyCode}>
+        <TouchableOpacity onPress={handleCopyCode} 
+          activeOpacity={0.7}
+        >
           <MaterialIcons name="content-copy" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -64,6 +66,7 @@ export default function ReferralScreen() {
       <TouchableOpacity
         style={[styles.inviteButton, { backgroundColor: colors.buttonPrimary }]}
         onPress={handleInviteFriends}
+        activeOpacity={0.7}
       >
         <ThemedText type="defaultSemiBold" style={styles.inviteButtonText}>
           Invite Friends

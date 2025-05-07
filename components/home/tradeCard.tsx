@@ -40,7 +40,7 @@ export default function TradeCard({ item }: TradeCardProps) {
 
   return (
     <ThemedView style={[styles.tradeCardContainer, { shadowColor: colors.shadowColor, backgroundColor: 'rgb(180, 180, 180)' }]}>
-      <TouchableOpacity onPress={handleTradePress}>
+      <TouchableOpacity onPress={handleTradePress} activeOpacity={0.7}>
         <ThemedView style={[styles.tradeCardHeader, {}]}>
           <ThemedText style={[styles.tradeCardTitle, { color: 'black' }]}>{item.title}</ThemedText>
           <MaterialIcons style={[styles.cardIcon, { color: 'black' }]} name={item.icon} size={26} color={colors.text} />
@@ -66,7 +66,7 @@ export default function TradeCard({ item }: TradeCardProps) {
               {
                 alignSelf: 'center',
                 justifyContent: 'center',
-                backgroundColor: 'green',
+                backgroundColor: '#388E3C',
                 color: 'white',
                 borderRadius: 5,
                 marginVertical: '18%',

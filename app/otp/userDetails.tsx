@@ -122,6 +122,7 @@ export default function UserDetails({
         style={[styles.button, { backgroundColor: isFormValid ? '#000' : '#808080' }]}
         onPress={handleFormSubmit}
         disabled={continueButtonLoading}
+        activeOpacity={0.7}
       >
         {continueButtonLoading ? (
           <ActivityIndicator size="small" color="#fff" />

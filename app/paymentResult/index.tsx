@@ -1,11 +1,13 @@
-import { useRoute } from '@react-navigation/native';
+import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Text, View, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@/context/UserContext';
+import { ThemedView } from '@/components/ThemedView';
+import { useTheme } from '@/utils/theme';
 
 const formatIndianRupee = (amount: number) => {
   const formatter = new Intl.NumberFormat('en-IN', {
@@ -24,8 +26,10 @@ const getISTDate = () => {
   return istDate.toISOString().slice(0, 19).replace('T', ' ');
 };
 
+
 const PaymentResultScreen = () => {
-  const route = useRoute();
+  
+  const colors=useTheme();
   const { getUserTransactions }=useUser();
 
   const [transaction_id, setTransactionId] = useState<string | null>(null);
@@ -65,23 +69,6 @@ const PaymentResultScreen = () => {
     fetchFromStorage();
   }, []);
 
-  const updateDB = async (paymentState: string, payment_method: string) => {
-    try {
-      const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
-      // const updateStatusResponse = await axios.post(`https://tradedge-server.onrender.com/api/addPaymentindb`, {
-        package_id: package_id,
-        user_id: user_id,
-        amount: amount,
-        payment_status: paymentState,
-        payment_date: payment_date || new Date().toISOString().slice(0, 19).replace('T', ' '),
-        transaction_id: transaction_id,
-        payment_method: payment_method || 'PHONEPE',
-      });
-      console.log('Payment status updated in DB:', updateStatusResponse.data);
-    } catch (error) {
-      console.error('Error updating payment status index:', (error as Error).message);
-    }
-  };
 
   useEffect(() => {
     const fetchPaymentStatus = async () => {
@@ -92,8 +79,8 @@ const PaymentResultScreen = () => {
       }
 
       try {
-        // const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
-        const response = await axios.get(`http://192.168.1.40:5000/api/paymentStatus`, {
+        const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
+        // const response = await axios.get(`http://192.168.1.40:5000/api/paymentStatus`, {
           params: { transaction_id },
         });
 
@@ -129,7 +116,7 @@ const PaymentResultScreen = () => {
 
         // Fetch user transactions after updating the payment status
         await getUserTransactions(user_id);
-        
+
 
       } catch (error) {
         console.error('Error fetching payment status:', (error as Error).message);
@@ -142,46 +129,89 @@ const PaymentResultScreen = () => {
     fetchPaymentStatus();
   }, [transaction_id]);
 
-  if (loading) {
+  const updateDB = async (paymentState: string, payment_method: string) => {
+    try {
+      // const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
+      const updateStatusResponse = await axios.post(`https://tradedge-server.onrender.com/api/addPaymentindb`, {
+        package_id: package_id,
+        user_id: user_id,
+        amount: amount,
+        payment_status: paymentState,
+        payment_date: payment_date || new Date().toISOString().slice(0, 19).replace('T', ' '),
+        transaction_id: transaction_id,
+        payment_method: payment_method || 'PHONEPE',
+      });
+      console.log('Payment status updated in DB:', updateStatusResponse.data);
+    } catch (error) {
+      console.error('Error updating payment status index:', (error as Error).message);
+    }
+  };
+
+
+
+  if (loading || status === null) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={styles.detailsText}>Fetching payment status...</Text>
-      </View>
+      <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <ThemedText style={[styles.detailsText, { color: colors.text }]}>Fetching payment status...</ThemedText>
+      </ThemedView>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {status === 'SUCCESS' && (
-        <Animated.View
-          entering={SlideInUp.duration(500)}
-          exiting={SlideOutDown.duration(500)}
-          style={styles.successContainer}
+    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
+      <Animated.View
+        entering={status === 'SUCCESS' ? SlideInUp.duration(500) : FadeIn.duration(500)}
+        exiting={status === 'SUCCESS' ? SlideOutDown.duration(500) : FadeOut.duration(500)}
+        style={[
+          styles.resultContainer,
+          status === 'SUCCESS'
+            ? { backgroundColor: colors.success, borderColor: colors.vgreen }
+            : { backgroundColor: colors.error + '22', borderColor: colors.error },
+        ]}
+      >
+        <ThemedText
+          type="defaultSemiBold"
+          style={[
+            styles.resultText,
+            { color: status === 'SUCCESS' ? colors.vgreen : colors.error },
+          ]}
         >
-          <ThemedText type="defaultSemiBold" style={styles.successText}>Payment Successful!</ThemedText>
-          <ThemedText type="default" style={styles.detailsText}>
-            Transaction ID: {transactionDetails?.transaction_id}
-          </ThemedText>
-          <ThemedText type="default" style={styles.detailsText}>
-            Payment Mode: {transactionDetails?.payment_method}
-          </ThemedText>
-          <ThemedText type="default" style={styles.detailsText}>
-            Amount: {transactionDetails?.amount ? formatIndianRupee(Number(transactionDetails.amount) / 100) : 'N/A'}
-          </ThemedText>
-        </Animated.View>
-      )}
-      {status === 'FAILURE' && (
-        <Animated.View
-          entering={FadeIn.duration(500)}
-          exiting={FadeOut.duration(500)}
-          style={styles.failureContainer}
+          {status === 'SUCCESS' ? 'Payment Successful!' : 'Payment Failed'}
+        </ThemedText>
+        {status === 'SUCCESS' ? (
+          <>
+            <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
+              Transaction ID: <ThemedText style={styles.boldText}>{transactionDetails?.transaction_id}</ThemedText>
+            </ThemedText>
+            <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
+              Payment Mode: <ThemedText style={styles.boldText}>{transactionDetails?.payment_method}</ThemedText>
+            </ThemedText>
+            <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
+              Amount: <ThemedText style={styles.boldText}>{transactionDetails?.amount ? formatIndianRupee(Number(transactionDetails.amount) / 100) : 'N/A'}</ThemedText>
+            </ThemedText>
+          </>
+        ) : (
+          <ThemedText type="default" style={[styles.detailsText, { color: colors.text }]}>Please try again.</ThemedText>
+        )}
+      </Animated.View>
+      <ThemedView style={{ marginTop: 32, alignItems: 'center' }}>
+        <ThemedText
+          type="defaultSemiBold"
+          style={[
+            styles.goHome,
+            {
+              color: colors.text,
+              backgroundColor: colors.tagBackground,
+              borderColor: colors.text,
+            },
+          ]}
+          onPress={() => router.replace('/(tabs)/home')}
         >
-          <ThemedText type="defaultSemiBold" style={styles.failureText}>Payment Failed</ThemedText>
-          <ThemedText type="default" style={styles.detailsText}>Please try again.</ThemedText>
-        </Animated.View>
-      )}
-    </View>
+          Go Home
+        </ThemedText>
+      </ThemedView>
+    </ThemedView>
   );
 };
 
@@ -190,32 +220,41 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
   },
-  successContainer: {
-    padding: 20,
-    backgroundColor: '#d4edda',
-    borderRadius: 10,
+  resultContainer: {
+    padding: 28,
+    borderRadius: 16,
+    alignItems: 'center',
+    width: 320,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
-  failureContainer: {
-    padding: 20,
-    backgroundColor: '#f8d7da',
-    borderRadius: 10,
-  },
-  successText: {
-    fontSize: 18,
-    color: '#155724',
-    fontWeight: 'bold',
-  },
-  failureText: {
-    fontSize: 18,
-    color: '#721c24',
+  resultText: {
+    fontSize: 22,
+    marginBottom: 16,
+    textAlign: 'center',
     fontWeight: 'bold',
   },
   detailsText: {
     fontSize: 16,
-    color: '#6c757d',
-    marginTop: 10,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  boldText: {
+    fontWeight: 'bold',
+  },
+  goHome: {
+    textDecorationLine: 'underline',
+    fontSize: 17,
+    paddingVertical: 8,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    borderWidth: 1,
+    overflow: 'hidden',
   },
 });
 

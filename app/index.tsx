@@ -2,7 +2,6 @@ import React from 'react';
 import { Redirect } from 'expo-router';
 import { useUser } from '@/context/UserContext';
 import { useFonts } from 'expo-font';
-import AppLoading from 'expo-app-loading';
 import { Text as DefaultText, TextProps, View } from 'react-native';
 
 // Custom Text Component to Apply Kanchenjunga Font Globally
@@ -20,11 +19,8 @@ const StartPage = () => {
     'Kanchenjunga-Bold': require('../assets/fonts/Kanchenjunga-Bold.ttf'),
   });
 
-  if (!fontsLoaded) {
-    return <AppLoading />;
-  }
 
-  if (isInitializing) {
+  if (isInitializing && !fontsLoaded) {
     return null; // Let RootLayout handle the loading state
   }
 

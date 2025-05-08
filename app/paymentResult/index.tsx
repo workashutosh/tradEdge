@@ -131,8 +131,8 @@ const PaymentResultScreen = () => {
 
   const updateDB = async (paymentState: string, payment_method: string) => {
     try {
-      // const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
       const updateStatusResponse = await axios.post(`https://tradedge-server.onrender.com/api/addPaymentindb`, {
+      // const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
         package_id: package_id,
         user_id: user_id,
         amount: amount,

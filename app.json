@@ -32,7 +32,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/logo.png",
-          "imageWidth": 200,
+          "imageWidth": 170,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
@@ -47,9 +47,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "82b0a79d-d0d5-413a-8856-e4aa2c3fc7a4"
+        "projectId": "8f6ca275-b2a1-49e5-8862-823efefcc754"
       }
     },
-    "owner": "twmnajaf"
+    "owner": "twmnajaf1"
   }
 }

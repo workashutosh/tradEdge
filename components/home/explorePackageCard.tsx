@@ -8,7 +8,6 @@ import { Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useStockContext } from '@/context/StockContext';
-import { GradientText } from '../GradientText';
 
 interface Package {
   type_id: string;
@@ -58,7 +57,11 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
     <ThemedView style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
       <TouchableOpacity onPress={handleTradePress} activeOpacity={0.7}>
         <ThemedView style={styles.cardHeader}>
-          <GradientText text={item.title} style={styles.cardTitle} colors={['#04810E', '#039D74']} />
+          <ThemedText
+            style={[styles.cardTitle, { color: "#2E7D32" }]}
+          >
+            {item.title}
+          </ThemedText>
           <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color="green" />
         </ThemedView>
         <ThemedView style={styles.cardBody}>

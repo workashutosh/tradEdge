@@ -20,7 +20,6 @@ import Header from '@/components/Header';
 import { useTheme } from '@/utils/theme';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
-import { GradientText } from '@/components/GradientText';
 import { BadgeIndianRupeeIcon } from 'lucide-react-native';
 type Package = {
   type_id: string;
@@ -127,13 +126,11 @@ export default function Trades() {
                 {/* Header Section */}
                 <View style={styles.cardHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <GradientText
-                      text={item.title}
-                      style={styles.cardTitle}
-                      colors={['#04810E', '#039D74']} // Gradient colors
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                    />
+                    <ThemedText
+                      style={[styles.cardTitle, { color: colors.vgreen }]}
+                    >
+                      {item.title}
+                    </ThemedText>
                     {/* <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} /> */}
                     <BadgeIndianRupeeIcon size={24} color={colors.success} style={{ marginLeft: 5 }} />
                     

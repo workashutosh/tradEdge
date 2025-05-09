@@ -95,7 +95,7 @@ export default function HomeScreen() {
           </ThemedView>
         )}
 
-        <ThemedView style={{ marginHorizontal: 10, marginTop: 0, backgroundColor: 'transparent' }}>
+        <ThemedView style={{ marginHorizontal: 10, marginTop: 6, backgroundColor: 'transparent' }}>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {

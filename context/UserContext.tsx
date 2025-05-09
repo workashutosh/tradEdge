@@ -125,7 +125,7 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
         `https://gateway.twmresearchalert.com/kyc?user_id=${userId}`
       );
 
-      // console.log('API Response:', JSON.stringify(response.data, null, 2));
+      console.log('API Response:', JSON.stringify(response.data, null, 2));
 
       if (response.data.status === 'success') { // Changed from response.data.success
         setUserDetails(response.data.data);

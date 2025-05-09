@@ -163,95 +163,111 @@ const KycComponent: React.FC = () => {
     );
   }
 
+  // If user is verified
   if (kycStatus === "Y") {
     return (
       <ThemedView style={[styles.kycContainer, { backgroundColor: colors.success, borderColor: colors.success, shadowColor: colors.shadowColor }]}>
-        <ThemedText style={[styles.kycStatusText, { }]}>User has been verified</ThemedText>
+        <ThemedText style={[styles.kycStatusText, {}]}>User has been verified</ThemedText>
       </ThemedView>
     );
   }
 
-  if (kycStatus === "N") {
+  // If user is unverified (docs uploaded but not verified)
+  if (
+    kycStatus === "N" &&
+    (userDetails?.aadhar_name || userDetails?.pan_name)
+  ) {
     return (
-      <ThemedView style={[styles.kycContainer, {flexDirection: 'row', alignItems: 'center', backgroundColor: colors.error, borderColor: colors.error, shadowColor: colors.shadowColor }]}>
+      <ThemedView style={[styles.kycContainer, { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.error, borderColor: colors.error, shadowColor: colors.shadowColor }]}>
         <Ionicons name="alert-circle-outline" size={24} color="white" style={{ marginRight: 8 }} />
-        <ThemedText style={[styles.kycStatusText, { }]}>Unverified contact support center</ThemedText>
+        <ThemedText style={[styles.kycStatusText, {}]}>Unverified contact support center</ThemedText>
       </ThemedView>
     );
   }
 
-  return (
-    <ThemedView style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder, shadowColor: colors.shadowColor }]}>
-      {!isKycExpanded ? (
-        // KYC section collapsed
-        <ThemedView style={styles.kycHeader}>
-          <ThemedText style={[styles.kycStatusText, { color: colors.warning }]}>
-            {isProcessing ? 'Processing Docs...' : 'KYC Incomplete'}
-          </ThemedText>
-          {!isProcessing && (
-            <TouchableOpacity
-              style={[styles.kycButton, { backgroundColor: colors.primary }]}
-              onPress={() => setIsKycExpanded(true)}
-              activeOpacity={0.7}
-            >
-              <ThemedText style={[styles.kycButtonText, { color: 'white' }]}>Complete KYC</ThemedText>
-            </TouchableOpacity>
-          )}
-        </ThemedView>
-      ) : (
-        // KYC section expanded
-        <ThemedView style={[styles.kycExpanded, isDark ? styles.cardDark : styles.cardLight]}>
-          <ThemedView style={styles.header}>
-            <TouchableOpacity onPress={handleCollapse} style={styles.backButton} activeOpacity={0.7}>
-              <Ionicons name="arrow-back" size={24} color={colors.text} />
-            </TouchableOpacity>
-            <ThemedText style={[styles.kycTitle, { color: colors.text }]}>Complete Your KYC</ThemedText>
-            <ThemedView style={{ width: 24 }} />
-          </ThemedView>
-
-          {/* Aadhaar Card */}
-          <ThemedView style={styles.fileSection}>
-            <ThemedText style={[styles.fileLabel, { color: colors.text }]}>Aadhaar Card</ThemedText>
-            <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickAadhaar} activeOpacity={0.7}>
-              <Ionicons name="image-outline" size={20} color={'white'} />
-              <ThemedText style={[styles.uploadText, { color: 'white' }]}>
-                {aadhaarFile && !aadhaarFile.canceled ? 'Change Image' : 'Upload Image'}
-              </ThemedText>
-            </TouchableOpacity>
-            {aadhaarFile && !aadhaarFile.canceled && (
-              <ThemedText style={[styles.fileName, { color: colors.text, backgroundColor: colors.border }]} numberOfLines={1}>
-                {aadhaarFile.assets[0].name}
-              </ThemedText>
+  // If user needs to provide docs (no docs and not verified)
+  if (
+    kycStatus === "N" &&
+    (!userDetails?.aadhar_name || !userDetails?.pan_name)
+  ) {
+    return (
+      <ThemedView style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder, shadowColor: colors.shadowColor }]}>
+        {/* ...existing KYC upload UI... */}
+        {!isKycExpanded ? (
+          // KYC section collapsed
+          <ThemedView style={styles.kycHeader}>
+            <ThemedText style={[styles.kycStatusText, { color: colors.warning }]}>
+              {isProcessing ? 'Processing Docs...' : 'KYC Incomplete'}
+            </ThemedText>
+            {!isProcessing && (
+              <TouchableOpacity
+                style={[styles.kycButton, { backgroundColor: colors.primary }]}
+                onPress={() => setIsKycExpanded(true)}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={[styles.kycButtonText, { color: 'white' }]}>Complete KYC</ThemedText>
+              </TouchableOpacity>
             )}
           </ThemedView>
+        ) : (
+          // KYC section expanded
+          <ThemedView style={[styles.kycExpanded, isDark ? styles.cardDark : styles.cardLight]}>
+            {/* ...existing expanded KYC UI... */}
+            <ThemedView style={styles.header}>
+              <TouchableOpacity onPress={handleCollapse} style={styles.backButton} activeOpacity={0.7}>
+                <Ionicons name="arrow-back" size={24} color={colors.text} />
+              </TouchableOpacity>
+              <ThemedText style={[styles.kycTitle, { color: colors.text }]}>Complete Your KYC</ThemedText>
+              <ThemedView style={{ width: 24 }} />
+            </ThemedView>
 
-          {/* Pan Card */}
-          <ThemedView style={styles.fileSection}>
-            <ThemedText style={[styles.fileLabel, { color: colors.text }]}>PAN Card</ThemedText>
-            <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickPan} activeOpacity={0.7}>
-              <Ionicons name="image-outline" size={20} color={'white'} />
-              <ThemedText style={[styles.uploadText, { color: 'white' }]}>
-                {panFile && !panFile.canceled ? 'Change Image' : 'Upload Image'}
-              </ThemedText>
+            {/* Aadhaar Card */}
+            <ThemedView style={styles.fileSection}>
+              <ThemedText style={[styles.fileLabel, { color: colors.text }]}>Aadhaar Card</ThemedText>
+              <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickAadhaar} activeOpacity={0.7}>
+                <Ionicons name="image-outline" size={20} color={'white'} />
+                <ThemedText style={[styles.uploadText, { color: 'white' }]}>
+                  {aadhaarFile && !aadhaarFile.canceled ? 'Change Image' : 'Upload Image'}
+                </ThemedText>
+              </TouchableOpacity>
+              {aadhaarFile && !aadhaarFile.canceled && (
+                <ThemedText style={[styles.fileName, { color: colors.text, backgroundColor: colors.border }]} numberOfLines={1}>
+                  {aadhaarFile.assets[0].name}
+                </ThemedText>
+              )}
+            </ThemedView>
+
+            {/* Pan Card */}
+            <ThemedView style={styles.fileSection}>
+              <ThemedText style={[styles.fileLabel, { color: colors.text }]}>PAN Card</ThemedText>
+              <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickPan} activeOpacity={0.7}>
+                <Ionicons name="image-outline" size={20} color={'white'} />
+                <ThemedText style={[styles.uploadText, { color: 'white' }]}>
+                  {panFile && !panFile.canceled ? 'Change Image' : 'Upload Image'}
+                </ThemedText>
+              </TouchableOpacity>
+              {panFile && !panFile.canceled && (
+                <ThemedText style={[styles.fileName, { color: colors.text, backgroundColor: colors.border }]} numberOfLines={1}>
+                  {panFile.assets[0].name}
+                </ThemedText>
+              )}
+            </ThemedView>
+
+            {/* Submit Button */}
+            <TouchableOpacity style={[styles.submitButton, { opacity: uploading ? 0.5 : 1, backgroundColor: colors.success }]} onPress={handleKycSubmit} disabled={uploading} activeOpacity={0.7}>
+              <ThemedText style={[styles.submitButtonText, { color: colors.text }]}>{uploading ? "Uploading" : "Submit KYC"}</ThemedText>
             </TouchableOpacity>
-            {panFile && !panFile.canceled && (
-              <ThemedText style={[styles.fileName, { color: colors.text, backgroundColor: colors.border }]} numberOfLines={1}>
-                {panFile.assets[0].name}
-              </ThemedText>
-            )}
           </ThemedView>
+        )}
+        {message && (
+          <ThemedText style={[styles.message, { color: colors.text }]}>{message}</ThemedText>
+        )}
+      </ThemedView>
+    );
+  }
 
-          {/* Submit Button */}
-          <TouchableOpacity style={[styles.submitButton, { opacity: uploading ? 0.5 : 1, backgroundColor: colors.success }]} onPress={handleKycSubmit} disabled={uploading} activeOpacity={0.7}>
-            <ThemedText style={[styles.submitButtonText, { color: colors.text }]}>{uploading ? "Uploading" : "Submit KYC"}</ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
-      )}
-      {message && (
-        <ThemedText style={[styles.message, { color: colors.text }]}>{message}</ThemedText>
-      )}
-    </ThemedView>
-  );
+  // fallback (should not reach here)
+  return null;
 };
 
 const styles = StyleSheet.create({

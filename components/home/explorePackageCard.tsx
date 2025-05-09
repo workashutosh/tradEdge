@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     height: '55%',
     justifyContent: 'center',
     paddingHorizontal: 10,
-    overflow: 'hidden',
+    // overflow: 'hidden',
   },
   cardFooter: {
     height: '25%',

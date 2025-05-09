@@ -161,7 +161,7 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
     try {
       console.log('Fetching transactions for userId:', userId);
       const response = await axios.get(
-        `http://tradedge-server.onrender.com/api/userTransactionsById?user_id=${userId}`
+        `https://tradedge-server.onrender.com/api/userTransactionsById?user_id=${userId}`
         // `http://192.168.1.40:5000/api/userTransactionsById?user_id=${userId}`
       );
 

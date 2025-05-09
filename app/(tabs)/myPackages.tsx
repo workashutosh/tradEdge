@@ -110,7 +110,7 @@ export default function MyPackages() {
                                         {item.title}
                                     </ThemedText>
                                     {/* <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} /> */}
-                                    <BadgeIndianRupeeIcon size={24} color={colors.success} style={{ marginLeft: 5 }} />
+                                    <BadgeCheck size={24} color={colors.success} style={{ marginLeft: 5 }} />
 
                                 </View>
                                 {/* <ThemedText type="subtitle" style={[styles.cardTitle]}>

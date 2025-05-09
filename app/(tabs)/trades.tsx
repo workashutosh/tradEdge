@@ -20,7 +20,7 @@ import Header from '@/components/Header';
 import { useTheme } from '@/utils/theme';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BadgeIndianRupeeIcon } from 'lucide-react-native';
+import { BadgeCheck, BadgeIndianRupeeIcon } from 'lucide-react-native';
 type Package = {
   type_id: string;
   type_name: string;
@@ -132,7 +132,7 @@ export default function Trades() {
                       {item.title}
                     </ThemedText>
                     {/* <FontAwesome name="check-circle" size={16} color={colors.success} style={{ marginLeft: 5 }} /> */}
-                    <BadgeIndianRupeeIcon size={24} color={colors.success} style={{ marginLeft: 5 }} />
+                    <BadgeCheck size={24} color={colors.success} style={{ marginLeft: 5 }} />
                     
                   </View>
                   <ThemedText type="subtitle" style={[styles.cardSubtitle]}>

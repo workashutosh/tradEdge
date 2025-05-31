@@ -1,67 +1,92 @@
 import { useColorScheme } from 'react-native';
+import { useSettings } from '@/context/SettingsContext';
 
-export const useTheme = () => {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+export type ThemeColors = {
+  background: string;
+  card: string;
+  text: string;
+  border: string;
+  primary: string;
+  success: string;
+  error: string;
+  tagBackground: string;
+  warning: string;
+  selectedTagBackground: string;
+  selectedTagText: string;
+  tagText: string;
+  shadowColor: string;
+  vgreen: string;
+};
 
-  return {
-    // Background: Softer dark for less eye strain, lighter off-white for warmth
-    background: isDark ? '#181818' : '#f8f9fc',
-    
-    // Header Background: Slightly lighter dark for depth, clean white for light mode
-    headerBackground: isDark ? '#252525' : '#ffffff',
-    
-    // Header Border: Subtle contrast for separation
-    headerBorderBottom: isDark ? '#383838' : '#e8ecef',
-    
-    // Text: High contrast for readability (WCAG-compliant)
-    text: isDark ? '#e0e0e0' : '#1a1a1a',
-    
-    // Button Background: Neutral tones for versatility
-    buttonBackground: isDark ? '#e0e0e0' : '#2c2c2c',
-    
-    // Button Primary: Vibrant green, slightly toned for accessibility
-    buttonPrimary: '#2e8b57', // Sea green, good contrast on white/black
-    
-    // Button Text: High contrast against button background
-    buttonText: isDark ? '#1a1a1a' : '#ffffff',
-    
-    // Card: Subtle differentiation from background
-    card: isDark ? 'rgb(8, 8, 8)' : '#fefefe',
-    
-    // Border: Softer for less harshness
-    border: isDark ? '#444444' : '#d1d5db',
-    
-    // Shadow: Adjusted opacity for subtlety
-    shadowColor: isDark ? 'rgb(153, 153, 153)' : 'rgb(0, 0, 0)',
-    
-    // Error: Softer red for less aggression, still clear
-    error: '#e63946',
-    
-    // Primary: Richer purple for vibrancy
-    primary: '#7b2cbf',
-    
-    // Secondary: Teal, adjusted for better dark mode contrast
-    secondary: isDark ? '#26a69a' : '#26a69a',
-    
-    // Success: Brighter green for positivity
-    success: '#2ecc71',
-    
-    // Warning: Warmer amber for clarity
-    warning: '#f4a261',
-    
-    // Tag Text: High contrast for readability
-    tagText: isDark ? '#e0e0e0' : '#2c2c2c',
-    
-    // Selected Tag Text: Ensure contrast against selected background
-    selectedTagText: isDark ? '#1a1a1a' : '#ffffff',
-    
-    // Tag Background: Neutral, low contrast
-    tagBackground: isDark ? '#444444' : '#e5e7eb',
-    
-    // Selected Tag Background: Clear differentiation
-    selectedTagBackground: isDark ? '#e0e0e0' : '#1f2937',
+// Define the return type for the useTheme hook
+export type ThemeHookReturn = {
+  isDarkMode: boolean;
+  background: string;
+  card: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+  notification: string;
+  primary: string;
+  success: string;
+  danger: string;
+  warning: string;
+  info: string;
+  error: string;
+  shadowColor: string;
+  vgreen: string;
+  tagBackground: string;
+  selectedTagBackground: string;
+  selectedTagText: string;
+  tagText: string;
+};
 
-    vgreen: '#2E7D32'
-  };
+const lightColors: ThemeColors = {
+  background: '#FFFFFF',
+  card: '#F5F5F5',
+  text: '#000000',
+  border: '#E0E0E0',
+  primary: '#04810E',
+  success: '#4CAF50',
+  error: '#FF5252',
+  tagBackground: '#F0F0F0',
+  warning: '#FFA726',
+  selectedTagBackground: '#04810E',
+  selectedTagText: '#FFFFFF',
+  tagText: '#000000',
+  shadowColor: '#000000',
+  vgreen: '#4CAF50',
+};
+
+const darkColors: ThemeColors = {
+  background: '#121212',
+  card: '#1E1E1E',
+  text: '#FFFFFF',
+  border: '#2C2C2C',
+  primary: '#039D74',
+  success: '#66BB6A',
+  error: '#FF5252',
+  tagBackground: '#2C2C2C',
+  warning: '#FFB74D',
+  selectedTagBackground: '#039D74',
+  selectedTagText: '#FFFFFF',
+  tagText: '#FFFFFF',
+  shadowColor: '#FFFFFF',
+  vgreen: '#388E3C',
+};
+
+// Update the useTheme hook to return ThemeHookReturn type
+export const useTheme = (): ThemeHookReturn => {
+  const { settings, isDarkMode } = useSettings();
+  const systemTheme = useColorScheme();
+  
+  // During initial load, use system theme and the determined isDarkMode state
+  if (!settings || Object.keys(settings).length === 0) {
+    const themeColors = systemTheme === 'dark' ? darkColors : lightColors;
+    return { ...themeColors, isDarkMode: systemTheme === 'dark' };
+  }
+
+  // Use the isDarkMode value from context and the corresponding colors
+  const themeColors = isDarkMode ? darkColors : lightColors;
+  return { ...themeColors, isDarkMode };
 };

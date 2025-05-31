@@ -15,19 +15,10 @@ interface HeaderProps {
 }
 
 export default function Header({ showBuyProButton = false, showLogoutButton = false, title }: HeaderProps) {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const themeColors = useTheme();
-  const colors = {
-    ...themeColors,
-    gradientStart: isDark ? '#1e1e1e' : '#ffffff',
-    gradientEnd: isDark ? '#121212' : '#f7f7f7',
-  };
-
+  const colors = useTheme();
   const { userDetails, logout } = useUser();
   const [isPopupVisible, setIsPopupVisible] = useState(false);
 
-  // handle logout
   const handleLogout = async (): Promise<void> => {
     await logout();
     router.replace('/otp');
@@ -43,6 +34,7 @@ export default function Header({ showBuyProButton = false, showLogoutButton = fa
           {title}
         </ThemedText>
       </ThemedView>
+      
       {showBuyProButton && (
         <>
           <BuyProButton setIsPopupVisible={setIsPopupVisible} />
@@ -63,7 +55,7 @@ export default function Header({ showBuyProButton = false, showLogoutButton = fa
                   onPress={() => setIsPopupVisible(false)}
                   activeOpacity={0.7}
                 >
-                  <ThemedText style={{ color: colors.buttonText, fontWeight: 'bold' }}>Close</ThemedText>
+                  <ThemedText style={{ color: '#FFFFFF', fontWeight: 'bold' }}>Close</ThemedText>
                 </TouchableOpacity>
               </ThemedView>
             </ThemedView>
@@ -76,10 +68,10 @@ export default function Header({ showBuyProButton = false, showLogoutButton = fa
           onPress={handleLogout}
           activeOpacity={0.7}
         >
-          <ThemedText style={[styles.logoutButtonText, { color: "white" }]}>
+          <ThemedText style={[styles.logoutButtonText, { color: '#FFFFFF' }]}>
             Logout
           </ThemedText>
-          <FontAwesome name="sign-out" size={16} color="white" style={styles.logoutIcon} />
+          <FontAwesome name="sign-out" size={16} color="#FFFFFF" style={styles.logoutIcon} />
         </TouchableOpacity>
       )}
     </ThemedView>

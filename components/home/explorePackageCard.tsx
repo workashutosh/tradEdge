@@ -8,6 +8,7 @@ import { Check } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useStockContext } from '@/context/StockContext';
+import { useTheme, ThemeHookReturn } from '@/utils/theme';
 
 interface Package {
   type_id: string;
@@ -26,13 +27,10 @@ interface Package {
 interface ExplorePackageCardProps {
   item: Package;
   shimmerAnim: Animated.Value;
-  colors: {
-    shadowColor: string;
-    text: string;
-  };
 }
 
-export default function ExplorePackageCard({ item, shimmerAnim, colors }: ExplorePackageCardProps) {
+export default function ExplorePackageCard({ item, shimmerAnim }: ExplorePackageCardProps) {
+  const colors: ThemeHookReturn = useTheme();
 
   // const { packages } = useStockContext();
 
@@ -41,60 +39,80 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
       pathname: '/main/TradeDetails',
       params: {
         package_id: item.package_id,
-        // title: item.title,
-        // price: item.price,
-        // details: JSON.stringify(item.details),
-        // categoryTag: item.categoryTag,
-        // icon: item.icon,
-        // riskCategory: item.riskCategory,
-        // minimumInvestment: item.minimumInvestment,
-        // profitPotential: item.profitPotential,
+        title: item.title,
+        price: item.price || '',
+        details: JSON.stringify(item.details),
+        categoryTag: item.categoryTag,
+        icon: item.icon,
+        riskCategory: item.riskCategory,
+        minimumInvestment: item.minimumInvestment || '',
+        profitPotential: item.profitPotential || '',
       },
     });
   };
 
+  const displayPrice = item.price && !isNaN(Number(item.price)) ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A';
+  const displayMinimumInvestment = item.minimumInvestment && !isNaN(Number(item.minimumInvestment)) ? new Intl.NumberFormat('en-IN').format(Number(item.minimumInvestment)) : 'N/A';
+  const displayProfitPotential = item.profitPotential ? `${item.profitPotential}%` : 'N/A';
+
   return (
-    <ThemedView style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
+    <ThemedView style={[
+      styles.cardContainer, 
+      { 
+        shadowColor: colors.shadowColor, 
+        backgroundColor: colors.isDarkMode ? colors.success : colors.vgreen // Use vgreen in bright mode
+      }
+    ]}>
       <TouchableOpacity onPress={handleTradePress} activeOpacity={0.7}>
-        <ThemedView style={styles.cardHeader}>
+        <ThemedView style={[styles.cardHeader, { borderBottomColor: colors.isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.2)' }]}>
           <ThemedText
-            style={[styles.cardTitle, { color: "#2E7D32" }]}
+            style={[styles.cardTitle, { color: colors.isDarkMode ? colors.text : '#FFFFFF' }]}
           >
             {item.title}
           </ThemedText>
-          <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color="green" />
+          <MaterialIcons 
+            style={styles.cardIcon} 
+            name={item.icon} 
+            size={26} 
+            color={colors.isDarkMode ? colors.text : '#FFFFFF'} 
+          />
         </ThemedView>
         <ThemedView style={styles.cardBody}>
-          <ThemedText>{item.details[0]}</ThemedText>
+          <ThemedText style={{ color: colors.isDarkMode ? colors.text : '#FFFFFF' }}>{item.details[0]}</ThemedText>
           <View style={{ flexDirection: 'row', gap: 3, paddingTop: 8 }}>
-            <Check color="rgb(0, 255, 42)" size={24} />
-            <ThemedText>Daily calls</ThemedText>
+            <Check color={colors.isDarkMode ? colors.text : '#FFFFFF'} size={24} />
+            <ThemedText style={{ color: colors.isDarkMode ? colors.text : '#FFFFFF' }}>Daily calls</ThemedText>
           </View>
           <View style={{ flexDirection: 'row', gap: 3, paddingBottom: 8 }}>
-            <Check color="rgb(0, 255, 42)" size={24} />
-            <ThemedText>Profit margin 80%</ThemedText>
+            <Check color={colors.isDarkMode ? colors.text : '#FFFFFF'} size={24} />
+            <ThemedText style={{ color: colors.isDarkMode ? colors.text : '#FFFFFF' }}>Profit margin 80%</ThemedText>
           </View>
         </ThemedView>
-        <ThemedView style={styles.cardFooter}>
+        <ThemedView style={[styles.cardFooter, { borderTopColor: colors.isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.2)' }]}>
           <Animated.View
             style={[
               styles.shimmer,
-              { transform: [{ translateX: shimmerAnim }, { rotate: '35deg' }] },
+              { 
+                transform: [{ translateX: shimmerAnim }, { rotate: '35deg' }],
+                backgroundColor: colors.isDarkMode ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.3)', // High opacity white for dark mode
+                width: colors.isDarkMode ? 200 : 150, // Wider shimmer in dark mode
+              },
             ]}
           />
-          <ThemedView style={{ borderRadius: 5, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, backgroundColor: 'transparent' }}>
-            {/* <ThemedText style={[styles.cardPrice, { textDecorationLine: 'line-through', color: 'white' }]}>
-              ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
-            </ThemedText> */}
+          <ThemedView style={styles.priceContainer}>
+            <ThemedText style={[styles.cardPrice, { textDecorationLine: 'line-through', color: colors.isDarkMode ? colors.text : '#FFFFFF' }]}>
+              ₹ {displayPrice}
+            </ThemedText>
             <LinearGradient
-              colors={['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.24)', 'rgba(255, 255, 255, 0.8)']}
+              colors={colors.isDarkMode ? 
+                ['rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.1)'] : 
+                ['rgba(255, 255, 255, 0.2)', 'rgba(255, 255, 255, 0.1)', 'rgba(255, 255, 255, 0.2)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0.5, y: 1 }}
-              style={{ borderRadius: 10 }}
+              style={styles.discountContainer}
             >
-              <ThemedText style={[styles.cardDiscountedPrice, { marginLeft: 8, color: 'black' }]}>
-                {/* ₹ 1,999/- */}
-                ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
+              <ThemedText style={[styles.cardDiscountedPrice, { marginLeft: 8, color: colors.isDarkMode ? colors.text : '#FFFFFF' }]}>
+                ₹ 1,999/-
               </ThemedText>
             </LinearGradient>
           </ThemedView>
@@ -106,64 +124,64 @@ export default function ExplorePackageCard({ item, shimmerAnim, colors }: Explor
 
 const styles = StyleSheet.create({
   cardContainer: {
-    height: 210,
-    width: 250,
-    borderColor: '#4CAF50', // Vibrant green border
-    marginHorizontal: 8,
-    borderWidth: 1,
-    borderRadius: 10,
-    shadowColor: '#00000033', // Subtle shadow
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    width: 280,
+    marginRight: 16,
+    borderRadius: 12,
     overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardHeader: {
-    height: '20%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
-    paddingTop: 15,
-  },
-  cardBody: {
-    height: '55%',
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    // overflow: 'hidden',
-  },
-  cardFooter: {
-    height: '25%',
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    backgroundColor: '#388E3C', // Dark green footer
-    overflow: 'hidden',
+    padding: 16,
+    borderBottomWidth: 1,
   },
   cardTitle: {
-    fontWeight: '700',
     fontSize: 18,
-    width: '85%',
-    color: '#212121', // Dark gray text
+    fontWeight: '600',
+    flex: 1,
   },
-  cardIcon: { width: '15%' },
+  cardIcon: {
+    marginLeft: 8,
+  },
+  cardBody: {
+    padding: 16,
+  },
+  cardFooter: {
+    padding: 16,
+    borderTopWidth: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    width: 100, // Default width, will be overridden by inline style
+  },
+  priceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   cardPrice: {
-    fontSize: 20,
-    fontWeight: '700',
-    padding: 5,
-    color: '#4CAF50', // Vibrant green price
+    fontSize: 16,
+    opacity: 0.7,
+  },
+  discountContainer: {
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   cardDiscountedPrice: {
     fontSize: 20,
     fontWeight: '700',
     padding: 5,
-    color: '#4CAF50', // Vibrant green discounted price
-  },
-  shimmer: {
-    position: 'absolute',
-    width: 15,
-    height: '200%',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Subtle shimmer
-    opacity: 0.7,
   },
 });

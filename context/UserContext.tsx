@@ -1,7 +1,8 @@
-import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios, { AxiosError } from 'axios';
 import { Router } from 'expo-router';
+import { useStockContext } from './StockContext';
 
 
 interface UserContextType {
@@ -72,33 +73,29 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [userDetails, setUserDetails] = useState<UserDetailsResponse['data'] | null>(null);
   const [userDetailsError, setUserDetailsError] = useState('');
   const [userDetailsLoading, setUserDetailsLoading] = useState(false);
-  const [userTransactions, setUserTransactions] = useState<any[]>([]); // State to store transactions
+  const [userTransactions, setUserTransactions] = useState<any[]>([]);
   const [transactionsError, setTransactionsError] = useState('');
   const [transactionsLoading, setTransactionsLoading] = useState(false);
-  const [purchasedPackagesId, setPurchasedPackagesId] = useState<string[]>([]); // New state
-  
+  const [purchasedPackagesId, setPurchasedPackagesId] = useState<string[]>([]);
 
   // Check login status on initial load
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const accessToken = await AsyncStorage.getItem('access_token');
-        // console.log('Access token found:', !!accessToken);
-        if (accessToken) {
-          const userId = await AsyncStorage.getItem('user_id');
-          // console.log('User ID found:', userId);
-          if (userId) {
-            await getUserDetails(userId);
-            await getUserTransactions(userId); // Fetch transactions after login
-            setIsLoggedIn(true);
-          } else {
-            // console.log('No user_id found in AsyncStorage');
-          }
-        } else {
-          // console.log('No access_token found, user not logged in');
+        const [accessToken, userId] = await Promise.all([
+          AsyncStorage.getItem('access_token'),
+          AsyncStorage.getItem('user_id')
+        ]);
+
+        if (accessToken && userId) {
+          await Promise.all([
+            getUserDetails(userId),
+            getUserTransactions(userId)
+          ]);
+          setIsLoggedIn(true);
         }
       } catch (error) {
-        // console.error('Error checking login status:', error);
+        console.error('Error checking login status:', error);
       } finally {
         setIsInitializing(false);
       }
@@ -107,70 +104,50 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
     checkLoginStatus();
   }, []);
 
-
-
-  // get user details
-  const getUserDetails = async (userId: string | null) => {
-    if (!userId) {
-      // console.log('No userId provided for getUserDetails');
-      return;
-    }
+  // Optimized get user details
+  const getUserDetails = useCallback(async (userId: string | null) => {
+    if (!userId) return;
 
     setUserDetailsLoading(true);
     setUserDetailsError('');
 
     try {
-      // console.log('Fetching user details for userId:', userId);
       const response = await axios.get<UserDetailsResponse>(
         `https://gateway.twmresearchalert.com/kyc?user_id=${userId}`
       );
 
-      console.log('API Response:', JSON.stringify(response.data, null, 2));
-
-      if (response.data.status === 'success') { // Changed from response.data.success
+      if (response.data.status === 'success') {
         setUserDetails(response.data.data);
         await AsyncStorage.setItem('user_details', JSON.stringify(response.data.data));
-        // console.log('User details stored successfully:', response.data.data);
       } else {
         setUserDetailsError(response.data.message || 'Failed to fetch user details');
-        // console.log('API returned status: failure:', response.data.message);
       }
     } catch (error) {
       const axiosError = error as AxiosError;
       setUserDetailsError(
         (axiosError.response?.data as UserDetailsResponse)?.message || 'An error occurred while fetching user details'
       );
-      // console.error('Error fetching user details:', axiosError.message);
     } finally {
       setUserDetailsLoading(false);
     }
-  };
+  }, []);
 
-
-
-  // get user transactions
-  const getUserTransactions = async (userId: string | null) => {
-    if (!userId) {
-      console.error('No userId provided for getUserTransactions');
-      return;
-    }
+  // Optimized get user transactions
+  const getUserTransactions = useCallback(async (userId: string | null) => {
+    if (!userId) return;
 
     setTransactionsLoading(true);
     setTransactionsError('');
 
     try {
-      console.log('Fetching transactions for userId:', userId);
       const response = await axios.get(
         `https://tradedge-server.onrender.com/api/userTransactionsById?user_id=${userId}`
-        // `http://192.168.1.40:5000/api/userTransactionsById?user_id=${userId}`
       );
 
       if (response.data.transactions.status === 'success') {
-        console.log('Success fetching transactions');
         const packages = response.data.transactions.data.packages || [];
         setUserTransactions(packages);
 
-        // Extract and store purchased package IDs
         const packageIds = packages
           .filter((pkg: any) =>
             parseFloat(pkg.payment_history?.[0]?.amount) === parseFloat(pkg.package_details.package_price) &&
@@ -178,44 +155,48 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
           )
           .map((pkg: any) => pkg.package_details.subtype_id);
         setPurchasedPackagesId(packageIds);
-
-
-        console.log('Purchased package IDs:', packageIds);
-
-
       } else {
         setTransactionsError(response.data.message || 'Failed to fetch transactions');
-        console.error('API returned status:', response.data.message);
       }
     } catch (error) {
       const axiosError = error as AxiosError;
       setTransactionsError(
         (axiosError.response?.data as { message?: string })?.message || 'An error occurred while fetching transactions'
       );
-      console.error('Error fetching transactions:', axiosError.message);
     } finally {
       setTransactionsLoading(false);
     }
-  };
+  }, []);
 
-
-  // handle login
-  const handleLogin = async (loginData: LoginResponse['data'], router: Router): Promise<boolean> => {
+  // Optimized handle login
+  const handleLogin = useCallback(async (loginData: LoginResponse['data'], router: Router): Promise<boolean> => {
     setLoginLoading(true);
     setErrorMessage('');
 
     try {
       const userId = loginData.user_id.replace('LNUSR', '');
-      // console.log('User ID:', userId);
+      
+      // Store tokens and fetch data in parallel
+      await Promise.all([
+        AsyncStorage.setItem('access_token', loginData.access_token),
+        AsyncStorage.setItem('user_id', userId)
+      ]);
 
-      await AsyncStorage.setItem('access_token', loginData.access_token);
-      await AsyncStorage.setItem('user_id', userId);
-
-      await getUserDetails(userId);
-      await getUserTransactions(userId); // Fetch transactions after login
+      // Fetch user details and transactions in parallel
+      await Promise.all([
+        getUserDetails(userId),
+        getUserTransactions(userId)
+      ]);
 
       setIsLoggedIn(true);
       router.replace('/(tabs)/home');
+      
+      // Fetch packages after navigation
+      const stockContext = await import('./StockContext').then(module => module.useStockContext());
+      if (stockContext) {
+        await stockContext.fetchPackages(true);
+      }
+      
       return true;
     } catch (error) {
       const axiosError = error as AxiosError<UserDetailsResponse>;
@@ -230,25 +211,21 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
     } finally {
       setLoginLoading(false);
     }
-  };
+  }, [getUserDetails, getUserTransactions]);
 
-
-  // handle logout
-  const logout = async (): Promise<void> => {
+  // Optimized logout
+  const logout = useCallback(async (): Promise<void> => {
     try {
       await AsyncStorage.multiRemove(['user_details', 'access_token', 'user_id']);
       setUserDetails(null);
       setIsLoggedIn(false);
-      // console.log('Logged out successfully');
     } catch (error) {
-      // console.error('Error during logout:', error);
+      console.error('Error during logout:', error);
       throw error;
     }
-  };
+  }, []);
 
-
-
-  const value: UserContextType = {
+  const value = useMemo(() => ({
     isLoggedIn,
     userDetails,
     userDetailsLoading,
@@ -259,12 +236,27 @@ export const AuthProvider: React.FC<UserProviderProps> = ({ children }) => {
     userTransactions,
     transactionsLoading,
     transactionsError,
-    purchasedPackagesId, // Expose purchasedPackagesId
+    purchasedPackagesId,
     setIsLoggedIn,
     handleLogin,
     logout,
     getUserTransactions,
-  };
+  }), [
+    isLoggedIn,
+    userDetails,
+    userDetailsLoading,
+    userDetailsError,
+    loginLoading,
+    errorMessage,
+    isInitializing,
+    userTransactions,
+    transactionsLoading,
+    transactionsError,
+    purchasedPackagesId,
+    handleLogin,
+    logout,
+    getUserTransactions,
+  ]);
 
   return <UseContext.Provider value={value}>{children}</UseContext.Provider>;
 };

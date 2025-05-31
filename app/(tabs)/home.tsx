@@ -25,7 +25,7 @@ import Header from '@/components/Header';
 import KycComponent from '@/components/KycComponent';
 import { useStockContext } from '@/context/StockContext';
 import { useUser } from '@/context/UserContext';
-import { useTheme } from '@/utils/theme';
+import { useTheme, ThemeHookReturn } from '@/utils/theme';
 
 export default function HomeScreen() {
   const userContext = useUser();
@@ -37,7 +37,7 @@ export default function HomeScreen() {
   const bestTradesId = ["2", "4", "11", "9"];
 
   const insets = useSafeAreaInsets();
-  const colors = useTheme();
+  const colors: ThemeHookReturn = useTheme();
 
   // Filter packages for Explore Packages and Best Trades
   const explorePackages = packages.filter((pkg) =>
@@ -120,13 +120,13 @@ export default function HomeScreen() {
 
         <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor, backgroundColor: colors.vgreen }]}>
           
-          <ThemedText type="subtitle" style={{ fontSize: 15, color: 'white' }}>
+          <ThemedText type="subtitle" style={{ fontSize: 15, color: colors.text }}>
             Your Trusted Research Analyst
           </ThemedText>
-          <ThemedText type="title" style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>
+          <ThemedText type="title" style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>
             Pay for Successful Research Calls
           </ThemedText>
-          <ThemedText type="default" style={{ fontSize: 15, color: 'white' }}>
+          <ThemedText type="default" style={{ fontSize: 15, color: colors.text }}>
             Start your wealth creation journey!
           </ThemedText>
           <ThemedView style={styles.websiteRedirectContainerBottom}>
@@ -153,7 +153,16 @@ export default function HomeScreen() {
 
 
         {/* Explore Packages Section */}
-        <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
+        <ThemedView style={[styles.explorePackagesContainer, { 
+          backgroundColor: colors.isDarkMode ? 'transparent' : colors.card,
+          marginHorizontal: colors.isDarkMode ? 0 : 8, // Add horizontal margin in light mode if desired
+          borderRadius: colors.isDarkMode ? 0 : 12, // Add border radius in light mode
+          shadowColor: colors.isDarkMode ? 'transparent' : colors.shadowColor, // Add shadow in light mode
+          shadowOffset: { width: 0, height: colors.isDarkMode ? 0 : 2 },
+          shadowOpacity: colors.isDarkMode ? 0 : 0.1,
+          shadowRadius: colors.isDarkMode ? 0 : 8,
+          elevation: colors.isDarkMode ? 0 : 4,
+         }]}>
           <ThemedText type="title" style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
             data={[...explorePackages, { isShowMore: true }]} // Use filtered explorePackages
@@ -163,7 +172,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     activeOpacity={0.7}
                     style={styles.showMoreContainer}
-                    onPress={() => router.replace('/(tabs)/trades')}
+                    onPress={() => router.replace('/(tabs)/myPackages')}
                   >
                     <ThemedText type="link" style={{ color: colors.text }}>See More</ThemedText>
                     <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
@@ -172,9 +181,9 @@ export default function HomeScreen() {
               } else if (!('isShowMore' in item)) {
                 return (
                   <ExplorePackageCard
+                    key={item.package_id}
                     item={item}
                     shimmerAnim={shimmerAnim}
-                    colors={colors}
                   />
                 );
               }
@@ -196,12 +205,12 @@ export default function HomeScreen() {
         >
           <ThemedView style={styles.bestTradesContainer}>
             <ThemedView style={styles.bestTradesSectionHeader}>
-              <ThemedText type="title" style={{ color: 'white', fontWeight: '600', fontSize: 22 }}>
+              <ThemedText type="title" style={{ color: '#FFFFFF', fontWeight: '600', fontSize: 22 }}>
                 Best Trades
               </ThemedText>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <BadgeCheck size={24} color="rgb(9, 196, 9)" style={{ marginRight: 3 }} />
-                <ThemedText type="defaultSemiBold" style={{ color: 'white', fontWeight: 'bold', alignSelf: 'center' }}>
+                <BadgeCheck size={24} color={colors.success} style={{ marginRight: 3 }} />
+                <ThemedText type="defaultSemiBold" style={{ color: '#FFFFFF', fontWeight: 'bold', alignSelf: 'center' }}>
                   SEBI Reg
                 </ThemedText>
               </View>
@@ -309,7 +318,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   cardList: { paddingBottom: 10 },
-  explorePackagesContainer: { paddingVertical: 10 },
+  explorePackagesContainer: {
+    paddingVertical: 10,
+    // backgroundColor handled inline based on theme
+  },
   bestTradesContainer: {
     paddingVertical: 10,
     paddingHorizontal: 8,

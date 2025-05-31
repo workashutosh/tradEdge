@@ -8,7 +8,11 @@ import { ThemedView } from './ThemedView';
 import { useUser } from '@/context/UserContext';
 import { useTheme } from '@/utils/theme';
 
-const KycComponent: React.FC = () => {
+interface KycComponentProps {
+  onKycComplete?: () => void;
+}
+
+const KycComponent: React.FC<KycComponentProps> = ({ onKycComplete }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const themeColor = useTheme();
@@ -17,6 +21,7 @@ const KycComponent: React.FC = () => {
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7',
     yellowBorder: '#ffab00',
+    error: '#ff4444',
   };
 
   const [uploading, setUploading] = useState(false);
@@ -136,6 +141,11 @@ const KycComponent: React.FC = () => {
       setIsKycExpanded(false);
       setAadhaarFile(null);
       setPanFile(null);
+      
+      // Call onKycComplete after successful submission
+      if (onKycComplete) {
+        onKycComplete();
+      }
     } catch (error: unknown) {
       // console.log('KYC Submit error:', error);
       let errorMessage = 'Failed to submit KYC';
@@ -187,17 +197,16 @@ const KycComponent: React.FC = () => {
 
   // If user needs to provide docs (no docs and not verified)
   if (
-    kycStatus === "N" &&
-    (!userDetails?.aadhar_name || !userDetails?.pan_name)
+    kycStatus === "N" ||
+    (!userDetails?.aadhar_name && !userDetails?.pan_name)
   ) {
     return (
       <ThemedView style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder, shadowColor: colors.shadowColor }]}>
-        {/* ...existing KYC upload UI... */}
         {!isKycExpanded ? (
           // KYC section collapsed
           <ThemedView style={styles.kycHeader}>
             <ThemedText style={[styles.kycStatusText, { color: colors.warning }]}>
-              {isProcessing ? 'Processing Docs...' : 'KYC Incomplete'}
+              {isProcessing ? 'Processing Docs...' : 'KYC Required'}
             </ThemedText>
             {!isProcessing && (
               <TouchableOpacity
@@ -212,18 +221,21 @@ const KycComponent: React.FC = () => {
         ) : (
           // KYC section expanded
           <ThemedView style={[styles.kycExpanded, isDark ? styles.cardDark : styles.cardLight]}>
-            {/* ...existing expanded KYC UI... */}
             <ThemedView style={styles.header}>
               <TouchableOpacity onPress={handleCollapse} style={styles.backButton} activeOpacity={0.7}>
-                <Ionicons name="arrow-back" size={24} color={colors.text} />
+                <Ionicons name="arrow-back" size={24} color="white" />
               </TouchableOpacity>
-              <ThemedText style={[styles.kycTitle, { color: colors.text }]}>Complete Your KYC</ThemedText>
+              <ThemedText style={[styles.kycTitle, { color: 'white' }]}>Complete Your KYC</ThemedText>
               <ThemedView style={{ width: 24 }} />
             </ThemedView>
 
+            <ThemedText style={[styles.kycDescription, { color: 'white' }]}>
+              Please upload clear images of your Aadhaar Card and PAN Card for verification.
+            </ThemedText>
+
             {/* Aadhaar Card */}
             <ThemedView style={styles.fileSection}>
-              <ThemedText style={[styles.fileLabel, { color: colors.text }]}>Aadhaar Card</ThemedText>
+              <ThemedText style={[styles.fileLabel, { color: 'white' }]}>Aadhaar Card</ThemedText>
               <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickAadhaar} activeOpacity={0.7}>
                 <Ionicons name="image-outline" size={20} color={'white'} />
                 <ThemedText style={[styles.uploadText, { color: 'white' }]}>
@@ -239,7 +251,7 @@ const KycComponent: React.FC = () => {
 
             {/* Pan Card */}
             <ThemedView style={styles.fileSection}>
-              <ThemedText style={[styles.fileLabel, { color: colors.text }]}>PAN Card</ThemedText>
+              <ThemedText style={[styles.fileLabel, { color: 'white' }]}>PAN Card</ThemedText>
               <TouchableOpacity style={[styles.uploadButton, { backgroundColor: colors.primary }]} onPress={pickPan} activeOpacity={0.7}>
                 <Ionicons name="image-outline" size={20} color={'white'} />
                 <ThemedText style={[styles.uploadText, { color: 'white' }]}>
@@ -254,8 +266,22 @@ const KycComponent: React.FC = () => {
             </ThemedView>
 
             {/* Submit Button */}
-            <TouchableOpacity style={[styles.submitButton, { opacity: uploading ? 0.5 : 1, backgroundColor: colors.success }]} onPress={handleKycSubmit} disabled={uploading} activeOpacity={0.7}>
-              <ThemedText style={[styles.submitButtonText, { color: colors.text }]}>{uploading ? "Uploading" : "Submit KYC"}</ThemedText>
+            <TouchableOpacity 
+              style={[
+                styles.submitButton, 
+                { 
+                  opacity: uploading ? 0.5 : 1, 
+                  backgroundColor: colors.success,
+                  marginTop: 20
+                }
+              ]} 
+              onPress={handleKycSubmit} 
+              disabled={uploading} 
+              activeOpacity={0.7}
+            >
+              <ThemedText style={[styles.submitButtonText, { color: 'white' }]}>
+                {uploading ? "Uploading..." : "Submit KYC"}
+              </ThemedText>
             </TouchableOpacity>
           </ThemedView>
         )}
@@ -373,6 +399,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  kycDescription: {
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });
 

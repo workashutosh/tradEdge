@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface StockData {
@@ -40,7 +40,9 @@ interface StockContextType {
   updateBSEData: (data: StockData[]) => void;
   updateMarketIndices: (data: MarketIndicesData[]) => void;
   getNSEBSEStocks: (stock: 'NSE' | 'BSE') => Promise<void>;
-  fetchAllData: () => Promise<void>;
+  fetchAllData: (forceRefresh?: boolean) => Promise<void>;
+  fetchPackages: (forceRefresh?: boolean) => Promise<void>;
+  lastFetchTime: number;
 }
 
 
@@ -54,14 +56,16 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
 
-  const stocks = ["nifty 200", "nifty 50", "nifty auto", "nifty bank", "sensex", "nifty infra", "nifty it", "nifty metal", "nifty pharma", "nifty psu bank"];
+  const stocks = useMemo(() => ["nifty 200", "nifty 50", "nifty auto", "nifty bank", "sensex", "nifty infra", "nifty it", "nifty metal", "nifty pharma", "nifty psu bank"], []);
 
-  const updateNSEData = (data: StockData[]) => setNSEData(data);
-  const updateBSEData = (data: StockData[]) => setBSEData(data);
-  const updateMarketIndices = (data: MarketIndicesData[]) => setMarketIndices(data);
+  const updateNSEData = useCallback((data: StockData[]) => setNSEData(data), []);
+  const updateBSEData = useCallback((data: StockData[]) => setBSEData(data), []);
+  const updateMarketIndices = useCallback((data: MarketIndicesData[]) => setMarketIndices(data), []);
 
-  const getIconForCategory = (category: string) => {
+  const getIconForCategory = useCallback((category: string) => {
     switch (category) {
       case 'Equity': return 'trending-up';
       case 'Stock Option': return 'tune';
@@ -75,7 +79,7 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       case 'International Club Commodities': return 'public';
       default: return 'info';
     }
-  };
+  }, []);
 
   const getNSEBSEStocks = async (stock: 'NSE' | 'BSE') => {
     // try {
@@ -177,17 +181,57 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // };
 
 
-  // fetch packages from API
-  const fetchPackages = async () => {
+  // Optimized package fetching with caching
+  const fetchPackages = useCallback(async (forceRefresh = false) => {
+    let cachedData = null;
     try {
       setLoading(true);
       setError(null);
+      const cacheKey = 'cachedPackages';
+      const cacheTimeKey = 'cachedPackagesTime';
+
+      // Check if we should use cached data
+      if (!forceRefresh) {
+        try {
+          const [cachedPackagesString, cachedTimeString] = await Promise.all([
+            AsyncStorage.getItem(cacheKey),
+            AsyncStorage.getItem(cacheTimeKey)
+          ]);
+
+          if (cachedPackagesString && cachedTimeString) {
+            const cachedTime = parseInt(cachedTimeString);
+            const now = Date.now();
+            
+            if (now - cachedTime < CACHE_DURATION) {
+              cachedData = JSON.parse(cachedPackagesString);
+              setPackages(cachedData);
+              setLoading(false);
+              return; // Use cached data if it's fresh
+            }
+          }
+        } catch (cacheError) {
+          console.error('Error loading packages from cache:', cacheError);
+        }
+      }
+
+      // Fetch fresh data
       const token = await AsyncStorage.getItem('access_token');
+      if (!token) {
+        throw new Error('No access token available');
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch('https://gateway.twmresearchalert.com/package', {
         headers: {
-          Authorization: token || '',
+          Authorization: token,
+          'Content-Type': 'application/json',
         },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -195,29 +239,43 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       const data = await response.json();
       
-      // Transform the API response into the required format
-      const transformedPackages: Package[] = data.data.flatMap((type: any) => {
-        // If there are subtypes, map them
-        if (type.subtypes && type.subtypes.length > 0) {
+      if (!data.data || !Array.isArray(data.data)) {
+        throw new Error('Invalid package data format received from server');
+      }
+      
+      // Transform data in chunks to avoid blocking the main thread
+      const transformedPackages: Package[] = [];
+      const chunkSize = 20; // Increased chunk size for better performance
+      
+      for (let i = 0; i < data.data.length; i += chunkSize) {
+        const chunk = data.data.slice(i, i + chunkSize);
+        const transformedChunk = chunk.flatMap((type: any) => {
+          if (!type.subtypes || !Array.isArray(type.subtypes)) {
+            console.warn('Invalid subtype data for type:', type.type_name);
+            return [];
+          }
+
           return type.subtypes.map((subtype: any) => ({
-            type_id: type.type_id,
-            type_name: type.type_name,
-            package_id: subtype.subtype_id,
-            title: subtype.subtype_name,
+            type_id: type.type_id || '',
+            type_name: type.type_name || '',
+            package_id: subtype.subtype_id || '',
+            title: subtype.subtype_name || 'Unnamed Package',
             price: subtype.price?.toString() || 'Contact for pricing',
-            details: (subtype.details || ['Details not available']).map((detail: string) => detail.replace(/\?/g, '₹')),
-            categoryTag: type.type_name,
-            icon: getIconForCategory(type.type_name),
+            details: Array.isArray(subtype.details) 
+              ? subtype.details.map((detail: string) => detail.replace(/\?/g, '₹'))
+              : ['Details not available'],
+            categoryTag: type.type_name || 'Uncategorized',
+            icon: getIconForCategory(type.type_name || ''),
             riskCategory: (subtype.riskCategory || 'N/A').replace(/^\w/, (c: string) => c.toUpperCase()),
             minimumInvestment: subtype.minimumInvestment || 'N/A',
             profitPotential: '15-25% p.a.'
           }));
-        }
+        });
+        transformedPackages.push(...transformedChunk);
+      }
 
-        return [];
-      });
-
-      setPackages([...transformedPackages, {
+      // Add refund offer package
+      const allPackages = [...transformedPackages, {
         type_id: '10000',
         type_name: 'Offer',
         package_id: '10000',
@@ -229,45 +287,47 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         riskCategory: 'Low',
         minimumInvestment: 'N/A',
         profitPotential: '10-20% p.a.',
-      }]);
+      }];
+
+      // Update state and cache
+      setPackages(allPackages);
+      const now = Date.now();
+      await Promise.all([
+        AsyncStorage.setItem(cacheKey, JSON.stringify(allPackages)),
+        AsyncStorage.setItem(cacheTimeKey, now.toString())
+      ]);
+      setLastFetchTime(now);
 
     } catch (error) {
       console.error('Error fetching packages:', error);
-      setError('Failed to fetch packages');
+      if (!cachedData) {
+        setError('Failed to fetch packages');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [getIconForCategory]);
 
-
-  // function to fetch all data at once
-  const fetchAllData = async () => {
+  // Optimized fetchAllData
+  const fetchAllData = useCallback(async (forceRefresh = false) => {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([
-        // getNSEBSEStocks('NSE'),
-        // getNSEBSEStocks('BSE'),
-        // fetchMarketIndices(), // Uncomment if needed
-        fetchPackages(),
-      ]);
+      await fetchPackages(forceRefresh);
     } catch (error) {
       console.error('Error fetching all data:', error);
       setError('Failed to fetch data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchPackages]);
 
-
-  // Fetch all data when the component mounts
+  // Initial fetch with cache
   useEffect(() => {
-    fetchAllData();
+    fetchAllData(false);
   }, []);
 
-
-
-  const value={
+  const value = useMemo(() => ({
     NSEData,
     BSEData,
     marketIndices,
@@ -278,8 +338,23 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     updateBSEData,
     updateMarketIndices,
     getNSEBSEStocks,
-    fetchAllData
-  }
+    fetchAllData,
+    fetchPackages,
+    lastFetchTime
+  }), [
+    NSEData,
+    BSEData,
+    marketIndices,
+    packages,
+    loading,
+    error,
+    updateNSEData,
+    updateBSEData,
+    updateMarketIndices,
+    fetchAllData,
+    fetchPackages,
+    lastFetchTime
+  ]);
 
   return (
     <StockContext.Provider value={value}>

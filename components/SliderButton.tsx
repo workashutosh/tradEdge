@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
-import { StyleSheet, Animated, PanResponder, View } from 'react-native';
+import { StyleSheet, Animated, PanResponder, View, Dimensions } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface SliderButtonProps {
-  name: string; // New prop for button text
+  name: string;
   colors: {
     buttonPrimary: string;
   };
@@ -13,8 +14,9 @@ interface SliderButtonProps {
 const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) => {
   const pan = useRef(new Animated.Value(0)).current;
   const wiggleAnimation = useRef<Animated.CompositeAnimation | null>(null);
-  const buttonWidth = 280;
-  const sliderWidth = 60;
+  const pulseAnimation = useRef(new Animated.Value(1)).current;
+  const buttonWidth = Dimensions.get('window').width - 40; // Full width minus padding
+  const sliderWidth = 70;
   const padding = 5;
 
   const startWiggle = () => {
@@ -35,6 +37,23 @@ const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) =>
     wiggleAnimation.current.start();
   };
 
+  const startPulse = () => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnimation, {
+          toValue: 1.1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnimation, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
   const stopWiggle = () => {
     if (wiggleAnimation.current) {
       wiggleAnimation.current.stop();
@@ -44,6 +63,7 @@ const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) =>
 
   useEffect(() => {
     startWiggle();
+    startPulse();
     return () => stopWiggle();
   }, []);
 
@@ -55,56 +75,38 @@ const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) =>
 
   const backgroundColor = pan.interpolate({
     inputRange: [0, buttonWidth - sliderWidth],
-    outputRange: [colors.buttonPrimary, '#99ff99'],
+    outputRange: [colors.buttonPrimary, '#4CAF50'],
     extrapolate: 'clamp',
   });
 
-  const glowOpacity = pan.interpolate({
+  const sliderScale = pan.interpolate({
     inputRange: [0, buttonWidth - sliderWidth],
-    outputRange: [0.3, 0.8],
+    outputRange: [1, 1.1],
     extrapolate: 'clamp',
   });
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      stopWiggle();
+    },
     onPanResponderMove: (_, gestureState) => {
-      const maxX = buttonWidth - sliderWidth - padding * 2;
-      const newX = Math.max(0, Math.min(gestureState.dx, maxX));
-      pan.setValue(newX);
+      const newValue = Math.max(0, Math.min(gestureState.dx, buttonWidth - sliderWidth - padding * 2));
+      pan.setValue(newValue);
     },
     onPanResponderRelease: (_, gestureState) => {
-      const threshold = buttonWidth - sliderWidth - padding * 2 - 10;
-      const maxPosition = buttonWidth - sliderWidth - padding * 2;
-
-      if (gestureState.dx >= threshold) {
-        Animated.spring(pan, {
-          toValue: maxPosition,
-          useNativeDriver: true,
-          friction: 7,
-          tension: 40,
-        }).start(({ finished }) => {
-          if (finished) {
-            onPress();
-            Animated.spring(pan, {
-              toValue: 0,
-              useNativeDriver: true,
-              friction: 7,
-              tension: 40,
-            }).start(({ finished }) => {
-              if (finished) startWiggle();
-            });
-          }
-        });
-      } else {
-        Animated.spring(pan, {
-          toValue: 0,
-          useNativeDriver: true,
-          friction: 7,
-          tension: 40,
-        }).start(({ finished }) => {
-          if (finished) startWiggle();
-        });
+      if (gestureState.dx > buttonWidth - sliderWidth - padding * 2) {
+        onPress();
       }
+      Animated.spring(pan, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 5,
+        tension: 40,
+      }).start(() => {
+        startWiggle();
+      });
     },
   });
 
@@ -113,24 +115,21 @@ const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) =>
       style={[
         styles.sliderButton,
         {
-          backgroundColor,
-          shadowColor: colors.buttonPrimary,
-          shadowOpacity: glowOpacity,
-          shadowRadius: 10,
-          elevation: 8,
+          transform: [{ scale: pulseAnimation }],
+          backgroundColor: colors.buttonPrimary,
         },
       ]}
     >
-      <View style={[styles.track, { backgroundColor: 'rgba(255, 255, 255, 0.2)' }]} />
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.2)', 'rgba(255, 255, 255, 0.1)']}
+        style={styles.track}
+      />
       <Animated.Text
         style={[
           styles.sliderButtonText,
           {
             opacity: textOpacity,
             color: '#ffffff',
-            textShadowColor: 'rgba(0, 0, 0, 0.5)',
-            textShadowOffset: { width: 0, height: 2 },
-            textShadowRadius: 4,
           },
         ]}
       >
@@ -140,14 +139,22 @@ const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) =>
         style={[
           styles.slider,
           {
-            transform: [{ translateX: pan }],
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            transform: [
+              { translateX: pan },
+              { scale: sliderScale }
+            ],
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
             borderColor: colors.buttonPrimary,
           },
         ]}
         {...panResponder.panHandlers}
       >
-        <MaterialIcons name="chevron-right" size={24} color={colors.buttonPrimary} style={styles.chevron} />
+        <LinearGradient
+          colors={[colors.buttonPrimary, colors.buttonPrimary + 'CC']}
+          style={styles.sliderGradient}
+        >
+          <MaterialIcons name="chevron-right" size={24} color="#ffffff" style={styles.chevron} />
+        </LinearGradient>
       </Animated.View>
     </Animated.View>
   );
@@ -155,35 +162,43 @@ const SliderButton: React.FC<SliderButtonProps> = ({ name, colors, onPress }) =>
 
 const styles = StyleSheet.create({
   sliderButton: {
-    width: 280,
-    height: 50,
-    borderRadius: 25,
+    width: '100%',
+    height: 60,
+    borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   track: {
     position: 'absolute',
     width: '100%',
     height: '100%',
-    borderRadius: 25,
+    borderRadius: 30,
   },
   sliderButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     zIndex: 1,
     backgroundColor: 'transparent',
+    letterSpacing: 0.5,
   },
   slider: {
     position: 'absolute',
     left: 5,
-    width: 60,
-    height: 40,
+    width: 70,
+    height: 50,
     top: 4,
-    borderRadius: 20,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sliderGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
   },

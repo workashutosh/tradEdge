@@ -4,6 +4,7 @@ import { ActivityIndicator, View, StatusBar, useColorScheme } from 'react-native
 import { AuthProvider, useUser } from '../context/UserContext';
 import { StockProvider } from '@/context/StockContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SettingsProvider } from '@/context/SettingsContext';
 
 const RootLayoutContent: React.FC = () => {
   const { isInitializing } = useUser();
@@ -34,7 +35,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <StockProvider>
-          <RootLayoutContent />
+          <SettingsProvider>
+            <RootLayoutContent />
+          </SettingsProvider>
         </StockProvider>
       </AuthProvider>
     </SafeAreaProvider>

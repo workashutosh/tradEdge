@@ -11,11 +11,81 @@ import {
 import { ThemedText } from '@/components/ThemedText';
 import * as Clipboard from 'expo-clipboard';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { useTheme } from "@/utils/theme"
+import { useTheme, ThemeHookReturn } from "@/utils/theme"
+
+const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  imageContainer: {
+    alignItems: 'center',
+  },
+  image: {
+    width: '100%',
+    height: 300,
+    resizeMode: 'contain',
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  referralCodeContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  referrerCode: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  inviteText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  inviteButton: {
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  inviteButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: colors.text,
+  },
+  statsCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statLabel: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+});
 
 export default function ReferralScreen() {
-  
-  const colors = useTheme();
+  const colors: ThemeHookReturn = useTheme();
+  const styles = getStyles(colors);
   const referrerCode = '3M60AVJSWTN9';
 
   const handleCopyCode = () => {
@@ -64,7 +134,7 @@ export default function ReferralScreen() {
       </ThemedText>
 
       <TouchableOpacity
-        style={[styles.inviteButton, { backgroundColor: colors.buttonPrimary }]}
+        style={[styles.inviteButton, { backgroundColor: colors.primary }]}
         onPress={handleInviteFriends}
         activeOpacity={0.7}
       >
@@ -94,73 +164,3 @@ export default function ReferralScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  imageContainer: {
-    alignItems: 'center',
-  },
-  image: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'contain',
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  referralCodeContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  referrerCode: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  inviteText: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  inviteButton: {
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  inviteButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  statsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 8,
-    marginTop: 16,
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-});

@@ -7,7 +7,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { LinearGradient } from 'expo-linear-gradient';
 import CircleBackgroundView from '@/animation/CircleAnimation';
 import { router } from 'expo-router';
-import { useTheme } from '@/utils/theme' 
+import { useTheme, ThemeHookReturn } from '@/utils/theme';
 
 interface TradeCards {
   type_id: string;
@@ -28,26 +28,49 @@ interface TradeCardProps {
 }
 
 export default function TradeCard({ item }: TradeCardProps) {
-  const colors = useTheme();
+  const colors: ThemeHookReturn = useTheme();
   const handleTradePress = () => {
     router.push({
       pathname: '/main/TradeDetails',
       params: {
         package_id: item.package_id,
+        title: item.title,
+        price: item.price || '',
+        details: JSON.stringify(item.details),
+        categoryTag: item.categoryTag,
+        icon: item.icon,
+        riskCategory: item.riskCategory,
+        minimumInvestment: item.minimumInvestment || '',
+        profitPotential: item.profitPotential || '',
       },
     });
   };
 
+  const displayPrice = item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A';
+
   return (
-    <ThemedView style={[styles.tradeCardContainer, { shadowColor: colors.shadowColor, backgroundColor: 'rgb(180, 180, 180)' }]}>
+    <ThemedView style={[
+      styles.tradeCardContainer, 
+      { 
+        shadowColor: colors.shadowColor, 
+        backgroundColor: colors.isDarkMode ? colors.card : '#E3F2FD' // Light blue background in bright mode
+      }
+    ]}>
       <TouchableOpacity onPress={handleTradePress} activeOpacity={0.7}>
-        <ThemedView style={[styles.tradeCardHeader, {}]}>
-          <ThemedText style={[styles.tradeCardTitle, { color: 'black' }]}>{item.title}</ThemedText>
-          <MaterialIcons style={[styles.cardIcon, { color: 'black' }]} name={item.icon} size={26} color={colors.text} />
+        <ThemedView style={[styles.tradeCardHeader, { borderColor: colors.border }]}>
+          <ThemedText style={[styles.tradeCardTitle, { color: colors.isDarkMode ? '#FFFFFF' : '#000000' }]}>{item.title}</ThemedText>
+          <MaterialIcons 
+            style={[styles.cardIcon, { color: colors.isDarkMode ? '#FFFFFF' : '#000000' }]} 
+            name={item.icon} 
+            size={26} 
+            color={colors.isDarkMode ? '#FFFFFF' : '#000000'} 
+          />
         </ThemedView>
         <CircleBackgroundView
           size={400}
-          colors={['rgb(255, 255, 255)', 'rgb(46, 46, 46)']}
+          colors={colors.isDarkMode ? 
+            [colors.border, colors.text] : // Use border and text colors for visibility in dark mode
+            ['rgb(187, 222, 251)', 'rgb(144, 202, 249)']} // Blue gradient in bright mode
           duration={2000}
           delay={400}
           ringCount={1}
@@ -55,7 +78,7 @@ export default function TradeCard({ item }: TradeCardProps) {
             height: '81%',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: 'rgb(29, 29, 29)',
+            backgroundColor: colors.background,
             borderRadius: 10,
             overflow: 'hidden',
           }}
@@ -66,31 +89,31 @@ export default function TradeCard({ item }: TradeCardProps) {
               {
                 alignSelf: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#388E3C',
-                color: 'white',
+                backgroundColor: colors.success,
+                color: '#FFFFFF',
                 borderRadius: 5,
                 marginVertical: '18%',
                 textAlignVertical: 'center',
               },
             ]}
           >
-            ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}/-
+            ₹ {displayPrice}/-
           </ThemedText>
           <View>
             <LinearGradient
-              colors={['rgb(255, 171, 0)', 'rgb(239, 159, 0)']}
+              colors={colors.isDarkMode ? [colors.primary, colors.primary] : ['rgb(255, 171, 0)', 'rgb(239, 159, 0)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 0, y: 1 }}
               style={{
                 borderWidth: 1,
-                borderColor: 'black',
+                borderColor: colors.border,
                 paddingHorizontal: 15,
                 paddingVertical: 5,
                 borderRadius: 20,
                 alignSelf: 'center',
               }}
             >
-              <ThemedText style={{ fontWeight: '600' }}>Subscribe</ThemedText>
+              <ThemedText style={{ fontWeight: '600', color: '#FFFFFF' }}>Subscribe</ThemedText>
             </LinearGradient>
           </View>
         </CircleBackgroundView>
@@ -116,7 +139,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     backgroundColor: 'transparent',
-    borderColor: 'grey',
     paddingBottom: 5,
     height: 30,
   },
@@ -130,6 +152,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     padding: 5,
-    color: 'green',
   },
 });

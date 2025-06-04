@@ -1,12 +1,14 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { ThemedView } from '../components/ThemedView';
 import { useTheme } from '@/utils/theme';
 import TransactionHistory from '../components/TransactionHistory';
 import { useUser } from '../context/UserContext';
 import { useState } from 'react';
 import { LayoutAnimation, Platform, UIManager } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { ThemedText } from '../components/ThemedText';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -16,6 +18,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function TransactionHistoryPage() {
   const { userTransactions } = useUser();
   const colors = useTheme();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSections, setExpandedSections] = useState<{ [key: string]: boolean }>({});
 
@@ -67,13 +70,13 @@ export default function TransactionHistoryPage() {
 
   const styles = StyleSheet.create({
     container: {
-      flex: 1,
+      flex: 2,
       backgroundColor: colors.background,
     },
   });
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { paddingTop: 18 }]}>
       <Stack.Screen
         options={{
           title: 'Transaction History',
@@ -83,6 +86,10 @@ export default function TransactionHistoryPage() {
           headerTintColor: colors.text,
         }}
       />
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <MaterialIcons name="arrow-back" size={28} color={colors.primary} style={{ marginRight: 8 }} onPress={() => router.replace('/profile')} />
+        <ThemedText type="title" style={{ color: colors.text, fontSize: 22, fontWeight: 'bold', flex: 1 }}>Transaction History</ThemedText>
+      </View>
       <TransactionHistory
         sections={sections}
         expandedSections={expandedSections}
@@ -92,4 +99,4 @@ export default function TransactionHistoryPage() {
       />
     </ThemedView>
   );
-} 
+}

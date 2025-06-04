@@ -46,6 +46,20 @@ export default function Profile() {
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
   const [showSubSettings, setShowSubSettings] = useState(false);
 
+  // Run all security subOptions actions automatically (moved from renderAccountSettings)
+  /*
+  React.useEffect(() => {
+    const security = settingsData['security'];
+    if (security && Array.isArray(security.subOptions)) {
+      security.subOptions.forEach((subOption) => {
+        if (typeof subOption.onPress === 'function') {
+          subOption.onPress();
+        }
+      });
+    }
+  }, []);
+  */
+
   const headerHeight = scrollY.interpolate({
     inputRange: [0, 100],
     outputRange: [200, 120],
@@ -151,32 +165,37 @@ export default function Profile() {
     </ProfileSection>
   );
 
-  const renderAccountSettings = () => (
-    <ProfileSection title="Account Settings">
-      {Object.entries(settingsData).map(([key, setting]) => (
-        <SettingItem
-          key={key}
-          icon={setting.icon}
-          label={setting.title}
-          value={setting.description}
-          onPress={() => {
-            setSelectedSetting(key);
-            setShowSubSettings(true);
-          }}
-        />
-      ))}
-      {selectedSetting && (
-        <SettingsModal
-          visible={showSubSettings}
-          onClose={() => {
-            setShowSubSettings(false);
-            setSelectedSetting(null);
-          }}
-          setting={settingsData[selectedSetting]}
-        />
-      )}
-    </ProfileSection>
-  );
+  const renderAccountSettings = () => {
+    return (
+      <ProfileSection title="Account Settings">
+        {Object.entries(settingsData).map(([key, setting]) => (
+          // Comment out security and support settings
+          (key === 'security' || key === 'support') ? null : (
+            <SettingItem
+              key={key}
+              icon={setting.icon}
+              label={setting.title}
+              value={setting.description}
+              onPress={() => {
+                setSelectedSetting(key);
+                setShowSubSettings(true);
+              }}
+            />
+          )
+        ))}
+        {selectedSetting && (
+          <SettingsModal
+            visible={showSubSettings}
+            onClose={() => {
+              setShowSubSettings(false);
+              setSelectedSetting(null);
+            }}
+            setting={settingsData[selectedSetting]}
+          />
+        )}
+      </ProfileSection>
+    );
+  };
 
   const renderKycStatus = () => (
     <ProfileSection title="Account Status">
@@ -186,11 +205,35 @@ export default function Profile() {
 
   const renderTransactionHistory = () => (
     <ProfileSection title="Transaction History">
-      <Transactions />
+      <View style={[styles.transactionHistoryContainer, { backgroundColor: colors.card, borderRadius: 14, padding: 10, marginTop: 4, shadowColor: colors.primary, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 }]}> 
+        <ThemedText style={[styles.transactionHistoryTitle, { color: colors.primary, fontWeight: 'bold', fontSize: 17, marginBottom: 8 }]}>Your Recent Transactions</ThemedText>
+        <Transactions
+          cardStyle={{
+            backgroundColor: colors.background,
+            borderRadius: 10,
+            marginBottom: 10,
+            borderWidth: 1,
+            borderColor: colors.primary,
+            shadowColor: colors.primary,
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 2,
+          }}
+          amountStyle={{
+            color: colors.success,
+            fontWeight: 'bold',
+            fontSize: 16,
+          }}
+          statusStyle={{
+            color: colors.info || colors.primary,
+            fontWeight: '600',
+          }}
+        />
+      </View>
     </ProfileSection>
   );
 
-  const renderSocialMedia = () => (
+  {/* const renderSocialMedia = () => (
     <ProfileSection title="Social Media">
       <View style={styles.socialMediaRow}>
         <SocialMediaItem
@@ -207,7 +250,7 @@ export default function Profile() {
         />
       </View>
     </ProfileSection>
-  );
+  ); */ }
 
   const sections = [
     { id: 'header', render: renderHeader },
@@ -215,7 +258,7 @@ export default function Profile() {
     { id: 'settings', render: renderAccountSettings },
     { id: 'kyc', render: renderKycStatus },
     { id: 'transactions', render: renderTransactionHistory },
-    { id: 'social', render: renderSocialMedia },
+    /*{ id: 'social', render: renderSocialMedia },*/
   ];
 
   return (
@@ -474,5 +517,15 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     resizeMode: 'contain',
+  },
+  transactionHistoryContainer: {
+    // Custom styles for attractive card
+    marginHorizontal: 0,
+    marginBottom: 0,
+    // backgroundColor, borderRadius, etc. set inline for theme
+  },
+  transactionHistoryTitle: {
+    // Custom styles for title
+    marginBottom: 8,
   },
 });

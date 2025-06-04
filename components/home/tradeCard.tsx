@@ -113,7 +113,7 @@ export default function TradeCard({ item }: TradeCardProps) {
                 alignSelf: 'center',
               }}
             >
-              <ThemedText style={{ fontWeight: '600', color: '#FFFFFF' }}>Subscribe</ThemedText>
+              <ThemedText style={{ fontWeight: '600' }}>Subscribe</ThemedText>
             </LinearGradient>
           </View>
         </CircleBackgroundView>

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { Text, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutDown } from 'react-native-reanimated';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@/context/UserContext';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/utils/theme';
+import LottieView from 'lottie-react-native';
 
 const formatIndianRupee = (amount: number) => {
   const formatter = new Intl.NumberFormat('en-IN', {
@@ -48,6 +49,9 @@ const PaymentResultScreen = () => {
     transaction_id?: string;
     payment_method?: string;
   } | null>(null);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
+  const [dbUpdateError, setDbUpdateError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchFromStorage = async () => {
@@ -75,12 +79,12 @@ const PaymentResultScreen = () => {
       if (!transaction_id) {
         // setStatus('FAILURE');
         setLoading(false);
-        return;
+        return null;
       }
 
       try {
         const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
-        // const response = await axios.get(`http://192.168.1.40:5000/api/paymentStatus`, {
+        //const response = await axios.get(`exp://192.168.1.20:8081/api/paymentStatus`, {
           params: { transaction_id },
         });
 
@@ -131,6 +135,7 @@ const PaymentResultScreen = () => {
 
   const updateDB = async (paymentState: string, payment_method: string) => {
     try {
+      setDbUpdateError(null); // Reset error before trying
       const updateStatusResponse = await axios.post(`https://tradedge-server.onrender.com/api/addPaymentindb`, {
       // const updateStatusResponse = await axios.post(`http://192.168.1.40:5000/api/addPaymentindb`, {
         package_id: package_id,
@@ -142,10 +147,28 @@ const PaymentResultScreen = () => {
         payment_method: payment_method || 'PHONEPE',
       });
       console.log('Payment status updated in DB:', updateStatusResponse.data);
-    } catch (error) {
-      console.error('Error updating payment status index:', (error as Error).message);
+    } catch (error: any) {
+      let errorMsg = 'Error updating payment status index:';
+      if (error.response) {
+        errorMsg += ` ${error.response.status} - ${JSON.stringify(error.response.data)}`;
+      } else if (error.request) {
+        errorMsg += ' No response received from server.';
+      } else {
+        errorMsg += ` ${error.message}`;
+      }
+      setDbUpdateError(errorMsg);
+      console.error(errorMsg);
     }
   };
+
+  useEffect(() => {
+    if (status === 'SUCCESS') {
+      setShowAnimation(true);
+      setAnimationKey(prev => prev + 1); // To restart animation if needed
+      const timer = setTimeout(() => setShowAnimation(false), 3500); // Show for 3.5s
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
 
 
@@ -159,42 +182,67 @@ const PaymentResultScreen = () => {
   }
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Animated.View
-        entering={status === 'SUCCESS' ? SlideInUp.duration(500) : FadeIn.duration(500)}
-        exiting={status === 'SUCCESS' ? SlideOutDown.duration(500) : FadeOut.duration(500)}
-        style={[
-          styles.resultContainer,
-          status === 'SUCCESS'
-            ? { backgroundColor: colors.success, borderColor: colors.vgreen }
-            : { backgroundColor: colors.error + '22', borderColor: colors.error },
-        ]}
-      >
-        <ThemedText
-          type="defaultSemiBold"
+    <ThemedView style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}> 
+      {/* Confetti animation at the very top, always reserving space */}
+      <View style={styles.confettiFixedHeightWrapper}>
+        {showAnimation && (
+          <View style={styles.confettiContainer}>
+            <LottieView
+              key={animationKey}
+              source={require('@/assets/images/confetti-burst.json')}
+              autoPlay
+              loop={false}
+              style={{ width: 320, height: 180 }}
+            />
+          </View>
+        )}
+      </View>
+      <ThemedText type="defaultSemiBold" style={{ fontSize: 22, color: colors.success, textAlign: 'center', marginBottom: 16, marginTop: 8 }}>
+        Transaction Successful!
+      </ThemedText>
+      {/* Center the result card below the confetti, with enough margin */}
+      <View style={[styles.resultCardWrapper, { marginTop: showAnimation ? 0 : 40 }]}> 
+        <Animated.View
+          entering={status === 'SUCCESS' ? SlideInUp.duration(500) : FadeIn.duration(500)}
+          exiting={status === 'SUCCESS' ? SlideOutDown.duration(500) : FadeOut.duration(500)}
           style={[
-            styles.resultText,
-            { color: status === 'SUCCESS' ? colors.vgreen : colors.error },
+            styles.resultContainer,
+            status === 'SUCCESS'
+              ? { backgroundColor: colors.success, borderColor: colors.vgreen }
+              : { backgroundColor: colors.error + '22', borderColor: colors.error },
           ]}
         >
-          {status === 'SUCCESS' ? 'Payment Successful!' : 'Payment Failed'}
-        </ThemedText>
-        {status === 'SUCCESS' ? (
-          <>
-            <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
-              Transaction ID: <ThemedText style={styles.boldText}>{transactionDetails?.transaction_id}</ThemedText>
+          <ThemedText
+            type="defaultSemiBold"
+            style={[
+              styles.resultText,
+              { color: status === 'SUCCESS' ? colors.vgreen : colors.error },
+            ]}
+          >
+            {status === 'SUCCESS' ? 'Payment Successful!' : 'Payment Failed'}
+          </ThemedText>
+          {status === 'SUCCESS' ? (
+            <>
+              <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
+                Transaction ID: <ThemedText style={styles.boldText}>{transactionDetails?.transaction_id}</ThemedText>
+              </ThemedText>
+              <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
+                Payment Mode: <ThemedText style={styles.boldText}>{transactionDetails?.payment_method}</ThemedText>
+              </ThemedText>
+              <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
+                Amount: <ThemedText style={styles.boldText}>{transactionDetails?.amount ? formatIndianRupee(Number(transactionDetails.amount) / 100) : 'N/A'}</ThemedText>
+              </ThemedText>
+            </>
+          ) : (
+            <ThemedText type="default" style={[styles.detailsText, { color: colors.text }]}>Please try again.</ThemedText>
+          )}
+          {dbUpdateError && (
+            <ThemedText type="default" style={{ color: colors.error, marginTop: 12, textAlign: 'center' }}>
+              {dbUpdateError}
             </ThemedText>
-            <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
-              Payment Mode: <ThemedText style={styles.boldText}>{transactionDetails?.payment_method}</ThemedText>
-            </ThemedText>
-            <ThemedText type="default" style={[styles.detailsText, { color: 'black' }]}>
-              Amount: <ThemedText style={styles.boldText}>{transactionDetails?.amount ? formatIndianRupee(Number(transactionDetails.amount) / 100) : 'N/A'}</ThemedText>
-            </ThemedText>
-          </>
-        ) : (
-          <ThemedText type="default" style={[styles.detailsText, { color: colors.text }]}>Please try again.</ThemedText>
-        )}
-      </Animated.View>
+          )}
+        </Animated.View>
+      </View>
       <ThemedView style={{ marginTop: 32, alignItems: 'center' }}>
         <ThemedText
           type="defaultSemiBold"
@@ -220,6 +268,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   resultContainer: {
     padding: 28,
@@ -255,6 +304,25 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     overflow: 'hidden',
+  },
+  confettiContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 0,
+    marginBottom: 0,
+    zIndex: 10,
+  },
+  confettiFixedHeightWrapper: {
+    width: '100%',
+    height: 190, // Always reserve space for confetti
+    alignItems: 'center',
+    justifyContent: 'flex-end', // push confetti to bottom of reserved space
+  },
+  resultCardWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: 0,
+    justifyContent: 'center',
   },
 });
 

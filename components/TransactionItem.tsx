@@ -30,7 +30,7 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ item }) => {
 
       <View style={styles.transactionDetails}>
         <ThemedText style={[styles.transactionName, { color: colors.text }]}>{item.packageName || 'Unknown Package'}</ThemedText>
-        <ThemedText style={[styles.transactionDate, { color: colors.textSecondary }]}>{formattedDate}</ThemedText>
+        <ThemedText style={[styles.transactionDate, { color: '#fff' }]}>{formattedDate}</ThemedText>
       </View>
 
       <ThemedText style={[styles.transactionAmount, { color: isCredit ? colors.vgreen : colors.text }]}>
@@ -80,4 +80,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TransactionItem; 
+export default TransactionItem;

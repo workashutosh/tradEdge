@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,7 +11,9 @@ import {
   Button,
   Linking,
   FlatList,
-  RefreshControl
+  RefreshControl,
+  Animated,
+  Easing
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
@@ -68,15 +70,24 @@ export default function Trades() {
   // const isDark = colorScheme === 'dark';
 
   const colors = useTheme();
-
   const { packages, loading } = useStockContext();
 
-  const uniqueTags = [...new Set(packages.map((pack) => pack.categoryTag))] as string[];
+  // Memoize unique tags calculation
+  const uniqueTags = useMemo(() => 
+    [...new Set(packages.map((pack) => pack.categoryTag))] as string[],
+    [packages]
+  );
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
   const [selectedTag, setSelectedTag] = useState<string>(tags[0]);
 
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedTimeFrame, setSelectedTimeFrame] = useState('Today');
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState('All');
+
+  // Memoize filtered services
+  const filteredServices = useMemo(() => 
+    packages.filter((item) => item.categoryTag === selectedTag),
+    [packages, selectedTag]
+  );
 
   // Mock data - Replace with actual API data
   const tradeTips: TradeTip[] = [
@@ -121,14 +132,215 @@ export default function Trades() {
     // Add more mock data as needed
   ];
 
-  const timeFrames = ['All', 'Today'];
+  // Memoize animation values
+  const buttonScale = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(1)).current;
+  const buttonRotation = useRef(new Animated.Value(0)).current;
+  const buttonTranslateY = useRef(new Animated.Value(0)).current;
 
-  const getTagStyle = (riskCategory: string): { color: string; icon: string } => {
+  // Memoize animation function
+  const animateButton = useCallback(() => {
+    // Reset values
+    buttonScale.setValue(1);
+    buttonOpacity.setValue(1);
+    buttonRotation.setValue(0);
+    buttonTranslateY.setValue(0);
+
+    Animated.sequence([
+      // Press down animation
+      Animated.parallel([
+        Animated.timing(buttonScale, {
+          toValue: 0.85,
+          duration: 100,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(buttonOpacity, {
+          toValue: 0.7,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonRotation, {
+          toValue: -0.05,
+          duration: 100,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(buttonTranslateY, {
+          toValue: 2,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Pop up animation
+      Animated.parallel([
+        Animated.spring(buttonScale, {
+          toValue: 1.15,
+          friction: 2,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonOpacity, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(buttonRotation, {
+          toValue: 0.05,
+          friction: 2,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.spring(buttonTranslateY, {
+          toValue: -4,
+          friction: 2,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Bounce back animation
+      Animated.parallel([
+        Animated.spring(buttonScale, {
+          toValue: 1,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.spring(buttonRotation, {
+          toValue: 0,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.spring(buttonTranslateY, {
+          toValue: 0,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, [buttonScale, buttonOpacity, buttonRotation, buttonTranslateY]);
+
+  // Memoize render functions
+  const renderTradeTip = useCallback(({ item }: { item: TradeTip }) => (
+    <ThemedView style={[styles.tradeCard, { backgroundColor: colors.card }]}> 
+      <View style={{ padding: 16 }}>
+        {/* Header */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+          <View style={{ flex: 1 }}>
+            <ThemedText type="title" style={{ color: colors.text, fontSize: 18, fontWeight: '700', marginBottom: 2 }}>{item.stockName.toUpperCase()}</ThemedText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+              <ThemedText type="subtitle" style={{ color: colors.text, fontSize: 13, opacity: 0.7 }}>{new Date(item.timestamp).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</ThemedText>
+              <ThemedText type="subtitle" style={{ color: colors.text, fontSize: 13, opacity: 0.7, marginLeft: 8 }}>{item.timeFrame}</ThemedText>
+            </View>
+          </View>
+          <ThemedText type="title" style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>₹ {item.entryPrice.toFixed(2)}</ThemedText>
+        </View>
+
+        {/* Profit, Target, Stop Loss */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <ThemedText style={{ color: colors.text, fontSize: 13, opacity: 0.7 }}>Profit Potential</ThemedText>
+            <ThemedText style={{ color: colors.success, fontSize: 18, fontWeight: '700' }}>{item.prediction.potentialProfit}%</ThemedText>
+          </View>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <ThemedText style={{ color: colors.text, fontSize: 13, opacity: 0.7 }}>Target Price</ThemedText>
+            <ThemedText style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>₹ {item.targetPrice.toFixed(2)}</ThemedText>
+          </View>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <ThemedText style={{ color: colors.text, fontSize: 13, opacity: 0.7 }}>Stop Loss</ThemedText>
+            <ThemedText style={{ color: colors.error, fontSize: 18, fontWeight: '700' }}>₹ {item.stopLoss.toFixed(2)}</ThemedText>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={[styles.cardFooter, { justifyContent: 'center', alignItems: 'center', flexDirection: 'row', marginTop: 0, paddingTop: 0, paddingBottom: 0, minHeight: undefined, height: 48 }]}> 
+          <View style={{ flexDirection: 'row', width: '100%' }}>
+            <TouchableOpacity
+              onPress={() => Linking.openURL('tel:7400330785')}
+              style={[
+                styles.actionButtonFooterCompact,
+                {
+                  flex: 1,
+                  marginRight: 6,
+                  borderWidth: 1,
+                  borderColor: colors.isDarkMode ? '#fff' : '#222',
+                  backgroundColor: colors.isDarkMode ? '#222' : '#fff',
+                  borderTopRightRadius: 0,
+                  borderBottomRightRadius: 0
+                }
+              ]}
+            >
+              <FontAwesome name="phone" size={12} color={colors.text} style={{ marginRight: 4 }} />
+              <ThemedText style={{ color: colors.text, fontWeight: '600', fontSize: 13 }}>Support</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                // Navigate to TradeDetailedCard and pass all trade tip details as params
+                router.push({
+                  pathname: '/main/TradeDetailedCard',
+                  params: {
+                    stockSymbol: item.stockSymbol,
+                    stockName: item.stockName,
+                    entryPrice: item.entryPrice,
+                    targetPrice: item.targetPrice,
+                    stopLoss: item.stopLoss,
+                    timeFrame: item.timeFrame,
+                    analysis: item.analysis,
+                    riskLevel: item.riskLevel,
+                    recommendedInvestment: item.recommendedInvestment,
+                    timestamp: item.timestamp,
+                    confidence: item.prediction.confidence,
+                    potentialProfit: item.prediction.potentialProfit,
+                    potentialLoss: item.prediction.potentialLoss,
+                    predictionType: item.prediction.type,
+                  },
+                });
+              }}
+              style={[
+                styles.actionButtonFooterCompact,
+                {
+                  flex: 1,
+                  borderTopLeftRadius: 0,
+                  borderBottomLeftRadius: 0,
+                  marginLeft: 0,
+                  backgroundColor: colors.info || '#007bff', // Use info color or blue
+                  borderWidth: 0,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }
+              ]}
+            >
+              <FontAwesome name="info-circle" size={14} color={'#fff'} style={{ marginRight: 4 }} />
+              <ThemedText style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>More Info</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </ThemedView>
+  ), [colors, animateButton]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Add your refresh logic here
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
+  }, []);
+
+  // Memoize timeFrames array
+  const timeFrames = useMemo(() => ['All', 'Today'], []);
+
+  // Memoize getTagStyle function
+  const getTagStyle = useCallback((riskCategory: string): { color: string; icon: string } => {
     if (riskCategory.includes('Low')) return { color: colors.success, icon: 'check-circle' };
     return { color: colors.error, icon: 'error' };
-  };
+  }, [colors]);
 
-  const handleTradePress = (item: Package) => {
+  // Memoize handleTradePress function
+  const handleTradePress = useCallback((item: Package) => {
     router.push({
       pathname: '/main/TradeDetails',
       params: {
@@ -143,148 +355,6 @@ export default function Trades() {
         profitPotential: item.profitPotential,
       },
     });
-  };
-
-  const filteredServices = packages.map((pack) => ({
-    ...pack,
-  })).filter((item) => item.categoryTag === selectedTag);
-
-  const renderTradeTip = ({ item }: { item: TradeTip }) => (
-    <ThemedView style={[styles.tradeCard, { backgroundColor: colors.card }]}>
-      <View style={styles.cardHeader}>
-        <View>
-          <ThemedText type="title" style={[styles.stockSymbol, { color: colors.text }]}>
-            {item.stockSymbol}
-          </ThemedText>
-          <ThemedText type="subtitle" style={[styles.stockName, { color: colors.text }]}>
-            {item.stockName}
-          </ThemedText>
-          <View style={[styles.dateContainer, { marginTop: 4 }]}>
-            <Calendar size={14} color={colors.text} style={{ marginRight: 4, opacity: 0.7 }} />
-            <ThemedText type="default" style={[styles.dateText, { color: colors.text }]}>
-              {new Date(item.timestamp).toLocaleDateString()}
-            </ThemedText>
-            <Clock size={14} color={colors.text} style={{ marginLeft: 8, marginRight: 4, opacity: 0.7 }} />
-            <ThemedText type="default" style={[styles.dateText, { color: colors.text }]}>
-              {new Date(item.timestamp).toLocaleTimeString()}
-            </ThemedText>
-          </View>
-        </View>
-        <View style={styles.predictionBadge}>
-          <MaterialIcons
-            name={item.prediction.type === 'bullish' ? 'trending-up' : 'trending-down'}
-            size={24}
-            color={item.prediction.type === 'bullish' ? colors.success : colors.error}
-          />
-          <ThemedText
-            type="defaultSemiBold"
-            style={[
-              styles.predictionText,
-              { color: item.prediction.type === 'bullish' ? colors.success : colors.error },
-            ]}
-          >
-            {item.prediction.type === 'bullish' ? 'Bullish' : 'Bearish'}
-          </ThemedText>
-        </View>
-      </View>
-
-      <View style={styles.priceContainer}>
-        <View style={styles.priceBox}>
-          <ThemedText type="subtitle" style={[styles.priceLabel, { color: colors.text }]}>
-            Entry
-          </ThemedText>
-          <ThemedText type="defaultSemiBold" style={[styles.priceValue, { color: colors.text }]}>
-            ₹{item.entryPrice.toLocaleString()}
-          </ThemedText>
-        </View>
-        <View style={styles.priceBox}>
-          <ThemedText type="subtitle" style={[styles.priceLabel, { color: colors.text }]}>
-            Target
-          </ThemedText>
-          <ThemedText type="defaultSemiBold" style={[styles.priceValue, { color: colors.success }]}>
-            ₹{item.targetPrice.toLocaleString()}
-          </ThemedText>
-        </View>
-        <View style={styles.priceBox}>
-          <ThemedText type="subtitle" style={[styles.priceLabel, { color: colors.text }]}>
-            Stop Loss
-          </ThemedText>
-          <ThemedText type="defaultSemiBold" style={[styles.priceValue, { color: colors.error }]}>
-            ₹{item.stopLoss.toLocaleString()}
-          </ThemedText>
-        </View>
-      </View>
-
-      <View style={styles.predictionContainer}>
-        <View style={styles.predictionBox}>
-          <TrendingUp size={20} color={colors.success} />
-          <ThemedText type="default" style={[styles.predictionValue, { color: colors.success }]}>
-            +{item.prediction.potentialProfit}%
-          </ThemedText>
-        </View>
-        <View style={styles.predictionBox}>
-          <TrendingDown size={20} color={colors.error} />
-          <ThemedText type="default" style={[styles.predictionValue, { color: colors.error }]}>
-            -{item.prediction.potentialLoss}%
-          </ThemedText>
-        </View>
-        <View style={styles.predictionBox}>
-          <Clock size={20} color={colors.text} />
-          <ThemedText type="default" style={[styles.predictionValue, { color: colors.text }]}>
-            {item.timeFrame}
-          </ThemedText>
-        </View>
-      </View>
-
-      <View style={styles.footerContainer}>
-        <View style={styles.riskContainer}>
-          <AlertTriangle size={20} color={themedColors.warning} />
-          <ThemedText type="default" style={[styles.riskText, { color: themedColors.text }]}>
-            Risk: {item.riskLevel}
-          </ThemedText>
-        </View>
-        <View style={styles.investmentContainer}>
-          <TrendingUpIcon size={20} color="#8A2BE2" />
-          <View>
-            <ThemedText type="defaultSemiBold" style={[styles.profitPercentage, { color: '#8A2BE2' }]}>
-              {item.prediction.potentialProfit}%
-            </ThemedText>
-            <ThemedText type="default" style={[styles.profitLabel, { color: colors.text }]}>
-              Profit Potential
-            </ThemedText>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.buttonContainer}>
-        <AnimatedButton
-          title="Enquiry"
-          icon={<FontAwesome name="phone" size={14} color={colors.card} style={{ marginRight: 5 }} />}
-          onPress={() => Linking.openURL('tel:7400330785')}
-          variant="secondary"
-          style={{ flex: 1 }}
-        />
-
-        <AnimatedButton
-          title="Buy"
-          icon={<FontAwesome name="shopping-cart" size={14} color={colors.card} style={{ marginRight: 5 }} />}
-          onPress={() => {
-            console.log('Buy action for:', item.stockSymbol);
-          }}
-          gradient
-          pulseAnimation={true}
-          style={{ flex: 1 }}
-        />
-      </View>
-    </ThemedView>
-  );
-
-  const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
-    // Add your refresh logic here
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
   }, []);
 
   // Add missing color properties to ThemeColors type or provide fallbacks
@@ -307,7 +377,7 @@ export default function Trades() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Trading Tips" />
-      
+
       {/* Fixed Tags Bar */}
       <View style={[styles.tagSection, { backgroundColor: colors.background }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
@@ -347,6 +417,10 @@ export default function Trades() {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={5}
+        windowSize={5}
+        initialNumToRender={3}
       />
     </SafeAreaView>
   );
@@ -358,279 +432,176 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingVertical: 12,
+    backgroundColor: 'transparent',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '600',
     textAlign: 'center',
-    letterSpacing: 0.5,
   },
   textDark: {
     color: '#ffffff',
   },
   scrollContent: {
-    paddingVertical: 16,
+    paddingVertical: 10,
   },
   tagSection: {
-    paddingTop: 10,
-    marginBottom: 0,
+    paddingTop: 6,
+    marginBottom: 3,
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-    zIndex: 1,
+    backgroundColor: 'transparent',
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   tagScroll: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 6,
     width: '100%',
   },
   tagButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 18,
     borderWidth: 1,
-    marginRight: 8,
+    marginRight: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tradeTagText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
     textAlign: 'center',
   },
-  cardContainer: {
-    marginBottom: 16,
-    marginHorizontal: 12,
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 5,
+  listContainer: {
+    padding: 10,
+    paddingTop: 3,
   },
-  card: {
-    borderRadius: 12,
-    padding: 16,
+  tradeCard: {
+    borderRadius: 14,
+    marginBottom: 14,
+    overflow: 'hidden',
+    // Add border and shadow for trade box
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0', // subtle light border
+    backgroundColor: '#fff', // ensure shadow is visible on light bg
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 6, // for Android shadow
+  },
+  cardGradient: {
+    padding: 10,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    paddingBottom: 8,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  cardSubtitle: {
-    color: 'grey',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  cardDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  detailBox: {
-    width: '32%',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    paddingBottom: 6,
-    alignItems: 'center',
-  },
-  detailIcon: {
-    alignSelf: 'flex-end',
-    marginRight: 2,
-    marginTop: 2,
-  },
-  detailLabel: {
-    fontSize: 12,
-    fontWeight: '300',
-    marginBottom: 0,
-    textAlign: 'center',
-  },
-  detailValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  enquiryButton: {
-    flex: 1 / 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  buyButton: {
+  stockInfo: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  noItemsText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 20,
-  },
-  timeFrameContainer: {
-    maxHeight: 50,
-    marginVertical: 8,
-  },
-  timeFrameContent: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  timeFrameButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 3,
-    borderRadius: 10,
-    marginRight: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  timeFrameText: {
-    fontSize: 15,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  listContainer: {
-    padding: 16,
-  },
-  tradeCard: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 12,
+    marginRight: 6,
   },
   stockSymbol: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  stockName: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  predictionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  predictionText: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  priceBox: {
-    alignItems: 'center',
-  },
-  priceLabel: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginBottom: 4,
-  },
-  priceValue: {
-    fontSize: 16,
-  },
-  predictionContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  predictionBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  predictionValue: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  footerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  riskContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  riskText: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  investmentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  investmentText: {
-    marginLeft: 4,
-    fontSize: 14,
-  },
-  profitPercentage: {
     fontSize: 18,
     fontWeight: '600',
+    marginBottom: 1,
   },
-  profitLabel: {
-    fontSize: 12,
+  stockName: {
+    fontSize: 13,
     opacity: 0.7,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 8,
+    marginBottom: 2,
   },
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   dateText: {
-    fontSize: 12,
-    opacity: 0.7,
+    fontSize: 11,
+    opacity: 0.6,
+  },
+  currentPriceContainer: {
+    alignItems: 'flex-end',
+  },
+  detailsContainer: {
+    marginVertical: 4, // reduced from 8
+    paddingHorizontal: 0,
+  },
+  detailsRowTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 2, // reduced from 6
+  },
+  detailsRowBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 0, // ensure no extra space
+  },
+  detailColumn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 0, // reduced from 2
+  },
+  detailLabel: {
+    fontSize: 13, // increased from 11
+    opacity: 0.8,
+    marginBottom: 2,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  detailValue: {
+    fontSize: 17, // increased from 14
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    minHeight: undefined,
+    height: 48,
+  },
+  buttonContainerFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+  },
+  buttonContainerFooterCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingVertical: 0,
+  },
+  actionButtonFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  actionButtonFooterCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    minHeight: 32,
+    backgroundColor: '#222',
   },
 });

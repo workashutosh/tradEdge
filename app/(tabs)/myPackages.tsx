@@ -23,6 +23,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BadgeCheck, BadgeIndianRupeeIcon } from 'lucide-react-native';
 import { AnimatedButton } from '@/components/AnimatedButton';
 import { AnimatedLinkButton } from '@/components/AnimatedLinkButton';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { useUser } from '@/context/UserContext';
 
 type Package = {
   type_id: string;
@@ -213,6 +216,7 @@ export default function Trades() {
   const styles = getStyles(colors); // Get styles using the function with colors
 
   const { packages, loading } = useStockContext();
+  const { userDetails } = useUser();
 
   const uniqueTags = [...new Set(packages.map((pack) => pack.categoryTag))] as string[];
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
@@ -252,6 +256,42 @@ export default function Trades() {
     ...pack,
     // profitPotential: '15-25% p.a.', // Dummy data
   })).filter((item) => item.categoryTag === selectedTag);
+
+  const handleBuyNow = async (item: Package) => {
+    const transaction_id = `TXN_${Date.now()}`;
+    const payment_date = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+    try {
+      await AsyncStorage.setItem(
+        'transactionDetails',
+        JSON.stringify({
+          package_id: item.package_id,
+          user_id: userDetails?.user_id,
+          amount: item.price,
+          payment_date: payment_date,
+          transaction_id: transaction_id,
+        })
+      );
+      const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
+        redirectUrl: `exp://192.168.1.20:8081/--/paymentResult`,
+        amount: Number(item.price),
+        user_id: userDetails?.user_id,
+        package_id: item.package_id,
+        transaction_id: transaction_id,
+        payment_date: payment_date,
+      });
+      const response = result.data;
+      const paymentUrl = response.redirectUrl;
+      if (!paymentUrl) {
+        alert('Payment URL not received. Please try again.');
+        return;
+      }
+      Linking.openURL(paymentUrl).catch((err) => {
+        alert('Failed to open the URL. Please try again later.');
+      });
+    } catch (error) {
+      alert('Failed to open the URL. Please try again later.');
+    }
+  };
 
   if (loading) {
     return (
@@ -395,7 +435,7 @@ export default function Trades() {
 
                   <AnimatedLinkButton
                     title="Buy Now"
-                    onPress={() => handleTradePress(item)}
+                    onPress={() => handleBuyNow(item)}
                     style={{ flex: 1, paddingVertical: 12, alignSelf: 'center' }}
                     icon="shopping-cart"
                     showShimmer={true}

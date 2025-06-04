@@ -1,6 +1,6 @@
 // app/(tabs)/home/ExplorePackageCard.tsx
-import React from 'react';
-import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Pressable, StyleSheet, Animated } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -31,8 +31,25 @@ interface ExplorePackageCardProps {
 
 export default function ExplorePackageCard({ item, shimmerAnim }: ExplorePackageCardProps) {
   const colors: ThemeHookReturn = useTheme();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [pressed, setPressed] = React.useState(false);
 
-  // const { packages } = useStockContext();
+  const handlePressIn = () => {
+    setPressed(true);
+    Animated.spring(scaleAnim, {
+      toValue: 1.06,
+      useNativeDriver: true,
+      friction: 5,
+    }).start();
+  };
+  const handlePressOut = () => {
+    setPressed(false);
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      friction: 5,
+    }).start();
+  };
 
   const handleTradePress = () => {
     router.push({
@@ -56,14 +73,20 @@ export default function ExplorePackageCard({ item, shimmerAnim }: ExplorePackage
   const displayProfitPotential = item.profitPotential ? `${item.profitPotential}%` : 'N/A';
 
   return (
-    <ThemedView style={[
-      styles.cardContainer, 
-      { 
-        shadowColor: colors.shadowColor, 
-        backgroundColor: colors.isDarkMode ? colors.success : colors.vgreen // Use vgreen in bright mode
-      }
-    ]}>
-      <TouchableOpacity onPress={handleTradePress} activeOpacity={0.7}>
+    <Pressable
+      onPress={handleTradePress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={{ flex: 1 }}
+    >
+      <Animated.View style={[
+        styles.cardContainer,
+        {
+          shadowColor: colors.shadowColor,
+          backgroundColor: pressed ? colors.success : (colors.isDarkMode ? colors.success : colors.vgreen),
+          transform: [{ scale: scaleAnim }],
+        },
+      ]}>
         <ThemedView style={[styles.cardHeader, { borderBottomColor: colors.isDarkMode ? colors.border : 'rgba(255, 255, 255, 0.2)' }]}>
           <ThemedText
             style={[styles.cardTitle, { color: colors.isDarkMode ? colors.text : '#FFFFFF' }]}
@@ -117,8 +140,8 @@ export default function ExplorePackageCard({ item, shimmerAnim }: ExplorePackage
             </LinearGradient>
           </ThemedView>
         </ThemedView>
-      </TouchableOpacity>
-    </ThemedView>
+      </Animated.View>
+    </Pressable>
   );
 }
 

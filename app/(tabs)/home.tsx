@@ -153,16 +153,7 @@ export default function HomeScreen() {
 
 
         {/* Explore Packages Section */}
-        <ThemedView style={[styles.explorePackagesContainer, { 
-          backgroundColor: colors.isDarkMode ? 'transparent' : colors.card,
-          marginHorizontal: colors.isDarkMode ? 0 : 8, // Add horizontal margin in light mode if desired
-          borderRadius: colors.isDarkMode ? 0 : 12, // Add border radius in light mode
-          shadowColor: colors.isDarkMode ? 'transparent' : colors.shadowColor, // Add shadow in light mode
-          shadowOffset: { width: 0, height: colors.isDarkMode ? 0 : 2 },
-          shadowOpacity: colors.isDarkMode ? 0 : 0.1,
-          shadowRadius: colors.isDarkMode ? 0 : 8,
-          elevation: colors.isDarkMode ? 0 : 4,
-         }]}>
+        <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
           <ThemedText type="title" style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
             data={[...explorePackages, { isShowMore: true }]} // Use filtered explorePackages
@@ -172,7 +163,7 @@ export default function HomeScreen() {
                   <TouchableOpacity
                     activeOpacity={0.7}
                     style={styles.showMoreContainer}
-                    onPress={() => router.replace('/(tabs)/myPackages')}
+                    onPress={() => router.replace('/(tabs)/trades')}
                   >
                     <ThemedText type="link" style={{ color: colors.text }}>See More</ThemedText>
                     <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
@@ -181,9 +172,15 @@ export default function HomeScreen() {
               } else if (!('isShowMore' in item)) {
                 return (
                   <ExplorePackageCard
-                    key={item.package_id}
                     item={item}
                     shimmerAnim={shimmerAnim}
+                    colors={{
+                      ...colors,
+                      card: colors.card,
+                      border: colors.border,
+                      priceBackground: colors.success, // Add green for price background
+                      priceText: '#fff', // White text for price
+                    }}
                   />
                 );
               }
@@ -198,7 +195,7 @@ export default function HomeScreen() {
 
         {/* Best Trades Section */}
         <LinearGradient
-          colors={['rgb(28, 28, 28)', 'rgb(143, 234, 214)']}
+          colors={['rgba(1, 47, 7, 0.78)', 'rgb(143, 234, 214)']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ marginHorizontal: 7, borderRadius: 10 }}

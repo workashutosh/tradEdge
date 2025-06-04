@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,7 +11,9 @@ import {
   useColorScheme,
   FlatList,
   Image,
-  Dimensions
+  Dimensions,
+  Animated,
+  Modal // <-- Add Modal import here
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -22,9 +24,6 @@ import Header from '@/components/Header';
 import {  useTheme } from '@/utils/theme';
 
 const { width } = Dimensions.get('window');
-
-// Your Alpha Vantage API key
-const ALPHA_VANTAGE_API_KEY = 'RTT9DS9ZHE6BO715'; // Replace with your actual API key
 
 export default function Stocks() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,6 +51,62 @@ export default function Stocks() {
   const [stockData, setStockData] = useState<StockData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [historicalData, setHistoricalData] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Animation for price pop-in (must be at top level)
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
+  useEffect(() => {
+    if (stockData) {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 5,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [stockData?.currentPrice]);
+
+  // Helper to fetch live price for a given symbol
+  const fetchLivePrice = async (symbol: string) => {
+    try {
+      const res = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${symbol}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (typeof data.livePrice === 'number' || typeof data.livePrice === 'string') {
+          // Convert to string and trim if needed
+          return `${data.livePrice}`;
+        }
+      }
+    } catch (e) {}
+    return '-';
+  };
+
+  // Fetch prices for NSE, BSE, NIFTY 50
+  const [exchangePrices, setExchangePrices] = useState<{ nse: string; bse: string; nifty: string }>({ nse: '-', bse: '-', nifty: '-' });
+
+  // Fetch exchange prices when a new stock is loaded
+  React.useEffect(() => {
+    if (stockData?.symbol) {
+      // Remove .NS/.BO for base symbol
+      let base = stockData.symbol.replace(/\.(NS|BO)$/i, '');
+      fetchExchangePrices(base);
+    }
+  }, [stockData?.symbol]);
+
+  const fetchExchangePrices = async (baseSymbol: string) => {
+    const nseSymbol = baseSymbol.endsWith('.NS') ? baseSymbol : baseSymbol + '.NS';
+    const bseSymbol = baseSymbol.endsWith('.BO') ? baseSymbol : baseSymbol + '.BO';
+    // NIFTY 50 symbol (use ^NSEI)
+    const niftySymbol = '^NSEI';
+    setExchangePrices({ nse: '-', bse: '-', nifty: '-' });
+    const [nse, bse, nifty] = await Promise.all([
+      fetchLivePrice(nseSymbol),
+      fetchLivePrice(bseSymbol),
+      fetchLivePrice(niftySymbol)
+    ]);
+    setExchangePrices({ nse, bse, nifty });
+  };
 
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
@@ -61,6 +116,47 @@ export default function Stocks() {
     gradientStart: isDark ? '#1e1e1e' : '#ffffff',
     gradientEnd: isDark ? '#121212' : '#f7f7f7'
   };
+
+  // Fuzzy search helper
+  function getFuzzyMatches(
+    query: string,
+    nseData: Array<{ ticker: string; name: string }>,
+    bseData: Array<{ ticker: string; name: string }>,
+    maxResults = 8
+  ): Array<{ ticker: string; name: string; score: number }> {
+    if (!query) return [];
+    const q = query.toUpperCase();
+    // Combine NSE and BSE, remove duplicates by ticker
+    const allStocks = [...nseData, ...bseData].reduce((acc: Array<{ ticker: string; name: string }>, stock) => {
+      if (!acc.find((s) => s.ticker === stock.ticker)) acc.push(stock);
+      return acc;
+    }, []);
+    // Score: exact, startsWith, includes, Levenshtein distance
+    function levenshtein(a: string, b: string): number {
+      const matrix = Array.from({ length: a.length + 1 }, () => Array(b.length + 1).fill(0));
+      for (let i = 0; i <= a.length; i++) matrix[i][0] = i;
+      for (let j = 0; j <= b.length; j++) matrix[0][j] = j;
+      for (let i = 1; i <= a.length; i++) {
+        for (let j = 1; j <= b.length; j++) {
+          matrix[i][j] = a[i - 1] === b[j - 1]
+            ? matrix[i - 1][j - 1]
+            : Math.min(matrix[i - 1][j - 1] + 1, matrix[i][j - 1] + 1, matrix[i - 1][j] + 1);
+        }
+      }
+      return matrix[a.length][b.length];
+    }
+    const scored = allStocks.map((stock) => {
+      const ticker = (stock.ticker || '').toUpperCase();
+      const name = (stock.name || '').toUpperCase();
+      let score = 100;
+      if (ticker === q || name === q) score = 0;
+      else if (ticker.startsWith(q) || name.startsWith(q)) score = 1;
+      else if (ticker.includes(q) || name.includes(q)) score = 2;
+      else score = 3 + Math.min(levenshtein(ticker, q), levenshtein(name, q));
+      return { ...stock, score };
+    });
+    return scored.sort((a, b) => a.score - b.score).slice(0, maxResults);
+  }
 
   const searchStock = async () => {
     const clearErrorAfterDelay = (message: string) => {
@@ -74,155 +170,135 @@ export default function Stocks() {
     }
 
     setLoading(true);
+    setHistoricalData([]); // Clear previous historical data
 
     try {
-      // Format the symbol for Indian stocks
-      let symbol = searchQuery.toUpperCase().trim();
-      
-      // If the symbol doesn't end with .NS or .BO, add .NS by default
-      if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) {
-        symbol = `${symbol}.NS`;
+      let inputSymbol = searchQuery.toUpperCase().replace(/\s+/g, '').trim();
+      let symbol = inputSymbol;
+      // Try to find the symbol in NSEData or BSEData
+      const nseMatch = NSEData.find(stock => stock.ticker?.toUpperCase() === inputSymbol || stock.ticker?.toUpperCase() === `${inputSymbol}.NS`);
+      const bseMatch = BSEData.find(stock => stock.ticker?.toUpperCase() === inputSymbol || stock.ticker?.toUpperCase() === `${inputSymbol}.BO`);
+      if (nseMatch) {
+        symbol = nseMatch.ticker;
+      } else if (bseMatch) {
+        symbol = bseMatch.ticker;
+      } else if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) {
+        // Try both NSE and BSE if not found
+        let found = false;
+        for (const suffix of ['.NS', '.BO']) {
+          const trySymbol = symbol + suffix;
+          try {
+            const response = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${trySymbol}`);
+            if (response.ok) {
+              const data = await response.json();
+              if (data && (typeof data.livePrice === 'number' || typeof data.livePrice === 'string')) {
+                symbol = trySymbol;
+                found = true;
+                break;
+              }
+            }
+          } catch {}
+        }
+        if (!found) {
+          // Instead of error, show suggestions
+          const matches = getFuzzyMatches(searchQuery, NSEData, BSEData);
+          if (matches.length > 0) {
+            setSuggestions(matches);
+            setShowSuggestions(true);
+          } else {
+            clearErrorAfterDelay('Could not fetch data for this stock. Please check the symbol or try again later.');
+          }
+          setLoading(false);
+          return;
+        }
       }
 
-      // First try to get the quote
-      const quoteUrl = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-      console.log('Fetching quote from URL:', quoteUrl);
-      
-      const quoteResponse = await fetch(quoteUrl, {
-        method: 'GET',
-      });
-
-      if (!quoteResponse.ok) {
-        throw new Error(`HTTP error! status: ${quoteResponse.status}`);
-      }
-
-      const quoteData = await quoteResponse.json();
-      console.log('Quote API Response:', JSON.stringify(quoteData, null, 2));
-
-      // Check for API limit messages
-      if (quoteData.Note) {
-        console.log('API Note:', quoteData.Note);
-        throw new Error(quoteData.Note);
-      }
-
-      // Check for error messages
-      if (quoteData.Error) {
-        console.log('API Error:', quoteData.Error);
-        throw new Error(quoteData.Error);
-      }
-
-      // Check for invalid API key
-      if (quoteData['Error Message'] && quoteData['Error Message'].includes('Invalid API call')) {
-        console.log('Invalid API Key Error:', quoteData['Error Message']);
-        throw new Error('Invalid API key. Please check your Alpha Vantage API key.');
-      }
-
-      // Check for empty response
-      if (Object.keys(quoteData).length === 0) {
-        console.log('Empty Quote Response');
-        throw new Error('Empty response from API. Please try again.');
-      }
-
-      // Check for Information message
-      if (quoteData.Information) {
-        console.log('API Information:', quoteData.Information);
-        throw new Error(`Invalid symbol format. Please try with market suffix (e.g., ${symbol.replace('.NS', '')}.NS for NSE or ${symbol.replace('.NS', '')}.BO for BSE)`);
-      }
-
-      const quote = quoteData['Global Quote'];
-      if (!quote || Object.keys(quote).length === 0) {
-        throw new Error(`No data available for ${symbol}. Please verify the symbol is correct.`);
-      }
-
-      // Now get the time series data
-      const timeSeriesUrl = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol=${symbol}&apikey=${ALPHA_VANTAGE_API_KEY}`;
-      console.log('Fetching time series from URL:', timeSeriesUrl);
-      
-      const timeSeriesResponse = await fetch(timeSeriesUrl, {
-        method: 'GET',
-      });
-
-      if (!timeSeriesResponse.ok) {
-        throw new Error(`HTTP error! status: ${timeSeriesResponse.status}`);
-      }
-
-      const timeSeriesData = await timeSeriesResponse.json();
-      console.log('Time Series API Response:', JSON.stringify(timeSeriesData, null, 2));
-
-      const dailyData = timeSeriesData['Time Series (Daily)'];
-      if (!dailyData) {
-        // If we don't have time series data, we can still show the current quote
-        const currentPrice = parseFloat(quote['05. price']);
-        const previousClose = parseFloat(quote['08. previous close']);
-        const change = currentPrice - previousClose;
-        const changePercent = parseFloat(quote['10. change percent'].replace('%', ''));
-
-        const stockData: StockData = {
-          symbol: symbol,
-          companyName: symbol,
-          sector: 'N/A',
-          currentPrice: currentPrice,
-          open: parseFloat(quote['02. open']),
-          high: parseFloat(quote['03. high']),
-          low: parseFloat(quote['04. low']),
-          volume: parseInt(quote['06. volume']),
-          previousClose: previousClose,
-          change: change,
-          changePercent: changePercent,
+      // Check for index keywords
+      const indexKeywords = ['NIFTY', 'NIFTY 50', '^NSEI', 'SENSEX', 'BANKNIFTY', 'BANK NIFTY'];
+      if (indexKeywords.includes(symbol)) {
+        // Fetch all indices and try to find the one matching the query
+        const response = await fetch('https://harshikapatil13.pythonanywhere.com/stock/indices');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const indices = await response.json();
+        // Try to match the index
+        const match = indices.find((idx: any) => idx.symbol?.toUpperCase() === symbol || idx.name?.toUpperCase().includes(inputSymbol));
+        if (!match) {
+          clearErrorAfterDelay('Index not found. Please check the name.');
+          return;
+        }
+        // Map to StockData
+        const indexStockData = {
+          symbol: match.symbol || symbol,
+          companyName: match.name || symbol,
+          sector: 'Index',
+          currentPrice: match.price ?? 0,
+          open: match.open ?? 0,
+          high: match.high ?? 0,
+          low: match.low ?? 0,
+          volume: match.volume ?? 0,
+          previousClose: match.prevClose ?? 0,
+          change: match.change ?? 0,
+          changePercent: match.changePercent ?? 0,
           marketCap: 0,
           peRatio: 0,
           eps: 0,
           dividend: 0,
-          dividendYield: 0
+          dividendYield: 0,
         };
-
-        console.log('Processed Stock Data from Quote:', stockData);
-        setStockData(stockData);
-        return;
+        setStockData(indexStockData);
+        setHistoricalData([]); // No historical for index
+      } else {
+        // For stocks, use the live endpoint
+        const response = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${symbol}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            clearErrorAfterDelay('Stock not found. Please check the symbol.');
+            return;
+          }
+          if (response.status === 504) {
+            clearErrorAfterDelay('The server took too long to respond. Please try again later.');
+            return;
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        // Map API response to StockData
+        const stockDataObj = {
+          symbol: symbol,
+          companyName: data.name || symbol,
+          sector: '',  // API doesn't provide sector info
+          currentPrice: data.livePrice ?? 0,
+          open: data.livePrice ?? 0,  // API doesn't provide open price
+          high: data.livePrice ?? 0,  // API doesn't provide high
+          low: data.livePrice ?? 0,   // API doesn't provide low
+          volume: 0,                  // API doesn't provide volume
+          previousClose: data.livePrice ?? 0, // API doesn't provide previous close
+          change: 0,                  // API doesn't provide change
+          changePercent: 0,           // API doesn't provide change percent
+          marketCap: 0,               // API doesn't provide market cap
+          peRatio: 0,                 // API doesn't provide PE ratio
+          eps: 0,                     // API doesn't provide EPS
+          dividend: 0,                // API doesn't provide dividend
+          dividendYield: 0,           // API doesn't provide dividend yield
+        };
+        setStockData(stockDataObj);
+        // Fetch historical data
+        try {
+          const histRes = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/historical?ticker=${symbol}`);
+          if (histRes.ok) {
+            const histData = await histRes.json();
+            if (Array.isArray(histData)) {
+              setHistoricalData(histData);
+            } else {
+              setHistoricalData([]);
+            }
+          } else {
+            setHistoricalData([]);
+          }
+        } catch (e) {
+          setHistoricalData([]);
+        }
       }
-
-      const dates = Object.keys(dailyData).sort().reverse();
-      if (dates.length < 2) {
-        throw new Error('Insufficient historical data available');
-      }
-
-      const latestDate = dates[0];
-      const previousDate = dates[1];
-      
-      const latestData = dailyData[latestDate];
-      const previousData = dailyData[previousDate];
-
-      if (!latestData || !previousData) {
-        throw new Error('Insufficient data available');
-      }
-
-      const currentPrice = parseFloat(latestData['4. close']);
-      const previousClose = parseFloat(previousData['4. close']);
-      const change = currentPrice - previousClose;
-      const changePercent = (change / previousClose) * 100;
-
-      const stockData: StockData = {
-        symbol: symbol,
-        companyName: symbol,
-        sector: 'N/A',
-        currentPrice: currentPrice,
-        open: parseFloat(latestData['1. open']),
-        high: parseFloat(latestData['2. high']),
-        low: parseFloat(latestData['3. low']),
-        volume: parseInt(latestData['5. volume']),
-        previousClose: previousClose,
-        change: change,
-        changePercent: changePercent,
-        marketCap: 0,
-        peRatio: 0,
-        eps: 0,
-        dividend: 0,
-        dividendYield: 0
-      };
-
-      console.log('Processed Stock Data from Time Series:', stockData);
-      setStockData(stockData);
-
     } catch (err) {
       console.error('Stock search error:', err);
       if (err instanceof Error) {
@@ -235,106 +311,185 @@ export default function Stocks() {
     }
   };
 
-  const renderStockOverview = () => {
-    if (!stockData) return null;
-    return (
-      <LinearGradient
-        colors={[colors.gradientStart, colors.gradientEnd]}
-        style={[styles.card, { backgroundColor: colors.card }]}
-      >
-        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
-          Company Overview
-        </ThemedText>
-        <View style={styles.infoRow}>
-          <MaterialIcons name="business" size={20} color={colors.text} />
-          <ThemedText type="default" style={[styles.value, { color: colors.text, marginLeft: 8 }]}>
-            {stockData.companyName} ({stockData.symbol})
-          </ThemedText>
-        </View>
-        <View style={styles.infoRow}>
-          <MaterialIcons name="work" size={20} color={colors.text} />
-          <ThemedText type="default" style={[styles.value, { color: colors.text, marginLeft: 8 }]}>
-            {stockData.sector}
-          </ThemedText>
-        </View>
-      </LinearGradient>
-    );
+  // Format number with commas (e.g., 1410.23 -> 1,410.23)
+  const formatNumber = (num: number | string | undefined) => {
+    if (num === undefined || num === null || isNaN(Number(num))) return '-';
+    return Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const renderCurrentPrice = () => {
     if (!stockData) return null;
+    const isUp = (stockData.change ?? 0) >= 0;
     return (
       <LinearGradient
-        colors={[colors.gradientStart, colors.gradientEnd]}
-        style={[styles.card, { backgroundColor: colors.card }]}
+        colors={colors.isDarkMode ? [colors.gradientStart, colors.gradientEnd] : ['#fff', '#fff']}
+        style={[styles.card, { backgroundColor: colors.isDarkMode ? colors.card : '#fff', padding: 0, overflow: 'hidden' }]}
       >
-        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
-          Current Price
-        </ThemedText>
-        <View style={styles.priceContainer}>
-          <View style={styles.exchangePrice}>
-            <ThemedText type="defaultSemiBold" style={[styles.priceValue, { color: colors.text }]}>
-              ₹{stockData.currentPrice.toFixed(2)}
+        <View style={{ padding: 20 }}>
+          {stockData?.companyName && (
+            <ThemedText type="title" style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', marginBottom: 4, textAlign: 'center' }}>
+              {stockData.companyName}
             </ThemedText>
-            <ThemedText
-              type="defaultSemiBold"
-              style={[
-                styles.metric,
-                { color: stockData.change >= 0 ? colors.success : colors.error },
-              ]}
-            >
-              {stockData.change >= 0 ? '+' : ''}{stockData.change.toFixed(2)} ({stockData.changePercent.toFixed(2)}%)
-            </ThemedText>
+          )}
+          <ThemedText type="title" style={[styles.cardTitle, { color: colors.text, marginBottom: 10 }]}>Current Price</ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
+              <ThemedText type="defaultSemiBold" style={{ fontSize: 25, color: colors.primary, fontWeight: 'bold', letterSpacing: 1, textShadowColor: colors.primary + '55', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 }}>
+                ₹{formatNumber(stockData.currentPrice)}
+              </ThemedText>
+              {/* Add more space below the price */}
+              <View style={{ height: 10 }} />
+            </Animated.View>
+            <View style={{
+              backgroundColor: isUp ? colors.success + '22' : colors.error + '22',
+              borderRadius: 12,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              alignItems: 'center',
+              marginLeft: 12,
+            }}>
+              <Text style={{ color: isUp ? colors.success : colors.error, fontWeight: 'bold', fontSize: 20 }}>
+                {isUp ? '▲' : '▼'}
+              </Text>
+            </View>
           </View>
-        </View>
-        <View style={styles.priceMetrics}>
-          <ThemedText type="default" style={[styles.metric, { color: colors.text }]}>
-            Open: ₹{stockData.open.toFixed(2)}
-          </ThemedText>
-          <ThemedText type="default" style={[styles.metric, { color: colors.text }]}>
-            High: ₹{stockData.high.toFixed(2)}
-          </ThemedText>
-          <ThemedText type="default" style={[styles.metric, { color: colors.text }]}>
-            Low: ₹{stockData.low.toFixed(2)}
-          </ThemedText>
-          <ThemedText type="default" style={[styles.metric, { color: colors.text }]}>
-            Volume: {stockData.volume.toLocaleString()}
-          </ThemedText>
+          {/* Add more space between price section and the open/high/low/volume row */}
+          <View style={{ height: 8 }} />
+          {/* 2x2 grid for Open, High, Low, Volume */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+            <View style={[styles.metricBox, { backgroundColor: colors.primary + '15' }]}> 
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: 'bold' }}>Open</Text>
+              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>₹{formatNumber(stockData.open)}</Text>
+            </View>
+            <View style={[styles.metricBox, { backgroundColor: colors.success + '15' }]}> 
+              <Text style={{ color: colors.success, fontSize: 13, fontWeight: 'bold' }}>High</Text>
+              <Text style={{ color: colors.success, fontWeight: 'bold', fontSize: 16 }}>₹{formatNumber(stockData.high)}</Text>
+            </View>
+          </View>
+          <View style={{ height: 10 }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
+            <View style={[styles.metricBox, { backgroundColor: colors.error + '15' }]}> 
+              <Text style={{ color: colors.error, fontSize: 13, fontWeight: 'bold' }}>Low</Text>
+              <Text style={{ color: colors.error, fontWeight: 'bold', fontSize: 16 }}>₹{formatNumber(stockData.low)}</Text>
+            </View>
+            <View style={[styles.metricBox, { backgroundColor: colors.text + '15' }]}> 
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: 'bold' }}>Volume</Text>
+              <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>{formatNumber(stockData.volume)}</Text>
+            </View>
+          </View>
         </View>
       </LinearGradient>
     );
   };
 
-  const renderTechnicalData = () => {
-    if (!stockData) return null;
+  // Horizontal Exchange Section
+  const renderExchangesData = () => {
+    // Helper to render each exchange box with loading spinner if price is '-'
+    const renderExchangeBox = (label: string, price: string, color: string, bgColor: string) => (
+      <View style={[
+        styles.exchangeBox,
+        {
+          backgroundColor: bgColor,
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 12,
+          shadowColor: colors.isDarkMode ? '#000' : '#b3b3b3', // moved here for dynamic theming
+        },
+      ]}>
+        <Text style={{ color, fontWeight: 'bold', fontSize: 18, width: 90 }}>{label}</Text>
+        {price === '-' ? (
+          <ActivityIndicator size="small" color={color} style={{ marginLeft: 12 }} />
+        ) : (
+          <Text style={{ color: colors.text, fontSize: 20, marginLeft: 12, fontWeight: 'bold' }}>{`₹${formatNumber(price)}`}</Text>
+        )}
+      </View>
+    );
+    return (
+      <LinearGradient
+        colors={colors.isDarkMode ? [colors.gradientStart, colors.gradientEnd] : ['#fff', '#fff']}
+        style={[styles.card, { backgroundColor: colors.isDarkMode ? colors.card : '#fff', padding: 0, overflow: 'hidden' }]}
+      >
+        <View style={{ padding: 20, paddingBottom: 10 }}>
+          <ThemedText type="title" style={[styles.cardTitle, { color: colors.text, marginBottom: 8 }]}>Exchanges</ThemedText>
+          <View style={{ gap: 0 }}>
+            {renderExchangeBox('NSE', exchangePrices.nse, colors.success, colors.success + '23')}
+            {renderExchangeBox('BSE', exchangePrices.bse, colors.warning, colors.warning + '22')}
+            {renderExchangeBox('NIFTY 50', exchangePrices.nifty, colors.primary, colors.primary + '22')}
+          </View>
+        </View>
+      </LinearGradient>
+    );
+  };
+
+  const renderHistoricalData = () => {
+    if (!historicalData || historicalData.length === 0) return null;
     return (
       <LinearGradient
         colors={[colors.gradientStart, colors.gradientEnd]}
         style={[styles.card, { backgroundColor: colors.card }]}
       >
-        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>
-          Key Statistics
-        </ThemedText>
-        <View style={styles.technicalCard}>
-          <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
-            Market Cap: ₹{(stockData.marketCap / 1000000000).toFixed(2)}B
-          </ThemedText>
-          <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
-            P/E Ratio: {stockData.peRatio.toFixed(2)}
-          </ThemedText>
-          <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
-            EPS: ₹{stockData.eps.toFixed(2)}
-          </ThemedText>
-          <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
-            Dividend: ₹{stockData.dividend.toFixed(2)}
-          </ThemedText>
-          <ThemedText type="default" style={[styles.maPrice, { color: colors.text }]}>
-            Dividend Yield: {stockData.dividendYield.toFixed(2)}%
-          </ThemedText>
+        <ThemedText type="title" style={[styles.cardTitle, { color: colors.text }]}>Historical Data (Last 7 Days)</ThemedText>
+        <View style={[styles.historicalTable, { borderColor: colors.border, backgroundColor: colors.background }]}> 
+          <View style={[styles.historicalRow, styles.historicalHeader, { borderBottomColor: colors.border }]}> 
+            <Text style={[styles.historicalCell, styles.historicalHeaderText, { color: colors.text }]}>Date</Text>
+            <Text style={[styles.historicalCell, styles.historicalHeaderText, { color: colors.text }]}>Open</Text>
+            <Text style={[styles.historicalCell, styles.historicalHeaderText, { color: colors.text }]}>High</Text>
+            <Text style={[styles.historicalCell, styles.historicalHeaderText, { color: colors.text }]}>Low</Text>
+            <Text style={[styles.historicalCell, styles.historicalHeaderText, { color: colors.text }]}>Close</Text>
+            <Text style={[styles.historicalCell, styles.historicalHeaderText, { color: colors.text }]}>Volume</Text>
+          </View>
+          {historicalData.slice(-7).map((item, idx) => (
+            <View key={idx} style={[styles.historicalRow, { borderBottomColor: colors.border }]}> 
+              <Text style={[styles.historicalCell, { color: colors.text }]}>{item.date || '-'}</Text>
+              <Text style={[styles.historicalCell, { color: colors.text }]}>₹{formatNumber(item.open)}</Text>
+              <Text style={[styles.historicalCell, { color: colors.text }]}>₹{formatNumber(item.high)}</Text>
+              <Text style={[styles.historicalCell, { color: colors.text }]}>₹{formatNumber(item.low)}</Text>
+              <Text style={[styles.historicalCell, { color: colors.primary, fontWeight: 'bold' }]}>₹{formatNumber(item.close)}</Text>
+              <Text style={[styles.historicalCell, { color: colors.text }]}>{formatNumber(item.volume)}</Text>
+            </View>
+          ))}
         </View>
       </LinearGradient>
     );
   };
+
+  // Suggestion Modal
+  const renderSuggestionModal = () => (
+    <Modal
+      visible={showSuggestions}
+      animationType="slide"
+      transparent
+      onRequestClose={() => setShowSuggestions(false)}
+    >
+      <View style={{ flex: 1, backgroundColor: '#0008', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ backgroundColor: colors.card, borderRadius: 16, padding: 20, width: '90%', maxHeight: '70%' }}>
+          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: colors.text }}>Did you mean:</Text>
+          <ScrollView style={{ maxHeight: 300 }}>
+            {suggestions.map((item, idx) => (
+              <TouchableOpacity
+                key={item.ticker + idx}
+                style={{ paddingVertical: 12, borderBottomWidth: idx < suggestions.length - 1 ? 1 : 0, borderBottomColor: colors.border }}
+                onPress={async () => {
+                  setShowSuggestions(false);
+                  setSearchQuery(item.ticker);
+                  setTimeout(() => searchStock(), 100); // Delay to allow modal to close
+                }}
+              >
+                <Text style={{ fontSize: 16, color: colors.primary, fontWeight: 'bold' }}>{item.ticker}</Text>
+                <Text style={{ fontSize: 14, color: colors.text }}>{item.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity
+            style={{ marginTop: 16, alignSelf: 'flex-end' }}
+            onPress={() => setShowSuggestions(false)}
+          >
+            <Text style={{ color: colors.error, fontWeight: 'bold', fontSize: 16 }}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   const renderContent = () => {
     return (
@@ -421,17 +576,22 @@ export default function Stocks() {
 
         {stockData && (
           <>
-            {renderStockOverview()}
+            {/* {renderStockOverview()} -- Company Overview removed */}
             {renderCurrentPrice()}
-            {renderTechnicalData()}
+            {renderExchangesData()}
+            {renderHistoricalData()}
           </>
         )}
+
+        {renderSuggestionModal()}
       </>
     );
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
+      {/* Floating ticker message */}
+      {/* Remove floating ticker, show stock name in current price container instead */}
       <Header title={"Stocks"} showBuyProButton={true}/>
       <FlatList
         data={[1]} // Single item since we're using it as a container
@@ -541,5 +701,54 @@ const styles = StyleSheet.create({
   maPrice: {
     fontSize: 16,
     marginBottom: 4,
+  },
+  exchangeBox: {
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowOpacity: 0.13,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+  historicalTable: {
+    borderWidth: 1,
+    borderRadius: 10,
+    marginTop: 18,
+    marginBottom: 24,
+    overflow: 'hidden',
+  },
+  historicalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+  },
+  historicalHeader: {
+    backgroundColor: '#f0f0f0',
+  },
+  historicalCell: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 13,
+    paddingHorizontal: 2,
+  },
+  historicalHeaderText: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  metricBox: {
+    flex: 1,
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 2,
+    minWidth: 0
   },
 });

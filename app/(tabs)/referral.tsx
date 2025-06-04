@@ -81,6 +81,10 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  referralBox: {
+    borderWidth: 1.5,
+    borderColor: colors.isDarkMode ? 'transparent' : '#222',
+  },
 });
 
 export default function ReferralScreen() {
@@ -111,14 +115,21 @@ export default function ReferralScreen() {
         />
       </View>
 
-      <ThemedText type="subtitle" style={[styles.title, { color: colors.text }]}>
+      <ThemedText type="subtitle" style={[styles.title, { color: colors.text, fontWeight: 'bold' }]}>
         Refer your friend
       </ThemedText>
       <ThemedText type="default" style={[styles.subtitle, { color: colors.text }]}>
         Share this code with your friend and help them discover Tradedge!
       </ThemedText>
 
-      <View style={[styles.referralCodeContainer, { backgroundColor: colors.card }]}>
+      <View style={[
+        styles.referralCodeContainer,
+        {
+          backgroundColor: colors.card,
+          borderWidth: 1.5,
+          borderColor: colors.isDarkMode ? 'transparent' : '#222',
+        },
+      ]}>
         <ThemedText type="defaultSemiBold" style={[styles.referrerCode, { color: colors.text }]}>
           {referrerCode}
         </ThemedText>
@@ -143,7 +154,14 @@ export default function ReferralScreen() {
         </ThemedText>
       </TouchableOpacity>
 
-      <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
+      <View style={[
+        styles.statsCard,
+        {
+          backgroundColor: colors.card,
+          borderWidth: 1.5,
+          borderColor: colors.isDarkMode ? 'transparent' : '#222',
+        },
+      ]}>
         <View style={styles.statItem}>
           <ThemedText type="subtitle" style={[styles.statLabel, { color: colors.text }]}>
             Total Referral Count

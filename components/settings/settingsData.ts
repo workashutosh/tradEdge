@@ -10,9 +10,9 @@ export const settingsData: SettingsData = {
     icon: Shield,
     description: "Manage your account security",
     subOptions: [
-      { id: 'biometric', label: 'Biometric Login', icon: Lock, value: false },
-      { id: 'two_factor', label: 'Two-Factor Authentication', icon: ShieldIcon, value: false },
-      { id: 'change_pin', label: 'Change PIN', icon: Lock, value: false },
+      { id: 'biometric', label: 'Biometric Login', icon: Lock, value: false, showSwitch: true },
+      { id: 'two_factor', label: 'Two-Factor Authentication', icon: ShieldIcon, value: false, showSwitch: true },
+      { id: 'change_pin', label: 'Change PIN', icon: Lock, value: false, showSwitch: false },
     ]
   },
   preferences: {
@@ -35,4 +35,4 @@ export const settingsData: SettingsData = {
       { id: 'about', label: 'About TradEdge', icon: Info, value: false },
     ]
   }
-}; 
+};

@@ -3,16 +3,18 @@ import { StyleSheet, TouchableOpacity, Text } from 'react-native';
 // import LinearGradient from 'react-native-linear-gradient';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path } from 'react-native-svg';
+import { useRouter } from 'expo-router';
 
 interface BuyProButtonProps {
   setIsPopupVisible: (visible: boolean) => void;
 }
 
 const BuyProButton: React.FC<BuyProButtonProps> = ({ setIsPopupVisible }) => {
+  const router = useRouter();
   return (
     <TouchableOpacity style={styles.buttonContainer} activeOpacity={0.8}
       onPress={() => {
-        setIsPopupVisible(true);
+        router.push('/main/BuyPackageOffer');
       }}
     >
       <LinearGradient

@@ -15,6 +15,7 @@ import BuyProButton from '@/components/BuyProButton';
 import MemoizedModal from '@/components/MemoizeModal';
 import CircleAnimation from '@/animation/CircleAnimation';
 import CircleBackgroundView from '@/animation/CircleAnimation';
+import ExplorePackageCard from '@/components/ExplorePackageCard';
 
 export default function HomeScreen() {
   const [username, setUsername] = useState('User');
@@ -37,6 +38,7 @@ export default function HomeScreen() {
     card: isDark ? '#1e1e1e' : '#ffffff',
     border: isDark ? '#333333' : '#e0e0e0',
     shadowColor: isDark ? 'rgb(128, 128, 128)' : 'rgb(0, 0, 0)',
+    vgreen: 'rgb(0, 128, 0)',
   };
 
   interface TradeCards {
@@ -198,45 +200,51 @@ export default function HomeScreen() {
   };
 
   const renderExplorePackagesItem = ({ item }: { item: PackagesItem }) => (
-    <ThemedView style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
-      <TouchableOpacity onPress={() => handleTradePress(item)}>
-        <ThemedView style={styles.cardHeader}>
-          <ThemedText style={styles.cardTitle}>{item.title}</ThemedText>
-          <MaterialIcons style={styles.cardIcon} name={item.icon} size={26} color="green" />
+    <ThemedView style={[
+      styles.cardContainer,
+      {
+        shadowColor: colors.shadowColor,
+        borderColor: isDark ? '#00FF2A' : '#04810E',
+        borderWidth: 2,
+        backgroundColor: isDark ? '#181c18' : '#f5f7fa',
+      },
+    ]}>
+      <TouchableOpacity onPress={() => handleTradePress(item)} style={{ flex: 1 }}>
+        <ThemedView style={[styles.cardHeader, { borderBottomWidth: 1, borderColor: isDark ? '#00FF2A' : '#04810E' }]}> 
+          <ThemedText style={[styles.cardTitle, { color: isDark ? '#00FF2A' : '#04810E' }]}>{item.title}</ThemedText>
+          <MaterialIcons style={styles.cardIcon} name={item.icon} size={22} color={isDark ? '#00FF2A' : '#04810E'} />
         </ThemedView>
         <ThemedView style={styles.cardBody}>
-          <ThemedText>{item.details[0]}</ThemedText>
+          <ThemedText style={{ color: colors.text }}>{item.details[0]}</ThemedText>
           <View style={{ flexDirection: 'row', gap: 3, paddingTop: 8 }}>
-            <Check color="rgb(0, 255, 42)" size={24} />
-            <ThemedText>Daily calls</ThemedText>
+            <Check color={isDark ? '#00FF2A' : '#04810E'} size={20} />
+            <ThemedText style={{ color: isDark ? '#00FF2A' : '#04810E', fontWeight: 'bold' }}>Daily calls</ThemedText>
           </View>
           <View style={{ flexDirection: 'row', gap: 3, paddingBottom: 8 }}>
-            <Check color="rgb(0, 255, 42)" size={24} />
-            <ThemedText>Profit margin 80%</ThemedText>
+            <Check color={isDark ? '#00FF2A' : '#04810E'} size={20} />
+            <ThemedText style={{ color: isDark ? '#00FF2A' : '#04810E', fontWeight: 'bold' }}>Profit margin 80%</ThemedText>
           </View>
         </ThemedView>
-        <ThemedView style={styles.cardFooter}>
-          <Animated.View
-            style={[
-              styles.shimmer,
-              { transform: [{ translateX: shimmerAnim }, { rotate: '35deg' }] },
-            ]}
-          />
-          <ThemedView style={{ borderRadius: 5, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, backgroundColor: 'transparent' }}>
-            <ThemedText style={[styles.cardPrice, { textDecorationLine: 'line-through', color: 'white' }]}>
-              ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
-            </ThemedText>
-            <LinearGradient
-              colors={['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.24)', 'rgba(255, 255, 255, 0.8)']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0.5, y: 1 }}
-              style={{ borderRadius: 10 }}
-            >
-              <ThemedText style={[styles.cardDiscountedPrice, { marginLeft: 8, color: 'black' }]}>
-                ₹ 1,999/-
-              </ThemedText>
-            </LinearGradient>
-          </ThemedView>
+        <ThemedView style={{
+          backgroundColor: isDark ? 'rgba(0,255,42,0.12)' : 'rgba(4,129,14,0.12)',
+          borderBottomLeftRadius: 10,
+          borderBottomRightRadius: 10,
+          alignItems: 'center',
+          paddingVertical: 10,
+          marginTop: 'auto',
+        }}>
+          <ThemedText style={{
+            fontSize: 20,
+            fontWeight: 'bold',
+            color: isDark ? '#00FF2A' : '#04810E',
+            backgroundColor: isDark ? '#232d23' : '#e6f5e6',
+            borderRadius: 8,
+            paddingHorizontal: 18,
+            paddingVertical: 4,
+            overflow: 'hidden',
+          }}>
+            ₹ {item.price ? new Intl.NumberFormat('en-IN').format(Number(item.price)) : 'N/A'}
+          </ThemedText>
         </ThemedView>
       </TouchableOpacity>
     </ThemedView>
@@ -346,27 +354,45 @@ export default function HomeScreen() {
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
-          <ThemedText style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
+        {/* Explore Packages Section */}
+        <ThemedView style={[
+          styles.explorePackagesContainer,
+          {
+            backgroundColor: colors.vgreen + '22', // subtle green tint overlay (with alpha)
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: colors.vgreen,
+            marginHorizontal: 8,
+            paddingVertical: 16,
+            marginBottom: 10,
+          },
+        ]}> 
+          <ThemedText type="title" style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
             data={[...ExplorePackages, { isShowMore: true }]}
-            renderItem={({ item }) =>
-              item.isShowMore ? (
-                <TouchableOpacity style={styles.showMoreContainer} onPress={() => router.replace('/(tabs)/trades')}>
-                  <ThemedText style={{ color: colors.text }}>See More</ThemedText>
-                  <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
-                </TouchableOpacity>
-              ) : (
-                item.isShowMore ? (
-                  <TouchableOpacity style={styles.showMoreContainer} onPress={() => router.replace('/(tabs)/trades')}>
-                    <ThemedText style={{ color: colors.text }}>See More</ThemedText>
+            renderItem={({ item }) => {
+              if ('isShowMore' in item && item.isShowMore) {
+                return (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={styles.showMoreContainer}
+                    onPress={() => router.replace('/(tabs)/trades')}
+                  >
+                    <ThemedText type="link" style={{ color: colors.text }}>See More</ThemedText>
                     <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
                   </TouchableOpacity>
-                ) : (
-                  renderExplorePackagesItem({ item: item as PackagesItem })
-                )
-              )
-            }
+                );
+              } else if (!('isShowMore' in item)) {
+                return (
+                  <ExplorePackageCard
+                    item={item}
+                    shimmerAnim={shimmerAnim}
+                    colors={colors}
+                  />
+                );
+              }
+              return null;
+            }}
             keyExtractor={(item, index) => ('title' in item ? item.title : `show-more-${index}`)}
             horizontal
             showsHorizontalScrollIndicator={false}

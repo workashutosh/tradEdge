@@ -37,11 +37,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           style={[
             styles.sectionHeaderText,
             {
-              color:
-                (title === 'Today' || title === 'Last Day') && !colors.isDarkMode
-                  ? '#222'
-                  : '#fff',
-              paddingLeft: 8,
+               color: !colors.isDarkMode ? '#000' : '#fff',
+                paddingLeft: 8,
             },
           ]}
         >

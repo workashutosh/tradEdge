@@ -6,6 +6,7 @@ import { StockProvider } from '@/context/StockContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SettingsProvider } from '@/context/SettingsContext';
 
+
 const RootLayoutContent: React.FC = () => {
   const { isInitializing } = useUser();
   const colorScheme = useColorScheme();

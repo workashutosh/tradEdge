@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -13,7 +13,8 @@ import {
   FlatList,
   RefreshControl,
   Animated,
-  Easing
+  Easing,
+  Alert
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
@@ -28,6 +29,9 @@ import { BadgeCheck, BadgeIndianRupeeIcon } from 'lucide-react-native';
 import { TrendingUp, TrendingDown, Clock, Calendar, AlertTriangle, TrendingUpIcon } from 'lucide-react-native';
 import { AnimatedButton } from '@/components/AnimatedButton';
 import { AnimatedLinkButton } from '@/components/AnimatedLinkButton';
+import TradeNotifications  from '@/components/websocket_server';
+
+
 
 type Package = {
   type_id: string;
@@ -90,7 +94,7 @@ export default function Trades() {
   );
 
   // Mock data - Replace with actual API data
-  const tradeTips: TradeTip[] = [
+  const [tradeTips, setTradeTips] = useState<TradeTip[]>([
     {
       id: '1',
       stockSymbol: 'RELIANCE',
@@ -130,7 +134,44 @@ export default function Trades() {
       timestamp: '2024-03-20T09:15:00',
     },
     // Add more mock data as needed
-  ];
+  ]);
+
+  { /* // WebSocket client setup
+  useEffect(() => {
+    const ws = new WebSocket('ws://192.168.1.20:9090');
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    ws.onmessage = (event) => {
+      console.log('WebSocket message received:', event.data);
+      try {
+        const data = JSON.parse(event.data);
+        if (data.tradeTip) {
+          // Add new trade tip notification to the list
+          setTradeTips((prevTips) => [data.tradeTip, ...prevTips]);
+          // Optionally show an alert or notification
+          Alert.alert('New Trade Notification', `Stock: ${data.tradeTip.stockName}`);
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    // Cleanup on unmount
+    return () => {
+      ws.close();
+    };
+  }, []); */ }
 
   // Memoize animation values
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -222,6 +263,8 @@ export default function Trades() {
     ]).start();
   }, [buttonScale, buttonOpacity, buttonRotation, buttonTranslateY]);
 
+  
+
   // Memoize render functions
   const renderTradeTip = useCallback(({ item }: { item: TradeTip }) => (
     <ThemedView style={[styles.tradeCard, { backgroundColor: colors.card }]}> 
@@ -245,11 +288,9 @@ export default function Trades() {
             <ThemedText style={{ color: colors.success, fontSize: 18, fontWeight: '700' }}>{item.prediction.potentialProfit}%</ThemedText>
           </View>
           <View style={{ alignItems: 'center', flex: 1 }}>
-            <ThemedText style={{ color: colors.text, fontSize: 13, opacity: 0.7 }}>Target Price</ThemedText>
             <ThemedText style={{ color: colors.text, fontSize: 18, fontWeight: '700' }}>₹ {item.targetPrice.toFixed(2)}</ThemedText>
           </View>
           <View style={{ alignItems: 'center', flex: 1 }}>
-            <ThemedText style={{ color: colors.text, fontSize: 13, opacity: 0.7 }}>Stop Loss</ThemedText>
             <ThemedText style={{ color: colors.error, fontSize: 18, fontWeight: '700' }}>₹ {item.stopLoss.toFixed(2)}</ThemedText>
           </View>
         </View>
@@ -377,6 +418,9 @@ export default function Trades() {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <Header title="Trading Tips" />
+
+        {/* Notifications */}
+      <TradeNotifications />
 
       {/* Fixed Tags Bar */}
       <View style={[styles.tagSection, { backgroundColor: colors.background }]}>

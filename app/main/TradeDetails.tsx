@@ -94,7 +94,7 @@ export default function TradeDetails() {
       const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
        // redirectUrl: `tradedge://paymentResult`,
       // const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
-         redirectUrl: `exp://192.168.1.20:8081/--/paymentResult`,
+         redirectUrl: `exp://192.168.1.12:8081/--/paymentResult`,
         amount: Number(trade.price),
         user_id: userDetails?.user_id,
         package_id: trade.package_id,

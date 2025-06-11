@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Animated,
@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ImageBackground,
+  Button,
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -26,31 +27,36 @@ import KycComponent from '@/components/KycComponent';
 import { useStockContext } from '@/context/StockContext';
 import { useUser } from '@/context/UserContext';
 import { useTheme, ThemeHookReturn } from '@/utils/theme';
+import { registerForPushNotificationsAsync } from '@/components/pushNotification';
+import * as Notifications from 'expo-notifications';
+import * as Permissions from 'expo-permissions';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true, // show banner
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function HomeScreen() {
   const userContext = useUser();
-  
+  const [expoToken, setExpoToken] = useState('');
   const [isPopupVisible, setIsPopupVisible] = useState(false);
-  const { NSEData, BSEData, packages } = useStockContext(); // Get packages from StockContext
+  const { NSEData, BSEData, packages } = useStockContext();
+  const insets = useSafeAreaInsets();
+  const colors: ThemeHookReturn = useTheme();
 
   const explorePackagesId = ["5", "3", "10", "9"];
   const bestTradesId = ["2", "4", "11", "9"];
 
-  const insets = useSafeAreaInsets();
-  const colors: ThemeHookReturn = useTheme();
-
-  // Filter packages for Explore Packages and Best Trades
   const explorePackages = packages.filter((pkg) =>
     explorePackagesId.includes(pkg.package_id)
   );
-
   const bestTrades = packages.filter((pkg) =>
     bestTradesId.includes(pkg.package_id)
   );
-
-  const refundOfferPackage = packages.find(pkg => pkg.package_id === "10000")
-  console.log(refundOfferPackage);
-
+  const refundOfferPackage = packages.find(pkg => pkg.package_id === "10000");
 
   const shimmerAnim = useRef(new Animated.Value(-200)).current;
 
@@ -65,6 +71,125 @@ export default function HomeScreen() {
     animation.start();
     return () => animation.stop();
   }, [shimmerAnim]);
+
+  // ✅ Push notification setup and send to Native Notify
+  useEffect(() => {
+    const initPushNotifications = async () => {
+      try {
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          console.log("Expo Push Token:", token);
+          setExpoToken(token);
+
+          // Send token to Native Notify
+          await fetch('https://app.nativenotify.com/api/expo-push-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              appId: 30641,
+              appToken: '8bDCRIV79EOfNyW7zDEkMd',
+              expoPushToken: token,
+              subID: userContext.userDetails?.user_id || 'guest',
+            }),
+          });
+        }
+      } catch (error) {
+        console.error("Push notification setup error:", error);
+      }
+    };
+
+    initPushNotifications();
+  }, []);
+
+  // ✅ Test push notification button handler
+  const sendTestNotification = async () => {
+    if (!expoToken) return;
+    try {
+      await fetch('https://exp.host/--/api/v2/push/send', {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Accept-Encoding': 'gzip, deflate',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: expoToken,
+          sound: 'default',
+          title: '🚀 Test Notification',
+          body: 'This is a test push sent from HomeScreen!',
+        }),
+      });
+      console.log('✅ Test notification sent');
+    } catch (error) {
+      console.error('❌ Failed to send notification:', error);
+    }
+  };
+
+
+useEffect(() => {
+  const handleNotificationResponse = (response: Notifications.NotificationResponse) => {
+    const data = response.notification.request.content.data;
+    console.log("Notification response received");
+
+    if (data?.screen === 'TradeDetailedCard' && data.tradeTip) {
+      const tip = data.tradeTip;
+      const prediction = tip?.prediction;
+
+      if (prediction) {
+        router.push({
+          pathname: '/tradeDetailedCard',
+          params: {
+            ...tip,
+            confidence: prediction.confidence,
+            potentialProfit: prediction.potentialProfit,
+            potentialLoss: prediction.potentialLoss,
+            predictionType: prediction.type,
+          },
+        });
+      } else {
+        console.warn("Prediction is undefined in tradeTip:", tip);
+      }
+    }
+  };
+
+  const subscription = Notifications.addNotificationResponseReceivedListener(handleNotificationResponse);
+
+  Notifications.getLastNotificationResponseAsync().then((response) => {
+    if (response) {
+      handleNotificationResponse(response);
+      console.log("Handled last notification response async");
+    }
+  }).catch(err => {
+    console.error("Error getting last notification response:", err);
+  });
+
+  return () => {
+    subscription.remove();
+  };
+}, []);
+
+useEffect(() => {
+  const setupNotifications = async () => {
+    const { status } = await Notifications.requestPermissionsAsync();
+
+    if (Device.osName === 'Android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        sound: 'default',
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
+    }
+  };
+
+  setupNotifications();
+}, []);
+
+
+
 
 
   if (userContext.isInitializing) {
@@ -88,7 +213,6 @@ export default function HomeScreen() {
       <Header title={"Hi " + (userContext.userDetails?.user_full_name || "User")} showBuyProButton={true} />
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* KYC Component */}
         {userContext.userDetails && (userContext.userDetails.auth === null || userContext.userDetails.auth === 'N') && (
           <ThemedView style={{ marginHorizontal: 8 }}>
             <KycComponent />
@@ -100,26 +224,23 @@ export default function HomeScreen() {
             activeOpacity={0.7}
             onPress={() => {
               router.push({
-                  pathname: '/main/TradeDetails',
-                  params: {
-                    package_id: "10000",
-                  },
-                });
-              }}
+                pathname: '/main/TradeDetails',
+                params: { package_id: "10000" },
+              });
+            }}
             style={[styles.refundOfferCard]}
           >
             <ImageBackground
-              source={require('@/assets/images/refundframe1.png')} // Replace with your image path
+              source={require('@/assets/images/refundframe1.png')}
               style={styles.refundOfferImageBackground}
-              imageStyle={{ borderRadius: 10, objectFit: 'cover' }} // Ensures the image respects the card's border radius
+              imageStyle={{ borderRadius: 10, objectFit: 'cover' }}
             >
-              <View style={{height: 200}}></View>
+              <View style={{ height: 200 }}></View>
             </ImageBackground>
           </TouchableOpacity>
         </ThemedView>
 
         <ThemedView style={[styles.websiteRedirectContainer, { shadowColor: colors.shadowColor, backgroundColor: colors.vgreen }]}>
-          
           <ThemedText type="subtitle" style={{ fontSize: 15, color: colors.text }}>
             Your Trusted Research Analyst
           </ThemedText>
@@ -151,12 +272,11 @@ export default function HomeScreen() {
           </ThemedView>
         </ThemedView>
 
-
-        {/* Explore Packages Section */}
+        {/* Explore Packages */}
         <ThemedView style={[styles.explorePackagesContainer, { backgroundColor: 'transparent' }]}>
           <ThemedText type="title" style={[styles.sectionHeader, { color: colors.text }]}>Explore Packages</ThemedText>
           <FlatList
-            data={[...explorePackages, { isShowMore: true }]} // Use filtered explorePackages
+            data={[...explorePackages, { isShowMore: true }]}
             renderItem={({ item }) => {
               if ('isShowMore' in item && item.isShowMore) {
                 return (
@@ -169,7 +289,7 @@ export default function HomeScreen() {
                     <MaterialIcons name="arrow-forward" size={24} color={colors.text} />
                   </TouchableOpacity>
                 );
-              } else if (!('isShowMore' in item)) {
+              } else {
                 return (
                   <ExplorePackageCard
                     item={item}
@@ -178,13 +298,12 @@ export default function HomeScreen() {
                       ...colors,
                       card: colors.card,
                       border: colors.border,
-                      priceBackground: colors.success, // Add green for price background
-                      priceText: '#fff', // White text for price
+                      priceBackground: colors.success,
+                      priceText: '#fff',
                     }}
                   />
                 );
               }
-              return null;
             }}
             keyExtractor={(item, index) => ('title' in item ? item.title : `show-more-${index}`)}
             horizontal
@@ -193,7 +312,7 @@ export default function HomeScreen() {
           />
         </ThemedView>
 
-        {/* Best Trades Section */}
+        {/* Best Trades */}
         <LinearGradient
           colors={['rgba(1, 47, 7, 0.78)', 'rgb(143, 234, 214)']}
           start={{ x: 0, y: 0 }}
@@ -206,8 +325,8 @@ export default function HomeScreen() {
                 Best Trades
               </ThemedText>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                <BadgeCheck size={24} color={colors.success} style={{ marginRight: 3 }} />
-                <ThemedText type="defaultSemiBold" style={{ color: '#FFFFFF', fontWeight: 'bold', alignSelf: 'center' }}>
+                <BadgeCheck size={24} color={colors.success} />
+                <ThemedText type="defaultSemiBold" style={{ color: '#FFFFFF', fontWeight: 'bold' }}>
                   SEBI Reg
                 </ThemedText>
               </View>
@@ -228,9 +347,11 @@ export default function HomeScreen() {
         <ThemedView style={{ backgroundColor: colors.background, paddingBottom: 70 }} />
       </ScrollView>
 
+      
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   safeArea: {

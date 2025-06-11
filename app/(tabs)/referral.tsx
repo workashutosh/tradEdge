@@ -98,8 +98,8 @@ export default function ReferralScreen() {
   };
 
   const handleInviteFriends = () => {
-    const message = `Download Tradedge app. Use my referral code ${referrerCode}`;
-    const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
+   const message = `Download Tradedge app. Use my referral code *${referrerCode}*`;
+  const whatsappUrl = `whatsapp://send?text=${encodeURIComponent(message)}`;
 
     Linking.openURL(whatsappUrl).catch(() => {
       Alert.alert('Error', 'WhatsApp is not installed on your device.');

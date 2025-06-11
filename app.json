@@ -19,7 +19,13 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.tradedge.app",
-      "versionCode": 1
+      "googleServicesFile": "./android/app/google-services.json",  // Corrected property name
+      "versionCode": 1,
+      "icon": "./assets/images/logo.png",
+      "notification": {
+        "icon": "./assets/images/notification-icon.png",
+        "color": "#6200EE"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -37,7 +43,17 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png", // Optional: Custom notification icon
+          "color": "#6200EE", // Optional:  Notification color (Android)
+          "sounds": [
+            "./assets/sounds/notification.wav" // Optional: Custom notification sound
+          ]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

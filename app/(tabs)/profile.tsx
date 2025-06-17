@@ -19,6 +19,11 @@ import { Animated } from 'react-native';
 import { SettingItem } from '@/components/settings/SettingItem';
 import { SettingsModal } from '@/components/settings/SettingsModal';
 import { settingsData } from '@/components/settings/settingsData';
+import Packages from '@/app/user_packages';
+import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+  
+
 
 const { width } = Dimensions.get('window');
 
@@ -108,42 +113,72 @@ export default function Profile() {
     </TouchableOpacity>
   );
 
-  const renderHeader = () => (
-    <Animated.View style={[styles.headerContainer, { height: headerHeight, opacity: headerOpacity }]}>
+  const { userTransactions = [] } = useUser(); 
+
+  const renderHeader = () => {
+  // safe default fallback
+
+  const getUserStats = () => {
+    let invested = 0;
+    let trades = 0;
+    let profit = 0;
+
+    userTransactions.forEach((txn: any) => {
+      txn.payment_history?.forEach((payment: any) => {
+        invested += parseFloat(payment.amount ?? '0');
+        trades += 1;
+      });
+
+      const mockProfit = 0 * parseFloat(txn.package_details?.package_price ?? '0');
+      profit += mockProfit;
+    });
+
+    return { invested, trades, profit };
+  };
+
+  const { invested, trades, profit } = getUserStats();
+
+  return (
+    <Animated.View style={[styles.headerContainer, { height: 250, opacity: headerOpacity }]}>
       <LinearGradient
-        colors={['#04810E', '#039D74']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.headerGradient}
-      >
+          colors={['#04810E', '#039D74']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.headerGradient, { minHeight: 300 }]} // <-- increase height here
+        >
         <View style={styles.avatarContainer}>
           <View style={[styles.avatar, { backgroundColor: colors.card }]}>
             <User size={40} color={colors.text} />
           </View>
           <View style={styles.userInfo}>
-            <ThemedText style={[styles.userName, { color: '#FFFFFF' }]}>{userDetails?.user_full_name || "User"}</ThemedText>
+            <ThemedText style={[styles.userName, { color: '#FFFFFF' }]}>
+              {userDetails?.user_full_name || 'User'}
+            </ThemedText>
             <ThemedText style={[styles.userRole, { color: '#FFFFFF' }]}>Active Trader</ThemedText>
           </View>
         </View>
+
         <View style={styles.statsContainer}>
           <View style={styles.statItem}>
-            <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>₹50K</ThemedText>
+            <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>₹{invested.toLocaleString()}</ThemedText>
             <ThemedText style={[styles.statLabel, { color: '#FFFFFF' }]}>Portfolio</ThemedText>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>12</ThemedText>
+            <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>{trades}</ThemedText>
             <ThemedText style={[styles.statLabel, { color: '#FFFFFF' }]}>Trades</ThemedText>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>₹2.5K</ThemedText>
+            <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>₹{profit.toFixed(0)}</ThemedText>
             <ThemedText style={[styles.statLabel, { color: '#FFFFFF' }]}>Profit</ThemedText>
           </View>
         </View>
       </LinearGradient>
     </Animated.View>
   );
+};
+
 
   const renderProfileInfo = () => (
     <ProfileSection title="Personal Information">
@@ -203,35 +238,63 @@ export default function Profile() {
     </ProfileSection>
   );
 
+  const router = useRouter();
+
   const renderTransactionHistory = () => (
-    <ProfileSection title="Transaction History">
-      <View style={[styles.transactionHistoryContainer, { backgroundColor: colors.card, borderRadius: 14, padding: 10, marginTop: 4, shadowColor: colors.primary, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 }]}> 
-        <ThemedText style={[styles.transactionHistoryTitle, { color: colors.primary, fontWeight: 'bold', fontSize: 17, marginBottom: 8 }]}>Your Recent Transactions</ThemedText>
-        <Transactions
-          cardStyle={{
-            backgroundColor: colors.background,
-            borderRadius: 10,
-            marginBottom: 10,
-            borderWidth: 1,
-            borderColor: colors.primary,
-            shadowColor: colors.primary,
-            shadowOpacity: 0.08,
-            shadowRadius: 6,
-            elevation: 2,
-          }}
-          amountStyle={{
-            color: colors.success,
-            fontWeight: 'bold',
-            fontSize: 16,
-          }}
-          statusStyle={{
-            color: colors.info || colors.primary,
-            fontWeight: '600',
-          }}
-        />
-      </View>
-    </ProfileSection>
-  );
+    
+  <ProfileSection title="Transaction History">
+  {/* Transaction History Button styled like My Packages */}
+  <TouchableOpacity
+    onPress={() => router.push('/transaction-history')}
+    style={{
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      padding: 10,
+      marginTop: 4,
+      elevation: 4,
+    }}
+  >
+    <ThemedText
+      style={{
+        fontSize: 14,
+        fontWeight: '600',
+        color: colors.text,
+        textAlign: 'center',
+      }}
+    >
+      Transaction History
+    </ThemedText>
+  </TouchableOpacity>
+
+  {/* My Packages Button */}
+  <TouchableOpacity
+    onPress={() => navigation.navigate('user_packages')}
+    style={{
+      backgroundColor: colors.card,
+      borderRadius: 14,
+      padding: 10,
+      marginTop: 10,
+      elevation: 4,
+    }}
+  >
+    <ThemedText
+      style={{
+        color: colors.text,
+        fontWeight: '600',
+        textAlign: 'center',
+      }}
+    >
+      My Packages
+    </ThemedText>
+  </TouchableOpacity>
+</ProfileSection>
+
+);
+
+const navigation = useNavigation();
+
+
+
 
   {/* const renderSocialMedia = () => (
     <ProfileSection title="Social Media">
@@ -258,6 +321,7 @@ export default function Profile() {
     { id: 'settings', render: renderAccountSettings },
     { id: 'kyc', render: renderKycStatus },
     { id: 'transactions', render: renderTransactionHistory },
+    /*{id: 'packages',render: renderPackagesSection}*/
     /*{ id: 'social', render: renderSocialMedia },*/
   ];
 

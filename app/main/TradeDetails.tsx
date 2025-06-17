@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStockContext } from '@/context/StockContext';
 import { useTheme } from '@/utils/theme';
 
+
 interface Trade {
   type_id: string;
   type_name: string;
@@ -40,10 +41,14 @@ const getISTDate = () => {
   return istDate.toISOString().slice(0, 19).replace('T', ' ');
 };
 
+
+
+
 export default function TradeDetails() {
   const { userDetails, purchasedPackagesId } = useUser();
   const { packages } = useStockContext(); // Get packages from StockContext
-  const params = useLocalSearchParams(); // Get params from the route
+  const { package_id, package_name, package_price, payment_date } = useLocalSearchParams();
+  
 
   const themeColors = useTheme();
   const colors = {
@@ -55,7 +60,12 @@ export default function TradeDetails() {
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Fetch the trade details using package_id
-  const trade = packages.find((pkg) => pkg.package_id === params.package_id);
+ const trade = packages.find(
+  (pkg) => pkg.package_id?.toString() === package_id?.toString()
+);
+  console.log('🔍 From search params - package_id:', package_id);
+console.log('📦 StockContext packages:', packages.map(p => p.package_id));
+
 
   if (!trade) {
     return (
@@ -94,7 +104,7 @@ export default function TradeDetails() {
       const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
        // redirectUrl: `tradedge://paymentResult`,
       // const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
-         redirectUrl: `exp://192.168.1.12:8081/--/paymentResult`,
+         redirectUrl: `exp://192.168.1.26:8081/--/paymentResult`,
         amount: Number(trade.price),
         user_id: userDetails?.user_id,
         package_id: trade.package_id,

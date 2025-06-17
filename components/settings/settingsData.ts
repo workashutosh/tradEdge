@@ -21,8 +21,8 @@ export const settingsData: SettingsData = {
     description: "Customize your app experience",
     subOptions: [
       { id: 'dark_mode', label: 'Dark Mode', icon: Moon, value: true },
-      { id: 'notifications', label: 'Notifications', icon: Bell, value: true },
-      { id: 'language', label: 'Language', icon: GlobeIcon, value: false },
+     // { id: 'notifications', label: 'Notifications', icon: Bell, value: true },
+      //{ id: 'language', label: 'Language', icon: GlobeIcon, value: false },
     ]
   },
   support: {

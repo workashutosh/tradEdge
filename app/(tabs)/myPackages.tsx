@@ -216,7 +216,26 @@ export default function Trades() {
   const styles = getStyles(colors); // Get styles using the function with colors
 
   const { packages, loading } = useStockContext();
-  const { userDetails } = useUser();
+  const { userDetails, userTransactions } = useUser();
+
+  // 1. Filter valid transactions
+const purchasedPackages = (userTransactions || []).filter(txn => txn.payment_history?.length > 0);
+
+// 2. Total investment = sum of all package prices
+const totalInvestment = purchasedPackages.reduce((total, item) => {
+  return total + Number(item.package_details?.package_price || 0);
+}, 0);
+
+// 3. Total trades = number of purchased packages
+const totalTrades = purchasedPackages.length;
+
+// 4. Estimated profit = sum of profitPotential (if available)
+const estimatedProfit = purchasedPackages.reduce((total, item) => {
+  const profitStr = item.package_details?.profitPotential?.replace(/[^0-9.-]/g, '');
+  const profit = profitStr ? Number(profitStr) : 0;
+  return total + profit;
+}, 0);
+
 
   const uniqueTags = [...new Set(packages.map((pack) => pack.categoryTag))] as string[];
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
@@ -272,7 +291,7 @@ export default function Trades() {
         })
       );
       const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-        redirectUrl: `exp://192.168.1.12:8081/--/paymentResult`,
+        redirectUrl: `exp://192.168.1.26:8081/--/paymentResult`,
         amount: Number(item.price),
         user_id: userDetails?.user_id,
         package_id: item.package_id,

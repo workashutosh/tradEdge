@@ -68,6 +68,22 @@ export default function TransactionHistoryPage() {
     }));
   };
 
+  
+  const getPackageTransactions = () => {
+  return userTransactions
+    .filter((txn: any) => txn.package_details?.subtype_name) // Ensure it's a package transaction
+    .flatMap((item: any) =>
+      (item.payment_history || []).map((payment: any) => ({
+        ...payment,
+        packageName: item.package_details?.subtype_name,
+        packagePrice: item.package_details?.package_price,
+        purchaseDate: item.purchase_info?.purchase_date,
+        type: 'package',
+      }))
+    );
+};
+
+
   const styles = StyleSheet.create({
     container: {
       flex: 2,

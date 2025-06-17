@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
+import { StyleSheet, TouchableOpacity, ActivityIndicator, useColorScheme ,View} from 'react-native';
 import React, { useState, useEffect } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import { Ionicons } from '@expo/vector-icons';
@@ -201,23 +201,101 @@ const KycComponent: React.FC<KycComponentProps> = ({ onKycComplete }) => {
     (!userDetails?.aadhar_name && !userDetails?.pan_name)
   ) {
     return (
-      <ThemedView style={[styles.kycContainer, { backgroundColor: colors.card, borderColor: colors.yellowBorder, shadowColor: colors.shadowColor }]}>
-        {!isKycExpanded ? (
-          // KYC section collapsed
-          <ThemedView style={styles.kycHeader}>
-            <ThemedText style={[styles.kycStatusText, { color: colors.warning }]}>
-              {isProcessing ? 'Processing Docs...' : 'KYC Required'}
+     <ThemedView
+  style={[
+    styles.kycContainer,
+    {
+      backgroundColor: colors.card,
+      borderColor: colors.yellowBorder,
+      shadowColor: colors.shadowColor,
+    },
+  ]}
+>
+  {!isKycExpanded ? (
+          // 🔒 KYC Collapsed View
+          <ThemedView
+            style={{
+              width: '100%',
+              backgroundColor: colors.card,
+              borderRadius: 20,
+              padding: 18,
+              marginVertical: 16,
+              shadowColor: '#000',
+              shadowOpacity: 0.15,
+              shadowRadius: 10,
+              shadowOffset: { width: 0, height: 6 },
+              elevation: 8,
+              borderWidth: 1,
+              borderColor: colors.primary,
+              position: 'relative',
+            }}
+          >
+            {/* Floating Icon Badge */}
+            <View
+              style={{
+                position: 'absolute',
+                top: -16,
+                left: 16,
+                backgroundColor: colors.primary,
+                borderRadius: 50,
+                padding: 10,
+                zIndex: 2,
+                shadowColor: colors.primary,
+                shadowOpacity: 0.3,
+                shadowRadius: 6,
+                elevation: 6,
+              }}
+            >
+              <Ionicons name="shield-checkmark" size={24} color="white" />
+            </View>
+
+            {/* Title */}
+            <ThemedText
+              style={{
+                fontSize: 18,
+                fontWeight: '700',
+                color: colors.primary,
+                marginLeft: 42,
+                marginBottom: 8,
+              }}
+            >
+              KYC Required
             </ThemedText>
-            {!isProcessing && (
-              <TouchableOpacity
-                style={[styles.kycButton, { backgroundColor: colors.primary }]}
-                onPress={() => setIsKycExpanded(true)}
-                activeOpacity={0.7}
-              >
-                <ThemedText style={[styles.kycButtonText, { color: 'white' }]}>Complete KYC</ThemedText>
-              </TouchableOpacity>
-            )}
+
+            {/* Message */}
+            <ThemedText
+              style={{
+                fontSize: 14,
+                color: colors.text,
+                opacity: 0.8,
+                marginBottom: 16,
+                paddingLeft: 42,
+              }}
+            >
+              Verify your identity to unlock all features.
+            </ThemedText>
+
+            {/* CTA Button */}
+            <TouchableOpacity
+              onPress={() => setIsKycExpanded(true)}
+              activeOpacity={0.9}
+              style={{
+                backgroundColor: colors.primary,
+                borderRadius: 14,
+                paddingVertical: 12,
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '100%',
+              }}
+            >
+              <ThemedText style={{ color: 'white', fontSize: 15, fontWeight: '600' }}>
+                 Complete KYC Now
+              </ThemedText>
+            </TouchableOpacity>
           </ThemedView>
+
+
+
         ) : (
           // KYC section expanded
           <ThemedView style={[styles.kycExpanded, isDark ? styles.cardDark : styles.cardLight]}>
@@ -268,18 +346,17 @@ const KycComponent: React.FC<KycComponentProps> = ({ onKycComplete }) => {
             {/* Submit Button */}
             <TouchableOpacity 
               style={[
-                styles.submitButton, 
+                styles.uploadButton, // match the style of the upload image button
                 { 
-                  opacity: uploading ? 0.5 : 1, 
-                  backgroundColor: colors.success,
-                  marginTop: 20
+                  backgroundColor: colors.success, // override color
+                  marginTop: 20 
                 }
-              ]} 
+              ]}
               onPress={handleKycSubmit} 
               disabled={uploading} 
               activeOpacity={0.7}
             >
-              <ThemedText style={[styles.submitButtonText, { color: 'white' }]}>
+              <ThemedText style={[styles.uploadText, { color: 'white' }]}>
                 {uploading ? "Uploading..." : "Submit KYC"}
               </ThemedText>
             </TouchableOpacity>
@@ -296,159 +373,67 @@ const KycComponent: React.FC<KycComponentProps> = ({ onKycComplete }) => {
   return null;
 };
 
+// ✅ Replace only the fields listed below in your existing `StyleSheet.create` call
 const styles = StyleSheet.create({
-  kycContainer: {
-    marginVertical: 14,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 8,
-    backgroundColor: '#F6FFF7', // fallback for light mode
-  },
-  kycHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
+  // ...
   kycStatusText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1B5E20',
-    letterSpacing: 0.2,
+    letterSpacing: 0.5,
+    // remove static color, use dynamic in component
   },
   kycButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 22,
-    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    
+  },
+  kycButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: 'white',
+  },
+  kycExpanded: {
+    borderRadius: 20,
+    padding: 20,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fileLabel: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  uploadButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#43A047',
-    shadowColor: '#43A047',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.18,
     shadowRadius: 6,
     elevation: 4,
   },
-  kycButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: 'white',
-    letterSpacing: 0.2,
-  },
-  kycExpanded: {
-    borderRadius: 16,
-    padding: 18,
-    backgroundColor: '#E8F5E9',
-    shadowColor: '#43A047',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  cardLight: {
-    backgroundColor: '#FFFFFF',
-  },
-  cardDark: {
-    backgroundColor: '#1e1e1e',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 18,
-  },
-  backButton: {
-    padding: 7,
-    backgroundColor: '#E0F2F1',
-    borderRadius: 20,
-  },
-  kycTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    textAlign: 'center',
-    flex: 1,
-    color: '#1B5E20',
-  },
-  fileSection: {
-    marginBottom: 22,
-  },
-  fileLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#388E3C',
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#43A047',
-    shadowColor: '#43A047',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  uploadText: {
-    fontSize: 15,
-    fontWeight: '600',
-    marginLeft: 10,
-    color: 'white',
-  },
   fileName: {
     fontSize: 13,
     marginTop: 8,
-    padding: 7,
-    borderRadius: 6,
-    backgroundColor: '#C8E6C9',
-    color: '#1B5E20',
-  },
-  submitButton: {
-    paddingVertical: 14,
+    padding: 8,
     borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: '#388E3C',
-    shadowColor: '#388E3C',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    elevation: 5,
-    marginTop: 24,
-  },
-  submitButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: 'white',
-    letterSpacing: 0.2,
   },
   message: {
-    marginTop: 14,
+    marginTop: 16,
     fontSize: 15,
-    textAlign: 'center',
-    color: '#388E3C',
     fontWeight: '600',
-  },
-  loadingContainer: {
-    flex: 1,
-    gap: 2,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  kycDescription: {
-    fontSize: 15,
-    marginBottom: 22,
     textAlign: 'center',
-    lineHeight: 22,
-    color: '#388E3C',
-    fontWeight: '500',
   },
 });
+
 
 export default KycComponent;

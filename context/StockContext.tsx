@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
 interface StockData {
   ticker: string;
   price: number;
@@ -43,6 +44,9 @@ interface StockContextType {
   fetchAllData: (forceRefresh?: boolean) => Promise<void>;
   fetchPackages: (forceRefresh?: boolean) => Promise<void>;
   lastFetchTime: number;
+  optionTabIndex: number;
+  setOptionTabIndex: (index: number) => void;
+  packageCategories: string[];
 }
 
 
@@ -57,7 +61,14 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastFetchTime, setLastFetchTime] = useState<number>(0);
+  const [optionTabIndex, setOptionTabIndex] = useState(0);
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+
+  const packageCategories = useMemo(() => {
+  const unique = [...new Set(packages.map(pkg => pkg.type_name))];
+  return unique;
+}, [packages]);
+
 
   const stocks = useMemo(() => ["nifty 200", "nifty 50", "nifty auto", "nifty bank", "sensex", "nifty infra", "nifty it", "nifty metal", "nifty pharma", "nifty psu bank"], []);
 
@@ -80,6 +91,8 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       default: return 'info';
     }
   }, []);
+
+  
 
   const getNSEBSEStocks = async (stock: 'NSE' | 'BSE') => {
     // try {
@@ -328,33 +341,39 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const value = useMemo(() => ({
-    NSEData,
-    BSEData,
-    marketIndices,
-    packages,
-    loading,
-    error,
-    updateNSEData,
-    updateBSEData,
-    updateMarketIndices,
-    getNSEBSEStocks,
-    fetchAllData,
-    fetchPackages,
-    lastFetchTime
-  }), [
-    NSEData,
-    BSEData,
-    marketIndices,
-    packages,
-    loading,
-    error,
-    updateNSEData,
-    updateBSEData,
-    updateMarketIndices,
-    fetchAllData,
-    fetchPackages,
-    lastFetchTime
-  ]);
+  NSEData,
+  BSEData,
+  marketIndices,
+  packages,
+  loading,
+  error,
+  updateNSEData,
+  updateBSEData,
+  updateMarketIndices,
+  getNSEBSEStocks,
+  fetchAllData,
+  fetchPackages,
+  lastFetchTime,
+  optionTabIndex,
+  setOptionTabIndex,
+  packageCategories,
+}), [
+  NSEData,
+  BSEData,
+  marketIndices,
+  packages,
+  loading,
+  error,
+  updateNSEData,
+  updateBSEData,
+  updateMarketIndices,
+  fetchAllData,
+  fetchPackages,
+  lastFetchTime,
+  optionTabIndex,
+  packageCategories
+]);
+
 
   return (
     <StockContext.Provider value={value}>

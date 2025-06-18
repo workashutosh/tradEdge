@@ -1,13 +1,13 @@
 module.exports = () => ({
   name: 'TradEdge',
-  slug: 'tradedge',
+  slug: 'newtradedge',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/logo.png',
   scheme: 'tradedge',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
-  owner: 'najaf1705',
+  owner: 'harshikapatil09',
 
   ios: {
     supportsTablet: true,
@@ -66,7 +66,7 @@ module.exports = () => ({
       origin: false,
     },
     eas: {
-      projectId: '0dca21b6-7a9a-4c7d-8da4-7f73d09c3b7e',
+      projectId: '966d83ea-9028-40e4-beca-492ce398a8e0',
     },
   },
 });

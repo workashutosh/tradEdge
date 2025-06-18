@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TradEdge",
-    "slug": "tradedge",
+    "slug": "newtradedge",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -19,7 +19,7 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.tradedge.app",
-      "googleServicesFile": "./android/app/google-services.json",  // Corrected property name
+      "googleServicesFile": "./android/app/google-services.json",
       "versionCode": 1,
       "icon": "./assets/images/logo.png",
       "notification": {
@@ -47,10 +47,10 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/notification-icon.png", // Optional: Custom notification icon
-          "color": "#6200EE", // Optional:  Notification color (Android)
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#6200EE",
           "sounds": [
-            "./assets/sounds/notification.wav" // Optional: Custom notification sound
+            "./assets/sounds/notification.wav"
           ]
         }
       ]
@@ -63,9 +63,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "0dca21b6-7a9a-4c7d-8da4-7f73d09c3b7e"
+        "projectId": "966d83ea-9028-40e4-beca-492ce398a8e0"
       }
     },
-    "owner": "najaf1705"
+    "owner": "harshikapatil09"
   }
 }

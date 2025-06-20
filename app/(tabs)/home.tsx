@@ -29,7 +29,8 @@ import { useUser } from '@/context/UserContext';
 import { useTheme, ThemeHookReturn } from '@/utils/theme';
 import { registerForPushNotificationsAsync } from '@/components/pushNotification';
 import * as Notifications from 'expo-notifications';
-import * as Permissions from 'expo-permissions';
+import * as Device from 'expo-device';
+
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -139,9 +140,10 @@ useEffect(() => {
 
       if (prediction) {
         router.push({
-          pathname: '/tradeDetailedCard',
+          pathname: '/tradeDetailedCard/[package_id]',
           params: {
             ...tip,
+            package_id: tip.package_id,
             confidence: prediction.confidence,
             potentialProfit: prediction.potentialProfit,
             potentialLoss: prediction.potentialLoss,

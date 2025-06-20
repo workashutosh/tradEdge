@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TradEdge",
-    "slug": "newtradedge",
+    "slug": "tradeedge",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -13,20 +13,20 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.tradedge.app"
     },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.tradedge.app",
-      "googleServicesFile": "./android/app/google-services.json",
-      "versionCode": 1,
-      "icon": "./assets/images/logo.png",
-      "notification": {
-        "icon": "./assets/images/notification-icon.png",
-        "color": "#6200EE"
-      }
-    },
+   "android": {
+  "adaptiveIcon": {
+    "foregroundImage": "./assets/images/logo.png",
+    "backgroundColor": "#ffffff"
+  },
+  "package": "com.tradedge.app",
+  "versionCode": 1,
+  "icon": "./assets/images/logo.png",
+  "notification": {
+    "icon": "./assets/images/notification-icon.png",
+    "color": "#6200EE"
+  }
+},
+
     "web": {
       "bundler": "metro",
       "output": "static",
@@ -63,9 +63,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "966d83ea-9028-40e4-beca-492ce398a8e0"
+        "projectId": "7f25bbb2-ce70-4bad-a763-27bc15a3a583"
       }
     },
-    "owner": "harshikapatil09"
+    "owner": "harshika11"
   }
 }

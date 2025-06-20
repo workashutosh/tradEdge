@@ -15,6 +15,7 @@ import { useUser } from '@/context/UserContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Stack, useRouter } from 'expo-router';
 import { router } from 'expo-router';
+import moment from 'moment'; // ✅ Add for date formatting
 
 const PackagesScreen = () => {
   const colors = useTheme();
@@ -22,37 +23,36 @@ const PackagesScreen = () => {
   const { userTransactions } = useUser();
   const [expanded, setExpanded] = useState(true);
 
-  
- console.log('🧾 userTransactions:', JSON.stringify(userTransactions, null, 2));
- const getPackageTransactions = () => {
-  if (!userTransactions || userTransactions.length === 0) {
-    return [];
-  }
+  console.log('🧾 userTransactions:', JSON.stringify(userTransactions, null, 2));
 
-  return userTransactions
-    .filter(
-      (txn: any) =>
-        txn.package_details?.subtype_name &&
-        txn.package_details?.subtype_id &&
-        Array.isArray(txn.payment_history)
-    )
-    .flatMap((item: any) =>
-      item.payment_history.map((payment: any) => {
-        const packageId = String(item.package_details.subtype_id); // ✅ Use subtype_id instead
-        return {
-          ...payment,
-          package_id: packageId,
-          packageName: item.package_details.subtype_name,
-          packagePrice: item.package_details.package_price ?? '0',
-          purchaseDate: item.purchase_info?.purchase_date ?? '',
-          type: 'package',
-        };
-      })
-    );
-};
+  const getPackageTransactions = () => {
+    if (!userTransactions || userTransactions.length === 0) {
+      return [];
+    }
 
+    return userTransactions
+      .filter(
+        (txn: any) =>
+          txn.package_details?.subtype_name &&
+          txn.package_details?.subtype_id &&
+          Array.isArray(txn.payment_history)
+      )
+      .flatMap((item: any) =>
+        item.payment_history.map((payment: any) => {
+          const packageId = String(item.package_details.subtype_id);
+          return {
+            ...payment,
+            package_id: packageId,
+            packageName: item.package_details.subtype_name,
+            packagePrice: item.package_details.package_price ?? '0',
+            purchaseDate: item.purchase_info?.purchase_date ?? '',
+            expiryDate: item.purchase_info?.expiry_date ?? '',
+            type: 'package',
+          };
+        })
+      );
+  };
 
- 
   const packageTransactions = getPackageTransactions();
 
   const styles = StyleSheet.create({
@@ -112,9 +112,19 @@ const PackagesScreen = () => {
     },
   });
 
+  const formatDate = (dateString: string) => {
+    return dateString ? moment(dateString).format('DD MMM YYYY') : 'N/A';
+  };
+
   return (
     <ThemedView style={styles.container}>
-      <MaterialIcons name="arrow-back" size={28} color={colors.primary} style={{ marginRight: 8 }} onPress={() => router.replace('/profile')} />
+      <MaterialIcons
+        name="arrow-back"
+        size={28}
+        color={colors.primary}
+        style={{ marginRight: 8 }}
+        onPress={() => router.replace('/profile')}
+      />
       <TouchableOpacity
         style={styles.headerContainer}
         onPress={() => setExpanded(!expanded)}
@@ -126,6 +136,7 @@ const PackagesScreen = () => {
           color={colors.text}
         />
       </TouchableOpacity>
+
       {expanded ? (
         packageTransactions.length > 0 ? (
           <FlatList
@@ -134,34 +145,33 @@ const PackagesScreen = () => {
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() => {
-                if (!item.package_id) {
-                  console.warn('❌ Invalid package_id');
-                  return;
-                }
+                  if (!item.package_id) {
+                    console.warn('❌ Invalid package_id');
+                    return;
+                  }
 
-                router.push({
-                  pathname: '/main/TradeDetails',
-                  params: {
-                    package_id: item.package_id,
-                    package_name: item.packageName,
-                    package_price: item.packagePrice,
-                    payment_date: item.payment_date,
-                  },
-                });
-              }}
-
+                  router.push({
+                    pathname: '/main/TradeDetails',
+                    params: {
+                      package_id: item.package_id,
+                      package_name: item.packageName,
+                      package_price: item.packagePrice,
+                      payment_date: item.payment_date,
+                    },
+                  });
+                }}
                 activeOpacity={0.7}
                 style={[styles.card, { shadowColor: colors.shadowColor }]}
               >
                 <View>
                   <ThemedText style={styles.cardTitle}>{item.packageName}</ThemedText>
                   <ThemedText style={styles.cardText}>Price: ₹{item.packagePrice}</ThemedText>
-                  <ThemedText style={styles.cardText}>Paid on: {item.payment_date}</ThemedText>
+                  <ThemedText style={styles.cardText}>Paid on: {formatDate(item.purchaseDate)}</ThemedText>
+                  <ThemedText style={styles.cardText}>Valid till: {formatDate(item.expiryDate)}</ThemedText>
                 </View>
               </TouchableOpacity>
             )}
           />
-
         ) : (
           <ThemedText style={styles.emptyText}>No purchased packages found.</ThemedText>
         )

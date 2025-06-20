@@ -1,13 +1,13 @@
 module.exports = () => ({
   name: 'TradEdge',
-  slug: 'newtradedge',
+  slug: 'tradeedge',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/logo.png',
   scheme: 'tradedge',
   userInterfaceStyle: 'automatic',
   newArchEnabled: true,
-  owner: 'harshikapatil09',
+  owner: 'harshika11',
 
   ios: {
     supportsTablet: true,
@@ -15,19 +15,19 @@ module.exports = () => ({
   },
 
   android: {
-    package: 'com.tradedge.app',
-    versionCode: 1,
-    googleServicesFile: './android/app/google-services.json',
-    icon: './assets/images/logo.png',
-    adaptiveIcon: {
-      foregroundImage: './assets/images/logo.png',
-      backgroundColor: '#ffffff',
-    },
-    notification: {
-      icon: './assets/images/notification-icon.png',
-      color: '#6200EE',
-    },
+  package: 'com.tradedge.app',
+  versionCode: 1,
+  icon: './assets/images/logo.png',
+  adaptiveIcon: {
+    foregroundImage: './assets/images/logo.png',
+    backgroundColor: '#ffffff',
   },
+  notification: {
+    icon: './assets/images/notification-icon.png',
+    color: '#6200EE',
+  },
+},
+
 
   web: {
     bundler: 'metro',
@@ -66,7 +66,7 @@ module.exports = () => ({
       origin: false,
     },
     eas: {
-      projectId: '966d83ea-9028-40e4-beca-492ce398a8e0',
+      projectId: '7f25bbb2-ce70-4bad-a763-27bc15a3a583',
     },
   },
 });

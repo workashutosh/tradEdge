@@ -291,7 +291,7 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
         })
       );
       const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-        redirectUrl: `exp://192.168.1.26:8081/--/paymentResult`,
+        redirectUrl: `tradedge://paymentResult`,
         amount: Number(item.price),
         user_id: userDetails?.user_id,
         package_id: item.package_id,

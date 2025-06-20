@@ -28,7 +28,12 @@ module.exports = () => ({
   },
 },
 
-
+ios: {
+      bundleIdentifier: "com.yourname.yourapp",
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false
+      }
+    },
   web: {
     bundler: 'metro',
     output: 'static',

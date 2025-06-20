@@ -11,22 +11,30 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tradedge.app"
+      "bundleIdentifier": "com.tradedge.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
-   "android": {
-  "adaptiveIcon": {
-    "foregroundImage": "./assets/images/logo.png",
-    "backgroundColor": "#ffffff"
-  },
-  "package": "com.tradedge.app",
-  "versionCode": 1,
-  "icon": "./assets/images/logo.png",
-  "notification": {
-    "icon": "./assets/images/notification-icon.png",
-    "color": "#6200EE"
-  }
-},
-
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.tradedge.app",
+      "versionCode": 1,
+      "icon": "./assets/images/logo.png",
+      "notification": {
+        "icon": "./assets/images/notification-icon.png",
+        "color": "#6200EE"
+      }
+    },
+     "ios": {
+      "bundleIdentifier": "com.yourname.yourapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
     "web": {
       "bundler": "metro",
       "output": "static",

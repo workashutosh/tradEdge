@@ -109,7 +109,7 @@ export const AnimatedLinkButton = ({
               {
                 transform: [
                   { translateX: shimmerAnim },
-                  { rotate: '35deg' }
+                  { rotate: '45deg' }
                 ],
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
               },
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -50,
     left: -50,
-    right: -50,
+    right: -30,
     bottom: -50,
     width: 50,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',

@@ -1,6 +1,13 @@
-import React from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { ThemedText } from '@/components/ThemedText'; // Import ThemedText
+import React, { useState } from 'react';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+} from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { ThemedText } from '@/components/ThemedText'; // Adjust path as needed
 
 interface PhoneInputProps {
   phone: string;
@@ -17,8 +24,9 @@ export default function PhoneInput({
   handleSubmit,
   otpButtonLoading,
 }: PhoneInputProps) {
+  const [consentGiven, setConsentGiven] = useState(false);
+
   const handlePhoneChange = (value: string) => {
-    // Only allow numeric input
     const numericValue = value.replace(/[^0-9]/g, '');
     setPhone(numericValue);
   };
@@ -47,17 +55,29 @@ export default function PhoneInput({
         <ThemedText type="defaultSemiBold" style={styles.errorText}>{phoneError}</ThemedText>
       ) : null}
 
-      {/* Terms Section */}
-      <ThemedText type="default" style={styles.termsText}>
-        By Proceeding I accept all the{' '}
-        <ThemedText type="link" style={styles.termsLink}>terms and conditions</ThemedText> of Tradege
-      </ThemedText>
+      {/* ✅ Terms with Checkbox */}
+      <View style={styles.checkboxContainer}>
+        <TouchableOpacity onPress={() => setConsentGiven(!consentGiven)}>
+          <MaterialIcons
+            name={consentGiven ? 'check-box' : 'check-box-outline-blank'}
+            size={23}
+            color="#fff"
+          />
+        </TouchableOpacity>
+        <ThemedText type="default" style={styles.termsText}>
+          By Proceeding I accept all the{' '}
+          <ThemedText type="link" style={styles.termsLink}>terms and conditions</ThemedText> of Tradege
+        </ThemedText>
+      </View>
 
       {/* Get OTP Button */}
       <TouchableOpacity
-        style={[styles.button, { backgroundColor: phone.length === 10 ? '#000' : '#808080' }]}
+        style={[
+          styles.button,
+          { backgroundColor: phone.length === 10 && consentGiven ? '#000' : '#808080' },
+        ]}
         onPress={handleSubmit}
-        disabled={otpButtonLoading}
+        disabled={otpButtonLoading || !consentGiven}
         activeOpacity={0.7}
       >
         {otpButtonLoading ? (
@@ -107,12 +127,18 @@ const styles = StyleSheet.create({
     color: '#000',
     paddingHorizontal: 15,
   },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingHorizontal: 10,
+  },
   termsText: {
     fontSize: 12,
     color: '#fff',
-    textAlign: 'center',
-    marginBottom: 10,
-    paddingHorizontal: 20,
+    marginLeft: 8,
+    flex: 1,
+    flexWrap: 'wrap',
   },
   termsLink: {
     color: '#00FF00',

@@ -24,6 +24,7 @@ const PackagesScreen = () => {
   const [expanded, setExpanded] = useState(true);
 
   console.log('🧾 userTransactions:', JSON.stringify(userTransactions, null, 2));
+  console.log('📦 Purchased Package IDs:', userTransactions.map(txn => txn.package_details?.subtype_id));
 
   const getPackageTransactions = () => {
     if (!userTransactions || userTransactions.length === 0) {

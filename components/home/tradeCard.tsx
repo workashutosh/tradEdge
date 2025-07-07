@@ -61,7 +61,7 @@ export default function TradeCard({ item }: TradeCardProps) {
           <ThemedText style={[styles.tradeCardTitle, { color: colors.isDarkMode ? '#FFFFFF' : '#000000' }]}>{item.title}</ThemedText>
           <MaterialIcons 
             style={[styles.cardIcon, { color: colors.isDarkMode ? '#FFFFFF' : '#000000' }]} 
-            name={item.icon} 
+            
             size={26} 
             color={colors.isDarkMode ? '#FFFFFF' : '#000000'} 
           />

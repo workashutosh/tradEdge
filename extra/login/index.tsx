@@ -13,6 +13,7 @@ const LoginScreen = () => {
   const [showPassword, setShowPassword] = useState(false); // State to toggle password visibility
   const { handleLogin, loading, errorMessage } = useUser();
   const router = useRouter();
+  
 
   const onLoginPress = async (): Promise<void> => {
     await handleLogin(whatsAppNumber, password, router);

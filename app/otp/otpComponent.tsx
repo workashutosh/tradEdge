@@ -1,7 +1,16 @@
-import React, { useRef } from 'react';
-import { ActivityIndicator } from 'react-native';
-import { View, TextInput, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
-import { ThemedText } from '@/components/ThemedText'; // Import ThemedText
+import React, { useRef, useState } from 'react';
+import {
+  View,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Keyboard,
+  ActivityIndicator,
+  Platform,
+  ToastAndroid,
+  Alert,
+} from 'react-native';
+import { ThemedText } from '@/components/ThemedText'; // Adjust based on your project structure
 
 interface OtpInputProps {
   otpDigits: string[];
@@ -10,9 +19,11 @@ interface OtpInputProps {
   isResendEnabled: boolean;
   verifyOtpButtonLoading: boolean;
   setOtpDigits: (digits: string[]) => void;
-  handleOtpSubmit: () => void;
-  handleResendOtp: () => void;
   setOtp: (otp: string) => void;
+  handleOtpSubmit: (otp: string) => Promise<boolean>;
+  handleResendOtp: () => void;
+  phoneNumber: string;
+  userName: string;
 }
 
 export default function OtpInput({
@@ -25,23 +36,40 @@ export default function OtpInput({
   setOtp,
   handleOtpSubmit,
   handleResendOtp,
+  phoneNumber,
+  userName,
 }: OtpInputProps) {
   const otpInputRefs = useRef<(TextInput | null)[]>([]);
+  const [whatsAppSent, setWhatsAppSent] = useState(false);
 
-  // OTP input
+  // Initialize refs for each OTP input
+  otpInputRefs.current = otpDigits.map(
+    (_, i) => otpInputRefs.current[i] ?? React.createRef<TextInput>()
+  );
+
+  const notifyUser = (message: string) => {
+    if (Platform.OS === 'android') {
+      ToastAndroid.show(message, ToastAndroid.SHORT);
+    } else {
+      Alert.alert('Info', message);
+    }
+  };
+
   const handleOtpChange = (text: string, index: number) => {
     if (text.length > 1) return;
     const newOtpDigits = [...otpDigits];
     newOtpDigits[index] = text;
     setOtpDigits(newOtpDigits);
     setOtp(newOtpDigits.join(''));
-
-    if (text && index < 3) {
+    if (text && index < otpDigits.length - 1) {
       otpInputRefs.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
+  const handleKeyPress = (
+    e: { nativeEvent: { key: string } },
+    index: number
+  ) => {
     if (e.nativeEvent.key === 'Backspace' && !otpDigits[index] && index > 0) {
       otpInputRefs.current[index - 1]?.focus();
     }
@@ -50,11 +78,79 @@ export default function OtpInput({
   const handleResend = () => {
     Keyboard.dismiss();
     handleResendOtp();
+    setWhatsAppSent(false);
+  };
+
+  const sendOtpSuccessWhatsAppMessage = async () => {
+    console.log("whatsappp is set ready ");
+    try {
+      const whatsAppUrl = 'https://app2.cunnekt.com/v1/sendnotification';
+      // Use environment variable for API key in production
+      const api_key = process.env.WHATSAPP_API_KEY || '3115c6ff026625317b9df24d692570ecab70ffb1';
+
+      const messagePayload = {
+        mobile: `91${phoneNumber}`,
+        templateid: '1207184657851670',
+        overridebot: 'no',
+        // Assuming the template supports parameters for userName
+        parameters: {
+          userName,
+        },
+      };
+
+      const response = await fetch(whatsAppUrl, {
+        method: 'POST',
+        headers: {
+          'API-KEY': api_key,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messagePayload),
+      });
+
+      const result = await response.json();
+console.log("📦 WhatsApp API Response:", result);
+
+    if (response.ok) {
+      
+      return true;
+    } else {
+      console.error('❌ WhatsApp message failed:', result);
+      notifyUser('Failed to send WhatsApp confirmation.');
+      return false;
+    }
+
+    } catch (error) {
+      console.error('Error sending WhatsApp message:', error);
+      notifyUser('Error sending WhatsApp confirmation.');
+      return false;
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const otp = otpDigits.join('');
+    const success = await handleOtpSubmit(otp);
+    console.log('✅ OTP Verification Result:', success);
+
+   if (success) {
+      console.log("✅ OTP verified successfully.");
+      if (!whatsAppSent) {
+        const sent = await sendOtpSuccessWhatsAppMessage();
+        console.log("📨 WhatsApp message sent?", sent);
+        if (sent) {
+          setWhatsAppSent(true);
+        }
+      } else {
+        console.log("ℹ️ WhatsApp message already sent.");
+      }
+    } else {
+      notifyUser('OTP verification failed. Please try again.');
+      console.log("❌ OTP verification failed.");
+    }
+
   };
 
   return (
     <>
-      {/* OTP input */}
       <View style={styles.otpContainer}>
         {otpDigits.map((digit, index) => (
           <TextInput
@@ -74,30 +170,31 @@ export default function OtpInput({
         ))}
       </View>
 
-      {/* Error Section */}
-      {otpError && otpError !== ' ' ? (
-        <ThemedText type="defaultSemiBold" style={styles.errorText}>{otpError}</ThemedText>
-      ) : null}
+      {otpError?.trim() !== '' && (
+        <ThemedText type="defaultSemiBold" style={styles.errorText}>
+          {otpError}
+        </ThemedText>
+      )}
 
-      {/* Verify OTP Button */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.button, { backgroundColor: '#000' }]}
-          onPress={handleOtpSubmit}
+          onPress={handleVerifyOtp}
           disabled={verifyOtpButtonLoading}
           activeOpacity={0.7}
         >
           {verifyOtpButtonLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
-            <ThemedText type="defaultSemiBold" style={styles.buttonText}>Verify OTP</ThemedText>
+            <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+              Verify OTP
+            </ThemedText>
           )}
         </TouchableOpacity>
       </View>
 
-      {/* Resend OTP */}
       <TouchableOpacity
-        style={[styles.resendButton]}
+        style={styles.resendButton}
         onPress={handleResend}
         disabled={!isResendEnabled}
         activeOpacity={0.7}

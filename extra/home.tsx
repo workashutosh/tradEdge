@@ -302,7 +302,7 @@ export default function HomeScreen() {
                 alignSelf: 'center',
               }}
             >
-              <ThemedText style={{ fontWeight: '600' }}>Subscribe</ThemedText>
+              <ThemedText style={{ fontWeight: '600' }}> Subscribe</ThemedText>
             </LinearGradient>
           </View>
         </CircleBackgroundView>

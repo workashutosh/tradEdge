@@ -11,8 +11,9 @@ import KycComponent from '@/components/KycComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'expo-router';
-import { TouchableWithoutFeedback } from 'react-native';
+import { TouchableWithoutFeedback , ToastAndroid, Alert} from 'react-native';
 import { ThemedText } from '@/components/ThemedText'; // Import ThemedText
+
 
 // Constants for API endpoints
 const API_ENDPOINTS = {
@@ -50,6 +51,8 @@ export default function OtpLogin() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showKyc, setShowKyc] = useState<boolean>(false);
   const [registrationComplete, setRegistrationComplete] = useState<boolean>(false);
+  
+  
 
   const [fontsLoaded] = useFonts({ Quicksand: Quicksand_400Regular });
   const dimHeight=Dimensions.get('window').height;
@@ -161,40 +164,44 @@ export default function OtpLogin() {
     }
   };
 
-  const handleOtpSubmit = async () => {
-    if (isLoading) return;
-    
-    setOtpError(' ');
-    Keyboard.dismiss();
-    
-    if (otp.length !== 4) {
-      handleOtpError('Please enter a valid 4-digit OTP');
-      return;
-    }
+const handleOtpSubmit = async (otp: string): Promise<boolean> => {
+  if (isLoading) return false; // ❗ Return boolean as expected
+  
+  setOtpError(' ');
+  Keyboard.dismiss();
 
-    setIsLoading(true);
-    setVerifyOtpButtonLoading(true);
+  if (otp.length !== 4) {
+    handleOtpError('Please enter a valid 4-digit OTP');
+    return false; // ❗ Return false for invalid OTP
+  }
 
-    try {
-      const response = await makeApiCall(() => 
-        axios.post(API_ENDPOINTS.SESSION, {
-          number: phone,
-          otp: otp,
-          platform: 'mobile',
-          verificationId: verificationId,
-        })
-      );
-      
-      await handleLogin(response.data.data, router);
-      setRegistrationComplete(true);
-      setShowKyc(true);
-    } catch (error) {
-      handleError(error, setOtpError);
-    } finally {
-      setIsLoading(false);
-      setVerifyOtpButtonLoading(false);
-    }
-  };
+  setIsLoading(true);
+  setVerifyOtpButtonLoading(true);
+
+  try {
+    const response = await makeApiCall(() =>
+      axios.post(API_ENDPOINTS.SESSION, {
+        number: phone,
+        otp: otp,
+        platform: 'mobile',
+        verificationId: verificationId,
+      })
+    );
+
+    await handleLogin(response.data.data, router);
+    setRegistrationComplete(true);
+    setShowKyc(true);
+
+    return true; // ✅ Return true if login successful
+  } catch (error) {
+    handleError(error, setOtpError);
+    return false; // ❌ Return false on error
+  } finally {
+    setIsLoading(false);
+    setVerifyOtpButtonLoading(false);
+  }
+};
+
 
   const handleResendOtp = () => {
     Keyboard.dismiss(); // Explicitly dismiss keyboard
@@ -206,53 +213,58 @@ export default function OtpLogin() {
     setPhoneError(' ');
   };
 
-  const handleUserDetailsSubmit = async () => {
-    if (isLoading) return;
-    
-    Keyboard.dismiss();
-    setIsLoading(true);
-    setContinueButtonLoading(true);
-    setUserDetailsError(' ');
+const handleUserDetailsSubmit = async () => {
+  if (isLoading) return;
 
-    const payload = {
-      user_full_name: userName.trim(),
-      user_whatsapp_number: phone.trim(),
-      user_alternate_number: phone.trim(),
-      user_email_id: userEmail.trim().toLowerCase(),
-      user_position: 3,
-      user_active: 'Y',
-      ...(referrerCode && { referred_by: referrerCode.trim() }),
-    };
+  Keyboard.dismiss();
+  setIsLoading(true);
+  setContinueButtonLoading(true);
+  setUserDetailsError(' ');
 
-    try {
-      console.log('Creating new user with payload:', payload);
-      const createUserResponse = await axios.put('https://gateway.twmresearchalert.com/kyc', payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      console.log('Create user response:', createUserResponse.data);
-      
-      if (createUserResponse.status === 200) {
-        await AsyncStorage.setItem('user_id', createUserResponse.data.data.user_id);
-        setRegistrationComplete(true);
-        setShowKyc(true);
-        setShowUserDetails(false);
-      }
-    } catch (error) {
-      console.error('Error in handleUserDetailsSubmit:', error);
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || error.message || 'Failed to create user';
-        setUserDetailsError(errorMessage);
-      } else {
-        setUserDetailsError('An unexpected error occurred');
-      }
-    } finally {
-      setIsLoading(false);
-      setContinueButtonLoading(false);
-    }
+  const payload = {
+    user_full_name: userName.trim(),
+    user_whatsapp_number: phone.trim(),
+    user_alternate_number: phone.trim(),
+    user_email_id: userEmail.trim().toLowerCase(),
+    user_position: 3,
+    user_active: 'Y',
+    ...(referrerCode && { referred_by: referrerCode.trim() }),
   };
+
+  try {
+    console.log('Creating new user with payload:', payload);
+
+    const createUserResponse = await axios.put('https://gateway.twmresearchalert.com/kyc', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    console.log('Create user response:', createUserResponse.data);
+
+    if (createUserResponse.status === 200) {
+      await AsyncStorage.setItem('user_id', createUserResponse.data.data.user_id);
+      setRegistrationComplete(true);
+      setShowKyc(true);
+      setShowUserDetails(false);
+
+      // ✅ Navigate to home screen after successful user creation
+      router.replace('/(tabs)/home');
+    }
+  } catch (error) {
+    console.error('Error in handleUserDetailsSubmit:', error);
+    if (axios.isAxiosError(error)) {
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create user';
+      setUserDetailsError(errorMessage);
+    } else {
+      setUserDetailsError('An unexpected error occurred');
+    }
+  } finally {
+    setIsLoading(false);
+    setContinueButtonLoading(false);
+  }
+};
+
 
   const handleKycComplete = async () => {
     try {
@@ -360,6 +372,8 @@ export default function OtpLogin() {
                         setReferrerCode={setReferrerCode}
                         continueButtonLoading={continueButtonLoading}
                         userDetailsError={userDetailsError}
+                        phoneNumber={phone} 
+                        setPhone={setPhone} // ✅ This enables WhatsApp message functionality
                       />
                     ) : showOtpField ? (
                       <OtpInput
@@ -372,6 +386,8 @@ export default function OtpLogin() {
                         timer={timer}
                         isResendEnabled={isResendEnabled}
                         verifyOtpButtonLoading={verifyOtpButtonLoading}
+                        //phoneNumber={phone}          // ✅ pass this
+                        //userName={userName} 
                       />
                     ) : (
                       <PhoneInput

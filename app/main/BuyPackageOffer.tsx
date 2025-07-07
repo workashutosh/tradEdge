@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, FlatList } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, FlatList ,Animated} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -52,6 +52,7 @@ export default function BuyPackageOffer() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('left');
   const sliderRef = useRef<FlatList>(null);
+ const scrollX = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -82,48 +83,86 @@ export default function BuyPackageOffer() {
   }, [slideDirection]);
 
   return (
-    <ThemedView style={{ flex: 1, backgroundColor: colors.background }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-        {/* Top Offers Slider */}
-        <View style={{ marginTop: 24, marginBottom: 10 }}>
-          {/* Back Arrow */}
-          <TouchableOpacity onPress={() => router.back()} style={{ alignSelf: 'flex-start', marginLeft: 16, marginBottom: 10, backgroundColor: '#FFF4E5', borderRadius: 20, padding: 4, elevation: 3 }}>
-            <FontAwesome name="arrow-left" size={24} color="#FF9900" />
-          </TouchableOpacity>
-          <FlatList
-            ref={sliderRef}
-            data={latestOffers}
-            horizontal
-            pagingEnabled
-            snapToAlignment="start"
-            decelerationRate="fast"
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={item => item.id.toString()}
-            contentContainerStyle={{ paddingLeft: 72 }}
-            renderItem={({ item }) => (
-              <View style={{
-                width: width - 72, // Full width minus back arrow
-                justifyContent: 'center',
-                marginRight: 16, // Add spacing between offers
-              }}>
-                <View style={{
-                  backgroundColor: '#FFF4E5',
-                  borderRadius: 16,
-                  padding: 18,
-                  width: '100%',
-                  shadowColor: '#FFD699',
-                  shadowOpacity: 0.15,
-                  shadowRadius: 8,
-                  shadowOffset: { width: 0, height: 3 },
-                  elevation: 2,
-                }}>
-                  <Text style={{ color: '#FF9900', fontWeight: 'bold', fontSize: 17 }}>{item.title}</Text>
-                  <Text style={{ color: '#333', fontSize: 14, marginTop: 4 }}>{item.desc}</Text>
+  <ThemedView style={{ flex: 1, backgroundColor: colors.background }}>
+    <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      {/* Top Offers Slider */}
+      <View style={{ marginTop: 24, marginBottom: 10 }}>
+        {/* Back Arrow */}
+        <TouchableOpacity onPress={() => router.back()} style={{ alignSelf: 'flex-start', marginLeft: 16, marginBottom: 10, backgroundColor: '#FFF4E5', borderRadius: 20, padding: 4, elevation: 3 }}>
+          <FontAwesome name="arrow-left" size={24} color="#FF9900" />
+        </TouchableOpacity>
+        <Animated.FlatList
+          ref={sliderRef}
+          data={latestOffers}
+          horizontal
+          pagingEnabled
+          snapToInterval={width - 72}
+          snapToAlignment="start"
+          decelerationRate="fast"
+          bounces
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          scrollEventThrottle={16}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true }
+          )}
+          renderItem={({ item, index }) => {
+            const inputRange = [
+              (index - 1) * (width - 72),
+              index * (width - 72),
+              (index + 1) * (width - 72),
+            ];
+
+            const scale = scrollX.interpolate({
+              inputRange,
+              outputRange: [0.94, 1, 0.94],
+              extrapolate: 'clamp',
+            });
+
+            const opacity = scrollX.interpolate({
+              inputRange,
+              outputRange: [0.5, 1, 0.5],
+              extrapolate: 'clamp',
+            });
+
+            return (
+              <Animated.View
+                style={{
+                  width: width - 72,
+                  justifyContent: 'center',
+                  marginRight: 16,
+                  transform: [{ scale }],
+                  opacity,
+                }}
+              >
+                <View
+                  style={{
+                    backgroundColor: '#FFF4E5',
+                    borderRadius: 20,
+                    padding: 20,
+                    width: '100%',
+                    shadowColor: '#FFB84D',
+                    shadowOpacity: 0.25,
+                    shadowRadius: 10,
+                    shadowOffset: { width: 0, height: 4 },
+                    elevation: 4,
+                  }}
+                >
+                  <Text style={{ color: '#FF9900', fontWeight: 'bold', fontSize: 18 }}>
+                    {item.title}
+                  </Text>
+                  <Text style={{ color: '#333', fontSize: 15, marginTop: 6 }}>
+                    {item.desc}
+                  </Text>
                 </View>
-              </View>
-            )}
-          />
-        </View>
+              </Animated.View>
+            );
+          }}
+        />
+
+      </View>
         {/* Offer Banner */}
         <View style={{ backgroundColor: '#FFF4E5', padding: 18, alignItems: 'center', marginTop: 40, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, borderColor: '#FFD699', borderWidth: 1, marginHorizontal: 10 }}>
           <Text style={{ color: '#FF4D4F', fontWeight: 'bold', fontSize: 20 }}>EXTRA ₹25 OFF</Text>
@@ -182,7 +221,7 @@ export default function BuyPackageOffer() {
                       onPress={() => setSelectedPackage(pack)}
                     >
                       <Text style={{ color: '#FF9900', fontWeight: 'bold', fontSize: 16 }}>{pack.title}</Text>
-                      <Text style={{ color: selectedPackage?.package_id === pack.package_id ? '#000' : '#fff', fontWeight: 'bold', fontSize: 22, marginVertical: 4 }}>₹{pack.price}</Text>
+                      <Text style={{ color: selectedPackage?.package_id === pack.package_id ? '#000' : '#555', fontWeight: 'bold', fontSize: 22, marginVertical: 4 }}>₹{pack.price}</Text>
                       <Text style={{ color: '#666', fontSize: 13, marginTop: 2 }}>{pack.details?.[0] || ''}</Text>
                       {idx === 0 && pidx === 0 && (
                         <Text style={{ color: '#FF9900', fontWeight: 'bold', fontSize: 12, marginTop: 6 }}>Best Value</Text>
@@ -231,6 +270,7 @@ export default function BuyPackageOffer() {
         </TouchableOpacity>
         <Text style={{ color: '#888', fontSize: 12, textAlign: 'center', marginTop: 4 }}>Cancel anytime • Billed every 1 month • Renews @ ₹899</Text>
       </View>
+         {/* Sticky Pay Button */}
     </ThemedView>
   );
 }

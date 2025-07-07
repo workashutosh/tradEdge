@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TradEdge",
-    "slug": "tradeedge",
+    "slug": "tradedge",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -10,6 +10,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      
       "supportsTablet": true,
       "bundleIdentifier": "com.tradedge.app",
       "infoPlist": {
@@ -71,9 +72,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "7f25bbb2-ce70-4bad-a763-27bc15a3a583"
+        "projectId": "637a5cf2-330f-4710-ad3e-5a4aff58ed3e"
       }
     },
-    "owner": "harshika11"
+    "owner": "guari2004"
   }
 }

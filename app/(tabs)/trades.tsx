@@ -30,6 +30,7 @@ import { TrendingUp, TrendingDown, Clock, Calendar, AlertTriangle, TrendingUpIco
 import { AnimatedButton } from '@/components/AnimatedButton';
 import { AnimatedLinkButton } from '@/components/AnimatedLinkButton';
 import TradeNotifications  from '@/components/websocket_server';
+import { useUser } from '@/context/UserContext';
 
 
 
@@ -75,7 +76,12 @@ export default function Trades() {
 
   const colors = useTheme();
   const { packages, loading } = useStockContext();
-
+  
+  //const [phone, setPhone] = useState<string>('');
+  const [todaysTrades, setTodaysTrades] = useState([]); // ✅ ADD THIS
+  const [allTrades, setAllTrades] = useState([]);  
+  const [activeTab, setActiveTab] = useState("all");
+  const { userDetails } = useUser();
   // Memoize unique tags calculation
   const uniqueTags = useMemo(() => 
     [...new Set(packages.map((pack) => pack.categoryTag))] as string[],
@@ -85,7 +91,7 @@ export default function Trades() {
   const [selectedTag, setSelectedTag] = useState<string>(tags[0]);
 
   const [refreshing, setRefreshing] = useState(false);
-  const [selectedTimeFrame, setSelectedTimeFrame] = useState('All');
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState('Today');
 
   // Memoize filtered services
   const filteredServices = useMemo(() => 
@@ -94,47 +100,7 @@ export default function Trades() {
   );
 
   // Mock data - Replace with actual API data
-  const [tradeTips, setTradeTips] = useState<TradeTip[]>([
-    {
-      id: '1',
-      stockSymbol: 'RELIANCE',
-      stockName: 'Reliance Industries',
-      entryPrice: 2450.75,
-      targetPrice: 2600.00,
-      stopLoss: 2400.00,
-      timeFrame: '1 Week',
-      prediction: {
-        type: 'bullish',
-        confidence: 85,
-        potentialProfit: 6.1,
-        potentialLoss: 2.1,
-      },
-      analysis: 'Strong technical breakout with increasing volume. Support at 2400.',
-      riskLevel: 'Medium',
-      recommendedInvestment: 50000,
-      timestamp: '2024-03-20T10:30:00',
-    },
-    {
-      id: '2',
-      stockSymbol: 'TCS',
-      stockName: 'Tata Consultancy Services',
-      entryPrice: 3850.25,
-      targetPrice: 4000.00,
-      stopLoss: 3750.00,
-      timeFrame: '2 Weeks',
-      prediction: {
-        type: 'bullish',
-        confidence: 75,
-        potentialProfit: 3.9,
-        potentialLoss: 2.6,
-      },
-      analysis: 'Positive earnings outlook with strong institutional buying.',
-      riskLevel: 'Low',
-      recommendedInvestment: 75000,
-      timestamp: '2024-03-20T09:15:00',
-    },
-    // Add more mock data as needed
-  ]);
+  const [tradeTips, setTradeTips] = useState<TradeTip[]>([]);
 
   { /* // WebSocket client setup
   useEffect(() => {
@@ -372,7 +338,7 @@ export default function Trades() {
   }, []);
 
   // Memoize timeFrames array
-  const timeFrames = useMemo(() => ['All', 'Today'], []);
+  const timeFrames = useMemo(() => ['Today', 'All'], []);
 
   // Memoize getTagStyle function
   const getTagStyle = useCallback((riskCategory: string): { color: string; icon: string } => {
@@ -398,6 +364,8 @@ export default function Trades() {
     });
   }, []);
 
+  
+
   // Add missing color properties to ThemeColors type or provide fallbacks
   // Assuming these colors should exist in your theme or need default values
   const themedColors = colors as ThemeColors & {
@@ -420,7 +388,27 @@ export default function Trades() {
       <Header title="Trading Tips" />
 
         {/* Notifications */}
-      <TradeNotifications />
+        <TradeNotifications
+      phoneNumber={userDetails?.username} 
+      onUpdateTradeLists={(_, all) => {
+        const today = new Date();
+        const isSameDay = (d1, d2) =>
+          d1.getDate() === d2.getDate() &&
+          d1.getMonth() === d2.getMonth() &&
+          d1.getFullYear() === d2.getFullYear();
+
+        const todaysOnly = all.filter((trade) =>
+          isSameDay(new Date(trade.timestamp), today)
+        );
+
+        setTodaysTrades(todaysOnly);
+        setAllTrades(all);
+      }}
+    />
+
+
+
+
 
       {/* Fixed Tags Bar */}
       <View style={[styles.tagSection, { backgroundColor: colors.background }]}>
@@ -453,7 +441,7 @@ export default function Trades() {
       </View>
 
       <FlatList
-        data={tradeTips}
+        data={selectedTimeFrame === 'Today' ? todaysTrades : allTrades}
         renderItem={renderTradeTip}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}

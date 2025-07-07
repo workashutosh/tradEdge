@@ -22,6 +22,7 @@ import { settingsData } from '@/components/settings/settingsData';
 import Packages from '@/app/user_packages';
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+
   
 
 
@@ -46,6 +47,7 @@ export default function Profile() {
   const colors = useTheme();
   const { userDetails } = useUser();
   const scrollY = useRef(new Animated.Value(0)).current;
+  
   
   // Settings states
   const [selectedSetting, setSelectedSetting] = useState<string | null>(null);
@@ -168,11 +170,11 @@ export default function Profile() {
             <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>{trades}</ThemedText>
             <ThemedText style={[styles.statLabel, { color: '#FFFFFF' }]}>Trades</ThemedText>
           </View>
-          <View style={styles.statDivider} />
+         {/* <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <ThemedText style={[styles.statValue, { color: '#FFFFFF' }]}>₹{profit.toFixed(0)}</ThemedText>
             <ThemedText style={[styles.statLabel, { color: '#FFFFFF' }]}>Profit</ThemedText>
-          </View>
+          </View>*/}
         </View>
       </LinearGradient>
     </Animated.View>
@@ -252,6 +254,8 @@ export default function Profile() {
       padding: 10,
       marginTop: 4,
       elevation: 4,
+      borderWidth: 1.5,
+      borderColor: colors.border,
     }}
   >
     <ThemedText
@@ -270,11 +274,13 @@ export default function Profile() {
   <TouchableOpacity
     onPress={() => navigation.navigate('user_packages')}
     style={{
-      backgroundColor: colors.card,
-      borderRadius: 14,
-      padding: 10,
-      marginTop: 10,
-      elevation: 4,
+       backgroundColor: colors.card,
+        borderRadius: 14,
+        padding: 10,
+        marginTop: 10,
+        elevation: 4,
+        borderWidth: 1.5,
+        borderColor: colors.border,
     }}
   >
     <ThemedText

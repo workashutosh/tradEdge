@@ -18,6 +18,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStockContext } from '@/context/StockContext';
 import { useTheme } from '@/utils/theme';
+import { FontAwesome } from '@expo/vector-icons';
 
 
 interface Trade {
@@ -64,7 +65,7 @@ export default function TradeDetails() {
   (pkg) => pkg.package_id?.toString() === package_id?.toString()
 );
   console.log('🔍 From search params - package_id:', package_id);
-console.log('📦 StockContext packages:', packages.map(p => p.package_id));
+console.log('📦 StockContext package IDs:', packages.filter(p => p?.package_id).map(p => p.package_id));
 
 
   if (!trade) {
@@ -189,7 +190,7 @@ const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) 
     style={styles.cardHeader}
   >
     <ThemedText style={[styles.title, { color: '#ffffff' }]}>{trade.title}</ThemedText>
-    <MaterialIcons name={trade.icon} size={28} color="#ffffff" />
+    <FontAwesome name="line-chart" size={28} color="#ffffff" />
   </LinearGradient>
 );
 
@@ -237,7 +238,7 @@ const DetailsSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors
     <ThemedText style={[styles.sectionTitle, { color: colors.text }]}>What we offer</ThemedText>
     {trade.details.map((detail, index) => (
       <View key={index} style={styles.detailItem}>
-        <MaterialIcons name="check" size={16} color={colors.success} style={styles.checkIcon} />
+        <MaterialIcons name="check" size={26} color={colors.success} style={styles.checkIcon} />
         <ThemedText style={[styles.detailText, { color: colors.text }]}>{detail}</ThemedText>
       </View>
     ))}

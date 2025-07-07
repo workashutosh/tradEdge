@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet,
   Animated,
+  Easing,
   SafeAreaView,
   View,
   FlatList,
@@ -73,6 +74,26 @@ export default function HomeScreen() {
     return () => animation.stop();
   }, [shimmerAnim]);
 
+  const explorePopScale = useRef(new Animated.Value(1)).current;
+
+useEffect(() => {
+  Animated.loop(
+    Animated.sequence([
+      Animated.timing(explorePopScale, {
+        toValue: 1.05,
+        duration: 600,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(explorePopScale, {
+        toValue: 1,
+        duration: 600,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ])
+  ).start();
+}, []);
   // ✅ Push notification setup and send to Native Notify
   useEffect(() => {
     const initPushNotifications = async () => {
@@ -258,17 +279,25 @@ useEffect(() => {
               onPress={() => router.replace('/(tabs)/trades')}
               style={styles.buttonContainer}
             >
-              <View style={styles.redirectionButton}>
-                <Animated.View
-                  style={[
-                    styles.shimmer,
-                    { transform: [{ translateX: shimmerAnim }, { rotate: '35deg' }] },
-                  ]}
-                />
-                <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                  Explore
-                </ThemedText>
-              </View>
+              <Animated.View style={{ transform: [{ scale: explorePopScale }] }}>
+            <View style={[styles.redirectionButton, { borderColor: '#fff', borderWidth: 1 }]}>
+              <Animated.View
+                style={[
+                  styles.shimmer,
+                  {
+                    transform: [
+                      { translateX: shimmerAnim },
+                      { rotate: '35deg' }
+                    ],
+                  },
+                ]}
+              />
+              <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                Explore
+              </ThemedText>
+            </View>
+          </Animated.View>
+
             </TouchableOpacity>
             <Image style={styles.tradedgeLogo} source={require('@/assets/images/logoWhite.png')} />
           </ThemedView>

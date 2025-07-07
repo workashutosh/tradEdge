@@ -54,6 +54,10 @@ export default function Stocks() {
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(true); // ✅ show prompt initially
+
+  const promptOpacity = useRef(new Animated.Value(0)).current;
+  const promptTranslateY = useRef(new Animated.Value(10)).current;
 
   // Animation for price pop-in (must be at top level)
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
@@ -157,159 +161,200 @@ export default function Stocks() {
     });
     return scored.sort((a, b) => a.score - b.score).slice(0, maxResults);
   }
+  
+useEffect(() => {
+  if (!showPrompt) return;
 
-  const searchStock = async () => {
-    const clearErrorAfterDelay = (message: string) => {
-      setError(message);
-      setTimeout(() => setError(''), 3000);
-    };
+  // Reset animation values
+  promptOpacity.setValue(0);
+  promptTranslateY.setValue(10);
 
-    if (!searchQuery?.trim()) {
-      clearErrorAfterDelay('Please enter a stock symbol');
-      return;
-    }
+  // Start animation
+  Animated.parallel([
+    Animated.timing(promptOpacity, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }),
+    Animated.timing(promptTranslateY, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }),
+  ]).start();
 
-    setLoading(true);
-    setHistoricalData([]); // Clear previous historical data
+  console.log('✅ showPrompt triggered animation:', showPrompt);
+}, [showPrompt]);
 
-    try {
-      let inputSymbol = searchQuery.toUpperCase().replace(/\s+/g, '').trim();
-      let symbol = inputSymbol;
-      // Try to find the symbol in NSEData or BSEData
-      const nseMatch = NSEData.find(stock => stock.ticker?.toUpperCase() === inputSymbol || stock.ticker?.toUpperCase() === `${inputSymbol}.NS`);
-      const bseMatch = BSEData.find(stock => stock.ticker?.toUpperCase() === inputSymbol || stock.ticker?.toUpperCase() === `${inputSymbol}.BO`);
-      if (nseMatch) {
-        symbol = nseMatch.ticker;
-      } else if (bseMatch) {
-        symbol = bseMatch.ticker;
-      } else if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) {
-        // Try both NSE and BSE if not found
-        let found = false;
-        for (const suffix of ['.NS', '.BO']) {
-          const trySymbol = symbol + suffix;
-          try {
-            const response = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${trySymbol}`);
-            if (response.ok) {
-              const data = await response.json();
-              if (data && (typeof data.livePrice === 'number' || typeof data.livePrice === 'string')) {
-                symbol = trySymbol;
-                found = true;
-                break;
-              }
-            }
-          } catch {}
-        }
-        if (!found) {
-          // Instead of error, show suggestions
-          const matches = getFuzzyMatches(searchQuery, NSEData, BSEData);
-          if (matches.length > 0) {
-            setSuggestions(matches);
-            setShowSuggestions(true);
-          } else {
-            clearErrorAfterDelay('Could not fetch data for this stock. Please check the symbol or try again later.');
-          }
-          setLoading(false);
-          return;
-        }
-      }
+const clearSearch = () => {
+  setSearchQuery('');
+  setStockData(null);
+  setHistoricalData([]);
+  setShowPrompt(true);
+  setSuggestions([]);
+  setShowSuggestions(false);
+};
 
-      // Check for index keywords
-      const indexKeywords = ['NIFTY', 'NIFTY 50', '^NSEI', 'SENSEX', 'BANKNIFTY', 'BANK NIFTY'];
-      if (indexKeywords.includes(symbol)) {
-        // Fetch all indices and try to find the one matching the query
-        const response = await fetch('https://harshikapatil13.pythonanywhere.com/stock/indices');
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const indices = await response.json();
-        // Try to match the index
-        const match = indices.find((idx: any) => idx.symbol?.toUpperCase() === symbol || idx.name?.toUpperCase().includes(inputSymbol));
-        if (!match) {
-          clearErrorAfterDelay('Index not found. Please check the name.');
-          return;
-        }
-        // Map to StockData
-        const indexStockData = {
-          symbol: match.symbol || symbol,
-          companyName: match.name || symbol,
-          sector: 'Index',
-          currentPrice: match.price ?? 0,
-          open: match.open ?? 0,
-          high: match.high ?? 0,
-          low: match.low ?? 0,
-          volume: match.volume ?? 0,
-          previousClose: match.prevClose ?? 0,
-          change: match.change ?? 0,
-          changePercent: match.changePercent ?? 0,
-          marketCap: 0,
-          peRatio: 0,
-          eps: 0,
-          dividend: 0,
-          dividendYield: 0,
-        };
-        setStockData(indexStockData);
-        setHistoricalData([]); // No historical for index
-      } else {
-        // For stocks, use the live endpoint
-        const response = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${symbol}`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            clearErrorAfterDelay('Stock not found. Please check the symbol.');
-            return;
-          }
-          if (response.status === 504) {
-            clearErrorAfterDelay('The server took too long to respond. Please try again later.');
-            return;
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        // Map API response to StockData
-        const stockDataObj = {
-          symbol: symbol,
-          companyName: data.name || symbol,
-          sector: '',  // API doesn't provide sector info
-          currentPrice: data.livePrice ?? 0,
-          open: data.livePrice ?? 0,  // API doesn't provide open price
-          high: data.livePrice ?? 0,  // API doesn't provide high
-          low: data.livePrice ?? 0,   // API doesn't provide low
-          volume: 0,                  // API doesn't provide volume
-          previousClose: data.livePrice ?? 0, // API doesn't provide previous close
-          change: 0,                  // API doesn't provide change
-          changePercent: 0,           // API doesn't provide change percent
-          marketCap: 0,               // API doesn't provide market cap
-          peRatio: 0,                 // API doesn't provide PE ratio
-          eps: 0,                     // API doesn't provide EPS
-          dividend: 0,                // API doesn't provide dividend
-          dividendYield: 0,           // API doesn't provide dividend yield
-        };
-        setStockData(stockDataObj);
-        // Fetch historical data
-        try {
-          const histRes = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/historical?ticker=${symbol}`);
-          if (histRes.ok) {
-            const histData = await histRes.json();
-            if (Array.isArray(histData)) {
-              setHistoricalData(histData);
-            } else {
-              setHistoricalData([]);
-            }
-          } else {
-            setHistoricalData([]);
-          }
-        } catch (e) {
-          setHistoricalData([]);
-        }
-      }
-    } catch (err) {
-      console.error('Stock search error:', err);
-      if (err instanceof Error) {
-        clearErrorAfterDelay(err.message || 'Failed to fetch stock data');
-      } else {
-        clearErrorAfterDelay('Failed to fetch stock data');
-      }
-    } finally {
-      setLoading(false);
-    }
+
+const searchStock = async () => {
+  const clearErrorAfterDelay = (message: string) => {
+    setError(message);
+    setTimeout(() => setError(''), 3000);
   };
+
+if (!searchQuery?.trim()) {
+  setShowPrompt(true);
+  clearErrorAfterDelay('Please enter a stock symbol');
+  return;
+}
+
+setShowPrompt(true);// ✅ hide prompt once valid search begins
+setLoading(true);
+
+  try {
+    let inputSymbol = searchQuery.toUpperCase().replace(/\s+/g, '').trim();
+    let symbol = inputSymbol;
+
+    const nseMatch = NSEData.find(stock =>
+      stock.ticker?.toUpperCase() === inputSymbol ||
+      stock.ticker?.toUpperCase() === `${inputSymbol}.NS`
+    );
+    const bseMatch = BSEData.find(stock =>
+      stock.ticker?.toUpperCase() === inputSymbol ||
+      stock.ticker?.toUpperCase() === `${inputSymbol}.BO`
+    );
+
+    if (nseMatch) {
+      symbol = nseMatch.ticker;
+    } else if (bseMatch) {
+      symbol = bseMatch.ticker;
+    } else if (!symbol.endsWith('.NS') && !symbol.endsWith('.BO')) {
+      let found = false;
+      for (const suffix of ['.NS', '.BO']) {
+        const trySymbol = symbol + suffix;
+        try {
+          const response = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${trySymbol}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data && (typeof data.livePrice === 'number' || typeof data.livePrice === 'string')) {
+              symbol = trySymbol;
+              found = true;
+              break;
+            }
+          }
+        } catch { }
+      }
+
+      if (!found) {
+        const matches = getFuzzyMatches(searchQuery, NSEData, BSEData);
+        if (matches.length > 0) {
+          setSuggestions(matches);
+          setShowSuggestions(true);
+        } else {
+          clearErrorAfterDelay('Could not fetch data for this stock. Please check the symbol or try again later.');
+        }
+        setLoading(false);
+        return;
+      }
+    }
+
+    const indexKeywords = ['NIFTY', 'NIFTY 50', '^NSEI', 'SENSEX', 'BANKNIFTY', 'BANK NIFTY'];
+    if (indexKeywords.includes(symbol)) {
+      const response = await fetch('https://harshikapatil13.pythonanywhere.com/stock/indices');
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const indices = await response.json();
+      const match = indices.find(
+        (idx: any) =>
+          idx.symbol?.toUpperCase() === symbol || idx.name?.toUpperCase().includes(inputSymbol)
+      );
+      if (!match) {
+        clearErrorAfterDelay('Index not found. Please check the name.');
+        return;
+      }
+
+      const indexStockData = {
+        symbol: match.symbol || symbol,
+        companyName: match.name || symbol,
+        sector: 'Index',
+        currentPrice: match.price ?? 0,
+        open: match.open ?? 0,
+        high: match.high ?? 0,
+        low: match.low ?? 0,
+        volume: match.volume ?? 0,
+        previousClose: match.prevClose ?? 0,
+        change: match.change ?? 0,
+        changePercent: match.changePercent ?? 0,
+        marketCap: 0,
+        peRatio: 0,
+        eps: 0,
+        dividend: 0,
+        dividendYield: 0,
+      };
+
+      setStockData(indexStockData);
+      setHistoricalData([]);
+    } else {
+      const response = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/live?ticker=${symbol}`);
+      if (!response.ok) {
+        if (response.status === 404) {
+          clearErrorAfterDelay('Stock not found. Please check the symbol.');
+          return;
+        }
+        if (response.status === 504) {
+          clearErrorAfterDelay('The server took too long to respond. Please try again later.');
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const stockDataObj = {
+        symbol: symbol,
+        companyName: data.name || symbol,
+        sector: '',
+        currentPrice: data.livePrice ?? 0,
+        open: data.livePrice ?? 0,
+        high: data.livePrice ?? 0,
+        low: data.livePrice ?? 0,
+        volume: 0,
+        previousClose: data.livePrice ?? 0,
+        change: 0,
+        changePercent: 0,
+        marketCap: 0,
+        peRatio: 0,
+        eps: 0,
+        dividend: 0,
+        dividendYield: 0,
+      };
+
+      setStockData(stockDataObj);
+      setTimeout(() => setShowPrompt(false), 100);// Hide prompt once valid stock is shown
+
+      // Fetch historical data
+      try {
+        const histRes = await fetch(`https://harshikapatil13.pythonanywhere.com/stock/historical?ticker=${symbol}`);
+        if (histRes.ok) {
+          const histData = await histRes.json();
+          if (Array.isArray(histData)) {
+            setHistoricalData(histData);
+          }
+        }
+      } catch {
+        setHistoricalData([]);
+      }
+    }
+  } catch (err) {
+    console.error('Stock search error:', err);
+    if (err instanceof Error) {
+      clearErrorAfterDelay(err.message || 'Failed to fetch stock data');
+    } else {
+      clearErrorAfterDelay('Failed to fetch stock data');
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // Format number with commas (e.g., 1410.23 -> 1,410.23)
   const formatNumber = (num: number | string | undefined) => {
@@ -321,64 +366,171 @@ export default function Stocks() {
     if (!stockData) return null;
     const isUp = (stockData.change ?? 0) >= 0;
     return (
+  <ScrollView style={{ flex: 1, padding: 16 }}>
+
+  {/* Prompt shown before search */}
+  {showPrompt && (
+    <Animated.View
+      style={{
+        opacity: promptOpacity,
+        transform: [{ translateY: promptTranslateY }],
+        marginTop: 20,
+        marginBottom: 10,
+      }}
+    >
+      <Text
+        style={{
+          textAlign: 'center',
+          color: colors.text,
+          opacity: 0.6,
+          fontSize: 14,
+        }}
+      >
+        Search field is empty. Please provide a valid stock name or symbol to proceed.
+      </Text>
+    </Animated.View>
+  )}
+
+  {/* Stock card shown after data is fetched */}
+  {stockData && (
+    <>
       <LinearGradient
-        colors={colors.isDarkMode ? [colors.gradientStart, colors.gradientEnd] : ['#fff', '#fff']}
-        style={[styles.card, { backgroundColor: colors.isDarkMode ? colors.card : '#fff', padding: 0, overflow: 'hidden' }]}
+        colors={
+          colors.isDarkMode
+            ? [colors.gradientStart, colors.gradientEnd]
+            : ['#fff', '#fff']
+        }
+        style={[
+          styles.card,
+          {
+            backgroundColor: colors.isDarkMode ? colors.card : '#fff',
+            padding: 0,
+            overflow: 'hidden',
+          },
+        ]}
       >
         <View style={{ padding: 20 }}>
           {stockData?.companyName && (
-            <ThemedText type="title" style={{ color: colors.text, fontSize: 18, fontWeight: 'bold', marginBottom: 4, textAlign: 'center' }}>
+            <ThemedText
+              type="title"
+              style={{
+                color: colors.text,
+                fontSize: 18,
+                fontWeight: 'bold',
+                marginBottom: 4,
+                textAlign: 'center',
+              }}
+            >
               {stockData.companyName}
             </ThemedText>
           )}
-          <ThemedText type="title" style={[styles.cardTitle, { color: colors.text, marginBottom: 10 }]}>Current Price</ThemedText>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <ThemedText
+            type="title"
+            style={[styles.cardTitle, { color: colors.text, marginBottom: 10 }]}
+          >
+            Current Price
+          </ThemedText>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 12,
+            }}
+          >
             <Animated.View style={{ flex: 1, transform: [{ scale: scaleAnim }] }}>
-              <ThemedText type="defaultSemiBold" style={{ fontSize: 25, color: colors.primary, fontWeight: 'bold', letterSpacing: 1, textShadowColor: colors.primary + '55', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 }}>
+              <ThemedText
+                type="defaultSemiBold"
+                style={{
+                  fontSize: 25,
+                  color: colors.primary,
+                  fontWeight: 'bold',
+                  letterSpacing: 1,
+                  textShadowColor: colors.primary + '55',
+                  textShadowOffset: { width: 0, height: 2 },
+                  textShadowRadius: 8,
+                }}
+              >
                 ₹{formatNumber(stockData.currentPrice)}
               </ThemedText>
-              {/* Add more space below the price */}
               <View style={{ height: 10 }} />
             </Animated.View>
-            <View style={{
-              backgroundColor: isUp ? colors.success + '22' : colors.error + '22',
-              borderRadius: 12,
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              alignItems: 'center',
-              marginLeft: 12,
-            }}>
-              <Text style={{ color: isUp ? colors.success : colors.error, fontWeight: 'bold', fontSize: 20 }}>
+
+            <View
+              style={{
+                backgroundColor: isUp
+                  ? colors.success + '22'
+                  : colors.error + '22',
+                borderRadius: 12,
+                paddingVertical: 8,
+                paddingHorizontal: 16,
+                alignItems: 'center',
+                marginLeft: 12,
+              }}
+            >
+              <Text
+                style={{
+                  color: isUp ? colors.success : colors.error,
+                  fontWeight: 'bold',
+                  fontSize: 20,
+                }}
+              >
                 {isUp ? '▲' : '▼'}
               </Text>
             </View>
           </View>
-          {/* Add more space between price section and the open/high/low/volume row */}
+
           <View style={{ height: 8 }} />
-          {/* 2x2 grid for Open, High, Low, Volume */}
+
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-            <View style={[styles.metricBox, { backgroundColor: colors.primary + '15' }]}> 
-              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: 'bold' }}>Open</Text>
-              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>₹{formatNumber(stockData.open)}</Text>
+            <View style={[styles.metricBox, { backgroundColor: colors.primary + '15' }]}>
+              <Text style={{ color: colors.primary, fontSize: 13, fontWeight: 'bold' }}>
+                Open
+              </Text>
+              <Text style={{ color: colors.primary, fontWeight: 'bold', fontSize: 16 }}>
+                ₹{formatNumber(stockData.open)}
+              </Text>
             </View>
-            <View style={[styles.metricBox, { backgroundColor: colors.success + '15' }]}> 
-              <Text style={{ color: colors.success, fontSize: 13, fontWeight: 'bold' }}>High</Text>
-              <Text style={{ color: colors.success, fontWeight: 'bold', fontSize: 16 }}>₹{formatNumber(stockData.high)}</Text>
+            <View style={[styles.metricBox, { backgroundColor: colors.success + '15' }]}>
+              <Text style={{ color: colors.success, fontSize: 13, fontWeight: 'bold' }}>
+                High
+              </Text>
+              <Text style={{ color: colors.success, fontWeight: 'bold', fontSize: 16 }}>
+                ₹{formatNumber(stockData.high)}
+              </Text>
             </View>
           </View>
+
           <View style={{ height: 10 }} />
+
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 12 }}>
-            <View style={[styles.metricBox, { backgroundColor: colors.error + '15' }]}> 
-              <Text style={{ color: colors.error, fontSize: 13, fontWeight: 'bold' }}>Low</Text>
-              <Text style={{ color: colors.error, fontWeight: 'bold', fontSize: 16 }}>₹{formatNumber(stockData.low)}</Text>
+            <View style={[styles.metricBox, { backgroundColor: colors.error + '15' }]}>
+              <Text style={{ color: colors.error, fontSize: 13, fontWeight: 'bold' }}>
+                Low
+              </Text>
+              <Text style={{ color: colors.error, fontWeight: 'bold', fontSize: 16 }}>
+                ₹{formatNumber(stockData.low)}
+              </Text>
             </View>
-            <View style={[styles.metricBox, { backgroundColor: colors.text + '15' }]}> 
-              <Text style={{ color: colors.text, fontSize: 13, fontWeight: 'bold' }}>Volume</Text>
-              <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>{formatNumber(stockData.volume)}</Text>
+            <View style={[styles.metricBox, { backgroundColor: colors.text + '15' }]}>
+              <Text style={{ color: colors.text, fontSize: 13, fontWeight: 'bold' }}>
+                Volume
+              </Text>
+              <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>
+                {formatNumber(stockData.volume)}
+              </Text>
             </View>
           </View>
         </View>
       </LinearGradient>
+
+      
+    </>
+  )}
+</ScrollView>
+
+
     );
   };
 
@@ -404,20 +556,56 @@ export default function Stocks() {
         )}
       </View>
     );
-    return (
-      <LinearGradient
-        colors={colors.isDarkMode ? [colors.gradientStart, colors.gradientEnd] : ['#fff', '#fff']}
-        style={[styles.card, { backgroundColor: colors.isDarkMode ? colors.card : '#fff', padding: 0, overflow: 'hidden' }]}
-      >
-        <View style={{ padding: 20, paddingBottom: 10 }}>
-          <ThemedText type="title" style={[styles.cardTitle, { color: colors.text, marginBottom: 8 }]}>Exchanges</ThemedText>
-          <View style={{ gap: 0 }}>
-            {renderExchangeBox('NSE', exchangePrices.nse, colors.success, colors.success + '23')}
-            {renderExchangeBox('BSE', exchangePrices.bse, colors.warning, colors.warning + '22')}
-            {renderExchangeBox('NIFTY 50', exchangePrices.nifty, colors.primary, colors.primary + '22')}
+    return(
+      <>
+        <LinearGradient
+          colors={colors.isDarkMode ? [colors.gradientStart, colors.gradientEnd] : ['#fff', '#fff']}
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.isDarkMode ? colors.card : '#fff',
+              padding: 0,
+              overflow: 'hidden',
+            },
+          ]}
+        >
+          <View style={{ padding: 20, paddingBottom: 10 }}>
+            <ThemedText
+              type="title"
+              style={[styles.cardTitle, { color: colors.text, marginBottom: 8 }]}
+            >
+              Exchanges
+            </ThemedText>
+            <View style={{ gap: 0 }}>
+              {renderExchangeBox('NSE', exchangePrices.nse, colors.success, colors.success + '23')}
+              {renderExchangeBox('BSE', exchangePrices.bse, colors.warning, colors.warning + '22')}
+              {renderExchangeBox('NIFTY 50', exchangePrices.nifty, colors.primary, colors.primary + '22')}
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+
+        <TouchableOpacity
+          onPress={clearSearch}
+          activeOpacity={0.7}
+          style={{
+            marginTop: 16,
+            alignSelf: 'center',
+            backgroundColor: colors.error,
+            paddingVertical: 12,
+            paddingHorizontal: 24,
+            borderRadius: 12,
+            shadowColor: colors.error,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.2,
+            shadowRadius: 4,
+            elevation: 3,
+          }}
+        >
+          <Text style={{ color: '#ffffff', fontWeight: '600', fontSize: 16 }}>
+            Clear
+          </Text>
+        </TouchableOpacity>
+      </>
     );
   };
 
@@ -493,8 +681,34 @@ export default function Stocks() {
 
   const renderContent = () => {
     return (
-      <>
-        <View style={[styles.searchContainer, { 
+  <>
+    {/* Prompt shown before search */}
+    {showPrompt && (
+      <Animated.View
+        style={{
+          opacity: promptOpacity,
+          transform: [{ translateY: promptTranslateY }],
+          marginTop: 20,
+          marginBottom: 10,
+        }}
+      >
+        <Text
+          style={{
+            textAlign: 'center',
+            color: colors.text,
+            opacity: 1,
+            fontSize: 15,
+          }}
+        >
+          Please enter a stock name or symbol to begin your search.
+        </Text>
+      </Animated.View>
+    )}
+
+    <View
+      style={[
+        styles.searchContainer,
+        {
           backgroundColor: colors.card,
           borderRadius: 16,
           padding: 8,
@@ -503,55 +717,90 @@ export default function Stocks() {
           shadowOpacity: 0.1,
           shadowRadius: 8,
           elevation: 5,
-        }]}>
-          <TextInput
-            style={[styles.input, { 
-              borderColor: colors.border,
-              color: colors.text,
-              backgroundColor: colors.background,
-              borderWidth: 1,
-              borderRadius: 12,
-              paddingHorizontal: 16,
-              fontSize: 16,
-              height: 50,
-              flex: 1,
-              marginRight: 10,
-            }]}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder="Enter stock symbol (e.g., AAPL)"
-            placeholderTextColor={isDark ? '#808080' : '#666666'}
-            onSubmitEditing={searchStock}
-          />
-          <TouchableOpacity 
-            style={[styles.searchButton, { 
-              backgroundColor: colors.primary,
-              width: 50,
-              height: 50,
-              borderRadius: 12,
-              justifyContent: 'center',
-              alignItems: 'center',
-              shadowColor: colors.primary,
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-              elevation: 5,
-            }]}
-            onPress={searchStock}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="search" size={24} color="#ffffff" />
-          </TouchableOpacity>
-        </View>
+        },
+      ]}
+    >
+      <TextInput
+        style={[
+          styles.input,
+          {
+            borderColor: colors.border,
+            color: colors.text,
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderRadius: 12,
+            paddingHorizontal: 16,
+            fontSize: 16,
+            height: 50,
+            flex: 1,
+            marginRight: 10,
+          },
+        ]}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Enter stock symbol"
+        placeholderTextColor={isDark ? '#808080' : '#666666'}
+        onSubmitEditing={searchStock}
+      />
+      <TouchableOpacity
+        style={[
+          styles.searchButton,
+          {
+            backgroundColor: colors.primary,
+            width: 50,
+            height: 50,
+            borderRadius: 12,
+            justifyContent: 'center',
+            alignItems: 'center',
+            shadowColor: colors.primary,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.3,
+            shadowRadius: 4,
+            elevation: 5,
+          },
+        ]}
+        onPress={searchStock}
+        activeOpacity={0.7}
+      >
+        <MaterialIcons name="search" size={24} color="#ffffff" />
+      </TouchableOpacity>
 
-        {loading && (
-          <View style={styles.centered}>
-            <ActivityIndicator size="large" color={colors.primary} />
-          </View>
-        )}
+    </View>
+    <TouchableOpacity
+    style={{
+      marginTop: 16,
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      paddingVertical: 14,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 5,
+      width: 100,
+      alignSelf: 'center',
+    }}
+    onPress={searchStock}
+    activeOpacity={0.7}
+  >
+    <Text style={{ color: '#ffffff', fontSize: 17, fontWeight: '600' }}>
+      Search
+    </Text>
+  </TouchableOpacity>
 
-        {error && (
-          <View style={[styles.errorContainer, { 
+    {loading && (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    )}
+
+    {error && (
+      <View
+        style={[
+          styles.errorContainer,
+          {
             backgroundColor: colors.error,
             flexDirection: 'row',
             alignItems: 'center',
@@ -563,28 +812,38 @@ export default function Stocks() {
             shadowOpacity: 0.2,
             shadowRadius: 4,
             elevation: 3,
-          }]}>
-            <MaterialIcons name="error" size={24} color="#ffffff" />
-            <Text style={[styles.errorText, { 
+          },
+        ]}
+      >
+        <MaterialIcons name="error" size={24} color="#ffffff" />
+        <Text
+          style={[
+            styles.errorText,
+            {
               color: '#ffffff',
               marginLeft: 8,
               fontSize: 16,
               flex: 1,
-            }]}>{error}</Text>
-          </View>
-        )}
+            },
+          ]}
+        >
+          {error}
+        </Text>
+      </View>
+    )}
 
-        {stockData && (
-          <>
-            {/* {renderStockOverview()} -- Company Overview removed */}
-            {renderCurrentPrice()}
-            {renderExchangesData()}
-            {renderHistoricalData()}
-          </>
-        )}
-
-        {renderSuggestionModal()}
+    {stockData && (
+      <>
+        {/* {renderStockOverview()} -- Company Overview removed */}
+        {renderCurrentPrice()}
+        {renderExchangesData()}
+        {renderHistoricalData()}
       </>
+    )}
+
+    {renderSuggestionModal()}
+</>
+
     );
   };
 

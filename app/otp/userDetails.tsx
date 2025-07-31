@@ -23,7 +23,7 @@ interface UserDetailsProps {
   setUserName: (userName: string) => void;
   setUserEmail: (userEmail: string) => void;
   setReferrerCode: (referrerCode: string) => void;
-  phoneNumber: string; // ✅ add this
+  phoneNumber: string; //  add this
 }
 
 export default function UserDetails({
@@ -36,7 +36,7 @@ export default function UserDetails({
   setReferrerCode,
   continueButtonLoading,
   userDetailsError,
-  phoneNumber, // ✅ Add this line
+  phoneNumber, //  Add this line
  }: UserDetailsProps) {
   const [nameError, setNameError] = useState<string>('');
   const [emailError, setEmailError] = useState<string>('');
@@ -88,7 +88,7 @@ const notifyUser = (message: string) => {
   };
 
 const sendWelcomeWhatsAppMessage = async () => {
-  console.log("📨 Preparing to send welcome WhatsApp message...");
+  console.log(" Preparing to send welcome WhatsApp message...");
 
   try {
     const whatsAppUrl = 'https://app2.cunnekt.com/v1/sendnotification';
@@ -118,13 +118,13 @@ const sendWelcomeWhatsAppMessage = async () => {
       setWhatsAppSent(true);
       return true;
     } else {
-      console.error('❌ WhatsApp error:', result);
+      console.error(' WhatsApp error:', result);
       notifyUser('Failed to send WhatsApp confirmation.');
       return false;
     }
 
   } catch (error) {
-    console.error('❌ WhatsApp Exception:', error);
+    console.error(' WhatsApp Exception:', error);
     notifyUser('Error sending WhatsApp confirmation.');
     return false;
   }
@@ -154,9 +154,9 @@ const handleFormSubmit = async () => {
   }
 
   if (isValid) {
-    onSubmit(); // ✅ Trigger submission logic
+    onSubmit(); //  Trigger submission logic
 
-    // ✅ Send WhatsApp message only once
+    //  Send WhatsApp message only once
     if (!whatsAppSent) {
       const sent = await sendWelcomeWhatsAppMessage();
       if (sent) setWhatsAppSent(true);
@@ -164,7 +164,7 @@ const handleFormSubmit = async () => {
       console.log("ℹ️ WhatsApp already sent.");
     }
 
-    // ✅ Optional: Redirect to home screen (if needed)
+    //  Optional: Redirect to home screen (if needed)
     router.replace('/(tabs)/home');
   }
 };

@@ -55,7 +55,7 @@ export default function PhoneInput({
         <ThemedText type="defaultSemiBold" style={styles.errorText}>{phoneError}</ThemedText>
       ) : null}
 
-      {/* ✅ Terms with Checkbox */}
+      {/*  Terms with Checkbox */}
       <View style={styles.checkboxContainer}>
         <TouchableOpacity onPress={() => setConsentGiven(!consentGiven)}>
           <MaterialIcons

@@ -7,7 +7,10 @@ import { ThemedText } from './ThemedText';
 import { ThemedView } from './ThemedView';
 import { useUser } from '@/context/UserContext';
 import { useTheme } from '@/utils/theme';
-import { send } from '@emailjs/react-native';
+import apiInstance from "@/components/api/apiInstance";
+import { getLocalStorage } from "@/utils/getLocalStorage";
+import axios from "axios";
+
 
 interface KycComponentProps {
   onKycComplete?: () => void;
@@ -85,53 +88,6 @@ const KycComponent: React.FC<KycComponentProps> = ({ onKycComplete }) => {
       setMessage('Failed to pick PAN image');
     }
   };
-
-const sendVerificationEmail = async () => {
-    console.log("sendverification is goinng on");
-  try {
-    if (!userDetails?.email) return;
-
-    await send(
-      'service_bugq70m',       // Replace with actual EmailJS service ID
-      'template_e414c2l',      // Replace with actual EmailJS template ID
-      {
-         name: userDetails.name || 'User',        // ✅ matches {{name}} in your template
-        email: userDetails.email,                // ✅ matches {{email}} if used
-        time: new Date().toLocaleString(),       // ✅ matches {{time}} in your template
-        message: '🎉 Your KYC has been successfully verified!',
-      },
-      'ABuLqJxVigb8USysd'        // Replace with actual EmailJS public key
-    );
-
-    setHasSentEmail(true);
-  } catch (err) {
-    console.error('Error sending email:', err);
-  }
-};
-
-const sendUnverifiedEmail = async () => {
-  console.log("sendunverification is goinng on");
-  try {
-    if (!userDetails?.email) return;
-
-    await send(
-      'service_bugq70m',            // ✅ Your actual service ID
-      'template_79sigwh',     // ✅ Your new template for rejection
-      {
-        name: userDetails.name || 'User',
-        email: userDetails.email,
-        time: new Date().toLocaleString(),
-        message: '❌ Your KYC verification failed. Please contact support or re-upload your documents.',
-      },
-      'ABuLqJxVigb8USysd'            // ✅ Your actual public key
-    );
-
-    console.log("Unverified KYC email sent.");
-  } catch (err) {
-    console.error('Error sending unverified email:', err);
-  }
-};
-
 
 
   // handle submit
@@ -214,23 +170,75 @@ const sendUnverifiedEmail = async () => {
     setIsKycExpanded(false);
   };
 
-// Send email if KYC verified
-useEffect(() => {
-  if (kycStatus === "Y" && !hasSentEmail) {
-    sendVerificationEmail();
-  }
-}, [kycStatus, hasSentEmail]);
+const sendKycconfirmationmail = async (email, status) => {
+  try {
+    const res = await fetch('http://gateway.twmresearchalert.com?url=sendkycmail', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        type: 'kyc',
+        status,
+      }),
+    });
 
-// Send email if KYC rejected
-useEffect(() => {
-  if (
-    kycStatus === "N" &&
-    (userDetails?.aadhar_name || userDetails?.pan_name) &&
-    !hasSentEmail
-  ) {
-    sendUnverifiedEmail();
+    const data = await res.json();
+    console.log("Response from PHP:", data);
+
+  } catch (err) {
+    console.error(`Error sending KYC ${status} email:`, err.message || err);
   }
-}, [kycStatus, hasSentEmail]);
+};
+
+
+useEffect(() => {
+  const checkKycAndSendMail = async () => {
+    const userId = userDetails?.user_id;
+
+    if (!userId) {
+      console.warn("User ID not found from context.");
+      return;
+    }
+
+    try {
+      console.log("Fetching KYC details for user:", userId);
+
+      const kycRes = await axios.get(`http://gateway.twmresearchalert.com/kyc?user_id=${userId}`);
+      const user = kycRes?.data?.data;
+
+      if (kycRes?.data?.status === "success" && user) {
+        const auth = user?.auth;
+        const email = user?.user_email_id;
+        const aadhar = user?.aadhar_name;
+        const pan = user?.pan_name;
+
+        if (!email) {
+          console.warn("Email missing in KYC data.");
+          return;
+        }
+
+        if (auth === "Y") {
+          console.log("Auth is Y, sending verified email...");
+          sendKycconfirmationmail(email, "verified");
+        } else if (auth === "N" && (aadhar || pan)) {
+          console.log("Auth is N with documents, sending unverified email...");
+          sendKycconfirmationmail(email, "unverified");
+        } else {
+          console.log("Auth is N and no docs submitted — skipping email.");
+        }
+      } else {
+        console.warn("Failed to fetch KYC or user not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching KYC data:", error.message || error);
+    }
+  };
+
+  checkKycAndSendMail();
+}, [userDetails]);
+
 
 // Show loading state
 if (fetchingKycStatus) {
@@ -528,7 +536,7 @@ return null;
 
 };
 
-// ✅ Replace only the fields listed below in your existing `StyleSheet.create` call
+
 const styles = StyleSheet.create({
   // ...
   kycStatusText: {

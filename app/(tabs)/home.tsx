@@ -94,7 +94,7 @@ useEffect(() => {
     ])
   ).start();
 }, []);
-  // ✅ Push notification setup and send to Native Notify
+  //  Push notification setup and send to Native Notify
   useEffect(() => {
     const initPushNotifications = async () => {
       try {
@@ -125,7 +125,7 @@ useEffect(() => {
     initPushNotifications();
   }, []);
 
-  // ✅ Test push notification button handler
+  //  Test push notification button handler
   const sendTestNotification = async () => {
     if (!expoToken) return;
     try {
@@ -139,13 +139,13 @@ useEffect(() => {
         body: JSON.stringify({
           to: expoToken,
           sound: 'default',
-          title: '🚀 Test Notification',
+          title: ' Test Notification',
           body: 'This is a test push sent from HomeScreen!',
         }),
       });
-      console.log('✅ Test notification sent');
+      console.log(' Test notification sent');
     } catch (error) {
-      console.error('❌ Failed to send notification:', error);
+      console.error(' Failed to send notification:', error);
     }
   };
 

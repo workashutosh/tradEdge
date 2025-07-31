@@ -1,0 +1,108 @@
+TO: test@example.com
+SUBJECT: Your KYC Status Has Been Verified - TWM Research Alert
+
+Plain Message:
+Dear User,
+
+Your KYC status has been marked as: VERIFIED.
+
+If you believe this is incorrect or need help, please contact our support team.
+
+Thank you,
+TWM Research Alert
+
+HTML Message:
+
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; background-color: #f8f9fa; padding: 20px; }
+    .container { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    .status { font-size: 18px; font-weight: bold; color: #28a745; }
+  </style>
+</head>
+<body>
+  <div class='container'>
+    <p>Hello,</p>
+    <p>Your <strong>KYC</strong> status has been updated to:</p>
+    <p class='status'>VERIFIED</p>
+    <p>If you have any concerns, please contact our support team.</p>
+    <p>Thank you,<br><strong>TWM RESEARCH ALERT</strong></p>
+  </div>
+</body>
+</html>
+
+
+---
+TO: harshikapatil56@gmail.com
+SUBJECT: Your KYC Status Has Been Verified - TWM Research Alert
+
+Plain Message:
+Dear User,
+
+Your KYC status has been marked as: VERIFIED.
+
+If you believe this is incorrect or need help, please contact our support team.
+
+Thank you,
+TWM Research Alert
+
+HTML Message:
+
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; background-color: #f8f9fa; padding: 20px; }
+    .container { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    .status { font-size: 18px; font-weight: bold; color: #28a745; }
+  </style>
+</head>
+<body>
+  <div class='container'>
+    <p>Hello,</p>
+    <p>Your <strong>KYC</strong> status has been updated to:</p>
+    <p class='status'>VERIFIED</p>
+    <p>If you have any concerns, please contact our support team.</p>
+    <p>Thank you,<br><strong>TWM RESEARCH ALERT</strong></p>
+  </div>
+</body>
+</html>
+
+
+---
+TO: harshikapatil56@gmail.com
+SUBJECT: Your KYC Status Has Been Verified - TWM Research Alert
+
+Plain Message:
+Dear User,
+
+Your KYC status has been marked as: VERIFIED.
+
+If you believe this is incorrect or need help, please contact our support team.
+
+Thank you,
+TWM Research Alert
+
+HTML Message:
+
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; color: #333; background-color: #f8f9fa; padding: 20px; }
+    .container { background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+    .status { font-size: 18px; font-weight: bold; color: #28a745; }
+  </style>
+</head>
+<body>
+  <div class='container'>
+    <p>Hello,</p>
+    <p>Your <strong>KYC</strong> status has been updated to:</p>
+    <p class='status'>VERIFIED</p>
+    <p>If you have any concerns, please contact our support team.</p>
+    <p>Thank you,<br><strong>TWM RESEARCH ALERT</strong></p>
+  </div>
+</body>
+</html>
+
+
+---

@@ -192,10 +192,10 @@ const handleOtpSubmit = async (otp: string): Promise<boolean> => {
     setRegistrationComplete(true);
     setShowKyc(true);
 
-    return true; // ✅ Return true if login successful
+    return true; //  Return true if login successful
   } catch (error) {
     handleError(error, setOtpError);
-    return false; // ❌ Return false on error
+    return false; //  Return false on error
   } finally {
     setIsLoading(false);
     setVerifyOtpButtonLoading(false);
@@ -248,7 +248,7 @@ const handleUserDetailsSubmit = async () => {
       setShowKyc(true);
       setShowUserDetails(false);
 
-      // ✅ Navigate to home screen after successful user creation
+      //  Navigate to home screen after successful user creation
       router.replace('/(tabs)/home');
     }
   } catch (error) {
@@ -373,7 +373,7 @@ const handleUserDetailsSubmit = async () => {
                         continueButtonLoading={continueButtonLoading}
                         userDetailsError={userDetailsError}
                         phoneNumber={phone} 
-                        setPhone={setPhone} // ✅ This enables WhatsApp message functionality
+                        setPhone={setPhone} //  This enables WhatsApp message functionality
                       />
                     ) : showOtpField ? (
                       <OtpInput
@@ -386,7 +386,7 @@ const handleUserDetailsSubmit = async () => {
                         timer={timer}
                         isResendEnabled={isResendEnabled}
                         verifyOtpButtonLoading={verifyOtpButtonLoading}
-                        //phoneNumber={phone}          // ✅ pass this
+                        //phoneNumber={phone}          //  pass this
                         //userName={userName} 
                       />
                     ) : (

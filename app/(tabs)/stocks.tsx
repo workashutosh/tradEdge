@@ -54,7 +54,7 @@ export default function Stocks() {
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showPrompt, setShowPrompt] = useState(true); // ✅ show prompt initially
+  const [showPrompt, setShowPrompt] = useState(true); //  show prompt initially
 
   const promptOpacity = useRef(new Animated.Value(0)).current;
   const promptTranslateY = useRef(new Animated.Value(10)).current;
@@ -183,7 +183,7 @@ useEffect(() => {
     }),
   ]).start();
 
-  console.log('✅ showPrompt triggered animation:', showPrompt);
+  console.log(' showPrompt triggered animation:', showPrompt);
 }, [showPrompt]);
 
 const clearSearch = () => {
@@ -208,7 +208,7 @@ if (!searchQuery?.trim()) {
   return;
 }
 
-setShowPrompt(true);// ✅ hide prompt once valid search begins
+setShowPrompt(true);//  hide prompt once valid search begins
 setLoading(true);
 
   try {

@@ -108,20 +108,20 @@ export default function OtpInput({
       });
 
       const result = await response.json();
-console.log("📦 WhatsApp API Response:", result);
+console.log(" WhatsApp API Response:", result);
 
     if (response.ok) {
       
       return true;
     } else {
-      console.error('❌ WhatsApp message failed:', result);
-      notifyUser('Failed to send WhatsApp confirmation.');
+      console.error(' WhatsApp message failed:', result);
+      
       return false;
     }
 
     } catch (error) {
       console.error('Error sending WhatsApp message:', error);
-      notifyUser('Error sending WhatsApp confirmation.');
+      
       return false;
     }
   };
@@ -129,13 +129,13 @@ console.log("📦 WhatsApp API Response:", result);
   const handleVerifyOtp = async () => {
     const otp = otpDigits.join('');
     const success = await handleOtpSubmit(otp);
-    console.log('✅ OTP Verification Result:', success);
+    console.log(' OTP Verification Result:', success);
 
    if (success) {
-      console.log("✅ OTP verified successfully.");
+      console.log(" OTP verified successfully.");
       if (!whatsAppSent) {
         const sent = await sendOtpSuccessWhatsAppMessage();
-        console.log("📨 WhatsApp message sent?", sent);
+        console.log(" WhatsApp message sent?", sent);
         if (sent) {
           setWhatsAppSent(true);
         }
@@ -144,7 +144,7 @@ console.log("📦 WhatsApp API Response:", result);
       }
     } else {
       notifyUser('OTP verification failed. Please try again.');
-      console.log("❌ OTP verification failed.");
+      console.log(" OTP verification failed.");
     }
 
   };

@@ -9,7 +9,7 @@ const TradeNotifications = ({ onNewTradeTip, existingTradeTips = [], onUpdateTra
   const [notifications, setNotifications] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [liveTradeIds, setLiveTradeIds] = useState(new Set());
-  const [fetchedTrades, setFetchedTrades] = useState([]); // ✅ store all fetched trades
+  const [fetchedTrades, setFetchedTrades] = useState([]); //  store all fetched trades
   const [todaysTrades, setTodaysTrades] = useState([]);
   const [allTrades, setAllTrades] = useState([]);
   const [phone, setPhone] = useState('');
@@ -28,7 +28,7 @@ const TradeNotifications = ({ onNewTradeTip, existingTradeTips = [], onUpdateTra
   };
 
   useEffect(() => {
-    console.log('🚀 fetchTrades useEffect triggered');
+    console.log(' fetchTrades useEffect triggered');
 
     const fetchTrades = async () => {
       try {
@@ -43,20 +43,20 @@ const TradeNotifications = ({ onNewTradeTip, existingTradeTips = [], onUpdateTra
         });
 
         const raw = await response.json();
-        console.log('📦 Raw API response:');
+        console.log(' Raw API response:');
         
         let trades = [];
         if (Array.isArray(raw)) {
-      console.log('✅ raw is an array');
+      console.log(' raw is an array');
       trades = raw;
     } else if (Array.isArray(raw?.data)) {
-      console.log('✅ raw.data is an array');
+      console.log(' raw.data is an array');
       trades = raw.data;
     } else if (Array.isArray(raw?.trades)) {
-      console.log('✅ raw.trades is an array');
+      console.log(' raw.trades is an array');
       trades = raw.trades;
     } else {
-      console.error('❌ No valid array found in API response:', raw);
+      console.error(' No valid array found in API response:', raw);
       return;
     }
         
@@ -80,7 +80,7 @@ const TradeNotifications = ({ onNewTradeTip, existingTradeTips = [], onUpdateTra
               analysis: t.description || '',
               riskLevel: t.risk_level || 'Medium',
               recommendedInvestment: Number(t.recommended_investment || 50000),
-              timestamp: parsedDate.toISOString(), // ✅ normalized
+              timestamp: parsedDate.toISOString(), //  normalized
             };
           });
 
@@ -92,12 +92,12 @@ const TradeNotifications = ({ onNewTradeTip, existingTradeTips = [], onUpdateTra
 
           const today = new Date();
 
-          // ✅ Now filter trades for today
+          //  Now filter trades for today
           const todaysTrades = formattedTrades.filter((trade) =>
             isSameDay(new Date(trade.timestamp), today)
           );
 
-          // ✅ Use in your state update or `onUpdateTradeLists`
+          //  Use in your state update or `onUpdateTradeLists`
           setTodaysTrades(todaysTrades);
           setAllTrades(formattedTrades);
 
@@ -109,7 +109,7 @@ const TradeNotifications = ({ onNewTradeTip, existingTradeTips = [], onUpdateTra
         }
 
       } catch (error) {
-        console.error('❌ Failed to fetch trades:', error);
+        console.error(' Failed to fetch trades:', error);
       }
     };
 
@@ -129,7 +129,7 @@ const handleNewTradeNotification = useCallback(async (data) => {
 
   const hasAccess = tradeSubtypeIds.some((id) => validUserPackageIds.includes(id));
   if (!hasAccess) {
-    console.log('❌ Skipped. User doesn’t have valid package for this trade.');
+    console.log(' Skipped. User doesn’t have valid package for this trade.');
     return;
   }
 
@@ -221,8 +221,8 @@ console.log("📱 Raw:", rawPhone, "| Cleaned:", cleanedPhone);
 if (cleanedPhone) {
   await sendTradeWhatsAppMessage(formattedTrade, cleanedPhone);
 } else {
-  console.warn("⚠️ Invalid phone number:", rawPhone);
-  Alert.alert("Invalid Number", `❌ Cannot send WhatsApp. Invalid: ${rawPhone}`);
+  console.warn("Invalid phone number:", rawPhone);
+  Alert.alert("Invalid Number", ` Cannot send WhatsApp. Invalid: ${rawPhone}`);
 }
 
 
@@ -259,12 +259,12 @@ if (cleanedPhone) {
 
     pusher.connection.bind('connected', () => {
       setIsConnected(true);
-      console.log('✅ Connected to Pusher');
+      console.log(' Connected to Pusher');
     });
 
     pusher.connection.bind('disconnected', () => {
       setIsConnected(false);
-      console.log('⚠️ Disconnected from Pusher');
+      console.log('Disconnected from Pusher');
     });
 
     channel.bind('new-trade-notification', handleNewTradeNotification);
@@ -286,14 +286,14 @@ const cleanPhoneNumber = (phone) => {
   const digits = String(phone).replace(/\D/g, '');
 
   if (digits.length === 12 && digits.startsWith('91')) {
-    return digits; // ✅ exactly what Cunnekt wants
+    return digits; //  exactly what Cunnekt wants
   }
 
   if (digits.length === 10 && /^[6-9]/.test(digits)) {
-    return `91${digits}`; // ✅ prepend 91
+    return `91${digits}`; //  prepend 91
   }
 
-  return ''; // ❌ Invalid number
+  return ''; //  Invalid number
 };
 
 
@@ -301,8 +301,8 @@ const cleanPhoneNumber = (phone) => {
 // Inside the same file or import from utils if separated
 const sendTradeWhatsAppMessage = async (trade, phoneNumber) => {
   console.log("📞 Cleaned phone number:", phoneNumber);
-console.log("📦 Final Cunnekt payload 'to':", phoneNumber);
-  console.log("📨 Message payload:", {
+console.log(" Final Cunnekt payload 'to':", phoneNumber);
+  console.log(" Message payload:", {
     stock: trade.stockSymbol,
     target: trade.targetPrice,
     type: trade.prediction?.type,
@@ -313,7 +313,7 @@ console.log("📦 Final Cunnekt payload 'to':", phoneNumber);
     const apiKey = '3115c6ff026625317b9df24d692570ecab70ffb1';
 
     const messagePayload = {
-        mobile: phoneNumber.replace(/^\+/, ''), // ✅ remove + if present
+        mobile: phoneNumber.replace(/^\+/, ''), //  remove + if present
         templateid: '1207184657851670',  
       parameters: {
         body: [
@@ -335,20 +335,20 @@ console.log("📦 Final Cunnekt payload 'to':", phoneNumber);
     });
 
     const result = await response.json();
-    console.log("📦 WhatsApp API Response:", result);
+    console.log(" WhatsApp API Response:", result);
 
     if (response.ok && result.status) {
-      Alert.alert?.(`✅ WhatsApp message sent to ${phoneNumber}`);
+      Alert.alert?.(` WhatsApp message sent to ${phoneNumber}`);
       return true;
     } else {
-      console.error('❌ WhatsApp message failed:', result);
-      Alert.alert?.(`❌ WhatsApp failed: ${result?.message || 'Unknown error'}`);
+      console.error(' WhatsApp message failed:', result);
+      Alert.alert?.(` WhatsApp failed: ${result?.message || 'Unknown error'}`);
       return false;
     }
 
   } catch (error) {
-    console.error('❌ Error sending WhatsApp message:', error);
-    Alert.alert?.('⚠️ Error sending WhatsApp confirmation.');
+    console.error(' Error sending WhatsApp message:', error);
+    Alert.alert?.('Error sending WhatsApp confirmation.');
     return false;
   }
 };

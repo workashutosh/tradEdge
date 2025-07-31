@@ -15,7 +15,7 @@ import { useUser } from '@/context/UserContext';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Stack, useRouter } from 'expo-router';
 import { router } from 'expo-router';
-import moment from 'moment'; // ✅ Add for date formatting
+import moment from 'moment'; //  Add for date formatting
 
 const PackagesScreen = () => {
   const colors = useTheme();
@@ -24,7 +24,7 @@ const PackagesScreen = () => {
   const [expanded, setExpanded] = useState(true);
 
   console.log('🧾 userTransactions:', JSON.stringify(userTransactions, null, 2));
-  console.log('📦 Purchased Package IDs:', userTransactions.map(txn => txn.package_details?.subtype_id));
+  console.log(' Purchased Package IDs:', userTransactions.map(txn => txn.package_details?.subtype_id));
 
   const getPackageTransactions = () => {
     if (!userTransactions || userTransactions.length === 0) {
@@ -147,7 +147,7 @@ const PackagesScreen = () => {
               <TouchableOpacity
                 onPress={() => {
                   if (!item.package_id) {
-                    console.warn('❌ Invalid package_id');
+                    console.warn(' Invalid package_id');
                     return;
                   }
 

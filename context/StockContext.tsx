@@ -195,131 +195,150 @@ export const StockProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
 
   // Optimized package fetching with caching
-  const fetchPackages = useCallback(async (forceRefresh = false) => {
-    let cachedData = null;
-    try {
-      setLoading(true);
-      setError(null);
-      const cacheKey = 'cachedPackages';
-      const cacheTimeKey = 'cachedPackagesTime';
+ const fetchPackages = useCallback(async (forceRefresh = false) => {
+  let cachedData = null;
+  try {
+    setLoading(true);
+    setError(null);
+    const cacheKey = 'cachedPackages';
+    const cacheTimeKey = 'cachedPackagesTime';
 
-      // Check if we should use cached data
-      if (!forceRefresh) {
-        try {
-          const [cachedPackagesString, cachedTimeString] = await Promise.all([
-            AsyncStorage.getItem(cacheKey),
-            AsyncStorage.getItem(cacheTimeKey)
-          ]);
+    // Check if we should use cached data
+    if (!forceRefresh) {
+      try {
+        const [cachedPackagesString, cachedTimeString] = await Promise.all([
+          AsyncStorage.getItem(cacheKey),
+          AsyncStorage.getItem(cacheTimeKey),
+        ]);
 
-          if (cachedPackagesString && cachedTimeString) {
-            const cachedTime = parseInt(cachedTimeString);
-            const now = Date.now();
-            
-            if (now - cachedTime < CACHE_DURATION) {
-              cachedData = JSON.parse(cachedPackagesString);
-              setPackages(cachedData);
-              setLoading(false);
-              return; // Use cached data if it's fresh
+        if (cachedPackagesString && cachedTimeString) {
+          const cachedTime = parseInt(cachedTimeString);
+          const now = Date.now();
+
+          if (now - cachedTime < CACHE_DURATION) {
+            cachedData = JSON.parse(cachedPackagesString);
+            // Check if cached data is empty
+            if (!cachedData || cachedData.length === 0) {
+              throw new Error('No packages found in cache');
             }
+            setPackages(cachedData);
+            setLoading(false);
+            return; // Use cached data if it's fresh and not empty
           }
-        } catch (cacheError) {
-          console.error('Error loading packages from cache:', cacheError);
         }
+      } catch (cacheError) {
+        console.error('Error loading packages from cache:', cacheError);
       }
+    }
 
-      // Fetch fresh data
-      const token = await AsyncStorage.getItem('access_token');
-      if (!token) {
-        throw new Error('No access token available');
-      }
+    // Fetch fresh data
+    const token = await AsyncStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No access token available');
+    }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      const response = await fetch('https://gateway.twmresearchalert.com/package', {
-        headers: {
-          Authorization: token,
-          'Content-Type': 'application/json',
-        },
-        signal: controller.signal
+    const response = await fetch('https://gateway.twmresearchalert.com/package', {
+      headers: {
+        Authorization: token,
+        'Content-Type': 'application/json',
+      },
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.data || !Array.isArray(data.data) || data.data.length === 0) {
+      throw new Error('No packages found or invalid package data format received from server');
+    }
+
+    // Transform data in chunks to avoid blocking the main thread
+    const transformedPackages: Package[] = [];
+    const chunkSize = 20;
+
+    for (let i = 0; i < data.data.length; i += chunkSize) {
+      const chunk = data.data.slice(i, i + chunkSize);
+      const transformedChunk = chunk.flatMap((type: any) => {
+        if (!type.subtypes || !Array.isArray(type.subtypes)) {
+          console.warn('Invalid subtype data for type:', type.type_name);
+          return [];
+        }
+
+        return type.subtypes.map((subtype: any) => ({
+          type_id: type.type_id || '',
+          type_name: type.type_name || '',
+          package_id: subtype.subtype_id || '',
+          title: subtype.subtype_name || 'Unnamed Package',
+          price: subtype.price?.toString() || 'Contact for pricing',
+          details: Array.isArray(subtype.details)
+            ? subtype.details.map((detail: string) => detail.replace(/\?/g, '₹'))
+            : ['Details not available'],
+          categoryTag: type.type_name || 'Uncategorized',
+          icon: getIconForCategory(type.type_name || ''),
+          riskCategory: (subtype.riskCategory || 'N/A').replace(/^\w/, (c: string) => c.toUpperCase()),
+          minimumInvestment: subtype.minimumInvestment || 'N/A',
+          profitPotential: '15-25% p.a.',
+        }));
       });
+      transformedPackages.push(...transformedChunk);
+    }
 
-      clearTimeout(timeoutId);
+    // Check if transformed packages are empty
+    if (transformedPackages.length === 0) {
+      throw new Error('No valid packages could be transformed from server data');
+    }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.data || !Array.isArray(data.data)) {
-        throw new Error('Invalid package data format received from server');
-      }
-      
-      // Transform data in chunks to avoid blocking the main thread
-      const transformedPackages: Package[] = [];
-      const chunkSize = 20; // Increased chunk size for better performance
-      
-      for (let i = 0; i < data.data.length; i += chunkSize) {
-        const chunk = data.data.slice(i, i + chunkSize);
-        const transformedChunk = chunk.flatMap((type: any) => {
-          if (!type.subtypes || !Array.isArray(type.subtypes)) {
-            console.warn('Invalid subtype data for type:', type.type_name);
-            return [];
-          }
-
-          return type.subtypes.map((subtype: any) => ({
-            type_id: type.type_id || '',
-            type_name: type.type_name || '',
-            package_id: subtype.subtype_id || '',
-            title: subtype.subtype_name || 'Unnamed Package',
-            price: subtype.price?.toString() || 'Contact for pricing',
-            details: Array.isArray(subtype.details) 
-              ? subtype.details.map((detail: string) => detail.replace(/\?/g, '₹'))
-              : ['Details not available'],
-            categoryTag: type.type_name || 'Uncategorized',
-            icon: getIconForCategory(type.type_name || ''),
-            riskCategory: (subtype.riskCategory || 'N/A').replace(/^\w/, (c: string) => c.toUpperCase()),
-            minimumInvestment: subtype.minimumInvestment || 'N/A',
-            profitPotential: '15-25% p.a.'
-          }));
-        });
-        transformedPackages.push(...transformedChunk);
-      }
-
-      // Add refund offer package
-      const allPackages = [...transformedPackages, {
+    // Add refund offer package
+    const allPackages = [
+      ...transformedPackages,
+      {
         type_id: '10000',
         type_name: 'Offer',
         package_id: '10000',
         title: 'Refund offer',
         price: '10000',
-        details: ['Profit Gaurantee', 'Refund if no profit', 'If we fail to generate atleast one profitable trade in 7 days period we will refund the amount.', 'If you engage in self-trading or any other trading activity that is not part of our recommendations, we will not be responsible for providing a refund.', 'If you fail to book or realize any profits generated by our services during the specified period, we will not be responsible for providing a refund.' ],
+        details: [
+          'Profit Guarantee',
+          'Refund if no profit',
+          'If we fail to generate at least one profitable trade in 7 days period we will refund the amount.',
+          'If you engage in self-trading or any other trading activity that is not part of our recommendations, we will not be responsible for providing a refund.',
+          'If you fail to book or realize any profits generated by our services during the specified period, we will not be responsible for providing a refund.',
+        ],
         categoryTag: 'Custom Category',
         icon: 'star',
         riskCategory: 'Low',
         minimumInvestment: 'N/A',
         profitPotential: '10-20% p.a.',
-      }];
+      },
+    ];
 
-      // Update state and cache
-      setPackages(allPackages);
-      const now = Date.now();
-      await Promise.all([
-        AsyncStorage.setItem(cacheKey, JSON.stringify(allPackages)),
-        AsyncStorage.setItem(cacheTimeKey, now.toString())
-      ]);
-      setLastFetchTime(now);
-
-    } catch (error) {
-      console.error('Error fetching packages:', error);
-      if (!cachedData) {
-        setError('Failed to fetch packages');
-      }
-    } finally {
-      setLoading(false);
+    // Update state and cache
+    setPackages(allPackages);
+    const now = Date.now();
+    await Promise.all([
+      AsyncStorage.setItem(cacheKey, JSON.stringify(allPackages)),
+      AsyncStorage.setItem(cacheTimeKey, now.toString()),
+    ]);
+    setLastFetchTime(now);
+  } catch (error) {
+    console.error('Error fetching packages:', error);
+    if (!cachedData) {
+      setError(error.message || 'Failed to fetch packages');
     }
-  }, [getIconForCategory]);
+  } finally {
+    setLoading(false);
+  }
+}, [getIconForCategory]);
+
+
 
   // Optimized fetchAllData
   const fetchAllData = useCallback(async (forceRefresh = false) => {

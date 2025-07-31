@@ -9,6 +9,22 @@ import { useUser } from '@/context/UserContext';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '@/utils/theme';
 import LottieView from 'lottie-react-native';
+import { useStockContext } from '@/context/StockContext';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+
+interface Trade {
+  type_id: string;
+  type_name: string;
+  package_id: string;
+  title: string;
+  price: string;
+  details: string[];
+  categoryTag: string;
+  icon: string;
+  riskCategory: string;
+  minimumInvestment?: string;
+  profitPotential?: string;
+}
 
 const formatIndianRupee = (amount: number) => {
   const formatter = new Intl.NumberFormat('en-IN', {
@@ -32,7 +48,7 @@ const PaymentResultScreen = () => {
   
   const colors=useTheme();
   const { getUserTransactions }=useUser();
-
+  const {userDetails} = useUser();
   const [transaction_id, setTransactionId] = useState<string | null>(null);
   const [package_id, setPackageId] = useState<string | null>(null);
   const [user_id, setUserId] = useState<string | null>(null);
@@ -52,6 +68,18 @@ const PaymentResultScreen = () => {
   const [showAnimation, setShowAnimation] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
   const [dbUpdateError, setDbUpdateError] = useState<string | null>(null);
+  const { package_id: queryPackageId } = useLocalSearchParams(); // Rename to avoid conflict
+  const userEmail = userDetails?.user_email_id;
+  const userName = userDetails?.user_full_name;
+
+  
+
+  useEffect(() => {
+    if (queryPackageId) {
+      setPackageId(queryPackageId.toString()); // Convert to string if needed
+    }
+  }, [queryPackageId]);
+      
 
   useEffect(() => {
     const fetchFromStorage = async () => {
@@ -73,65 +101,74 @@ const PaymentResultScreen = () => {
     fetchFromStorage();
   }, []);
 
+useEffect(() => {
+  const fetchPaymentStatus = async () => {
+    if (!transaction_id) {
+      setLoading(false);
+      return;
+    }
 
-  useEffect(() => {
-    const fetchPaymentStatus = async () => {
-      if (!transaction_id) {
-        // setStatus('FAILURE');
-        setLoading(false);
-        return null;
+    try {
+      const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
+        params: { transaction_id },
+      });
+
+      const paymentData = response.data.status || {};
+      const paymentState = paymentData.state || 'FAILURE';
+      const paymentDetails = paymentData.paymentDetails?.[0] || {};
+
+      setStatus(paymentState === 'COMPLETED' ? 'SUCCESS' : 'FAILURE');
+      setTransactionDetails({
+        transaction_id: paymentDetails.transactionId,
+        payment_method: paymentDetails.paymentMode,
+        amount: paymentDetails.amount,
+      });
+
+      const updatedTransactionDetails = {
+        transaction_id: paymentDetails.transactionId || transaction_id,
+        package_id,
+        user_id,
+        amount: paymentDetails.amount || amount,
+        payment_status: paymentState,
+        payment_date: payment_date || getISTDate(),
+        payment_method: paymentDetails.paymentMode || 'PHONEPE',
+      };
+
+      await AsyncStorage.setItem('transactionDetails', JSON.stringify(updatedTransactionDetails));
+      await updateDB(paymentState, paymentDetails.paymentMode);
+      await getUserTransactions(user_id);
+
+      //  Send confirmation email if payment successful
+      if (
+        paymentState === 'COMPLETED' &&
+        package_id &&
+        userDetails?.user_email_id &&
+        userDetails?.user_full_name
+      ) {
+        const packageData = await fetchPackageDetails(package_id);
+        if (packageData) {
+          await sendConfirmationEmail({
+            email: userDetails.user_email_id,
+            name: userDetails.user_full_name,
+            transaction_id: paymentDetails.transactionId || transaction_id,
+            payment_method: paymentDetails.paymentMode || 'PHONEPE',
+            amount: Number(paymentDetails.amount || amount),
+            packageDetails: packageData,
+          });
+        }
       }
+    } catch (error) {
+      console.error('Error fetching payment status:', (error as Error).message);
+      setStatus('FAILURE');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      try {
-        const response = await axios.get(`https://tradedge-server.onrender.com/api/paymentStatus`, {
-        //const response = await axios.get(`exp://192.168.1.20:8081/api/paymentStatus`, {
-          params: { transaction_id },
-        });
-
-        const paymentData = response.data.status || {};
-        const paymentState = paymentData.state || 'FAILURE';
-        const paymentDetails = paymentData.paymentDetails?.[0] || {};
-
-        console.log('Payment Data:', paymentData);
-
-        setStatus(paymentState === 'COMPLETED' ? 'SUCCESS' : 'FAILURE');
-        setTransactionDetails({
-          transaction_id: paymentDetails.transactionId,
-          payment_method: paymentDetails.paymentMode,
-          amount: paymentDetails.amount,
-        });
-
-        // Update AsyncStorage with payment status and method
-        const updatedTransactionDetails = {
-          transaction_id: paymentDetails.transactionId || transaction_id,
-          package_id: package_id,
-          user_id: user_id,
-          amount: paymentDetails.amount || amount,
-          payment_status: paymentState,
-          payment_date: payment_date || getISTDate(),
-          payment_method: paymentDetails.paymentMode || 'PHONEPE',
-        };
-
-        await AsyncStorage.setItem('transactionDetails', JSON.stringify(updatedTransactionDetails));
-        console.log('✅ AsyncStorage updated with payment status and method');
-
-        // Update the database with the payment status
-        await updateDB(paymentState, paymentDetails.paymentMode);
-
-        // Fetch user transactions after updating the payment status
-        await getUserTransactions(user_id);
+  fetchPaymentStatus();
+}, [transaction_id]);
 
 
-      } catch (error) {
-        console.error('Error fetching payment status:', (error as Error).message);
-        setStatus('FAILURE');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPaymentStatus();
-  }, [transaction_id]);
 
   const updateDB = async (paymentState: string, payment_method: string) => {
     try {
@@ -169,6 +206,70 @@ const PaymentResultScreen = () => {
       return () => clearTimeout(timer);
     }
   }, [status]);
+
+ const fetchPackageDetails = async (id: string) => {
+  const url = `https://gateway.twmresearchalert.com/package?package_id=${id}`;
+  console.log(" Fetching package from URL:", url);
+
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `6WeFqncZXmLCo2V0/NaWIQ==`, // Replace with real token
+      },
+    });
+
+    const packageData = response?.data?.data;
+
+    //  Add selected subtype explicitly for backend PHP script
+    if (packageData?.subtypes?.length > 0) {
+      packageData.subtype = packageData.subtypes[0]; // 👈 Key step
+    }
+
+    return packageData;
+  } catch (error: any) {
+    console.error(' Failed to fetch package details:', error?.response?.status, error?.message);
+    return null;
+  }
+};
+
+const sendConfirmationEmail = async ({
+  email,
+  name,
+  transaction_id,
+  payment_method,
+  amount,
+  packageDetails,
+}: {
+  email: string;
+  name: string;
+  transaction_id: string;
+  payment_method: string;
+  amount: number;
+  packageDetails: any;
+}) => {
+  try {
+    const response = await axios.post('http://gateway.twmresearchalert.com?url=sendpackagemail', {
+      email,
+      name,
+      transaction_id,
+      payment_method,
+      amount,
+      packageDetails, //  This now includes .subtype
+    });
+
+    console.log('📧 Full response:', response.data);
+
+    if (response.data.success) {
+      console.log(' Confirmation email sent');
+    } else {
+      console.warn('Email not sent:', response.data.message || 'No message returned from backend');
+    }
+  } catch (error) {
+    console.error(' Error sending confirmation email:', error);
+  }
+};
+
+
 
 
 

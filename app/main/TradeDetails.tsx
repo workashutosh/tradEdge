@@ -5,21 +5,19 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
-import { useLocalSearchParams, router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import SliderButton from '@/components/SliderButton';
-import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import { useUser } from '@/context/UserContext';
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useStockContext } from '@/context/StockContext';
 import { useTheme } from '@/utils/theme';
 import { FontAwesome } from '@expo/vector-icons';
-
 
 interface Trade {
   type_id: string;
@@ -35,21 +33,10 @@ interface Trade {
   profitPotential?: string;
 }
 
-const getISTDate = () => {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000; // IST is UTC+5:30
-  const istDate = new Date(now.getTime() + istOffset);
-  return istDate.toISOString().slice(0, 19).replace('T', ' ');
-};
-
-
-
-
 export default function TradeDetails() {
   const { userDetails, purchasedPackagesId } = useUser();
-  const { packages } = useStockContext(); // Get packages from StockContext
-  const { package_id, package_name, package_price, payment_date } = useLocalSearchParams();
-  
+  const { packages } = useStockContext();
+  const { package_id } = useLocalSearchParams();
 
   const themeColors = useTheme();
   const colors = {
@@ -60,17 +47,13 @@ export default function TradeDetails() {
 
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  // Fetch the trade details using package_id
- const trade = packages.find(
-  (pkg) => pkg.package_id?.toString() === package_id?.toString()
-);
-  console.log('🔍 From search params - package_id:', package_id);
-console.log('📦 StockContext package IDs:', packages.filter(p => p?.package_id).map(p => p.package_id));
-
+  const trade = packages.find(
+    (pkg) => pkg.package_id?.toString() === package_id?.toString()
+  );
 
   if (!trade) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}> 
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <ThemedText style={[{ color: colors.text }]}>Trade details not found.</ThemedText>
         </View>
@@ -78,52 +61,52 @@ console.log('📦 StockContext package IDs:', packages.filter(p => p?.package_id
     );
   }
 
-  
   const getTagStyle = (riskCategory: string): { borderColor: string; icon: string } => {
     if (riskCategory.includes('Low')) return { borderColor: colors.success, icon: 'check-circle' };
     return { borderColor: colors.error, icon: 'error' };
   };
 
   const handlePayment = async () => {
-    console.log(trade);
     const transaction_id = `TXN_${Date.now()}`;
-    const payment_date = getISTDate();
+    const payment_date = new Date(Date.now() + 5.5 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
 
     try {
+      if (!userDetails?.user_id) {
+        Alert.alert('Error', 'Please log in to proceed with payment.');
+        router.push('/main/Login');
+        return;
+      }
+
       await AsyncStorage.setItem(
         'transactionDetails',
         JSON.stringify({
           package_id: trade.package_id,
-          user_id: userDetails?.user_id,
+          user_id: userDetails.user_id,
           amount: trade.price,
-          payment_date: payment_date,
-          transaction_id: transaction_id,
+          payment_date,
+          transaction_id,
         })
       );
 
-      setIsRedirecting(true);
-      const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-       redirectUrl: `tradedge://paymentResult`,
-      // const result = await axios.post('http://192.168.1.40:5000/api/paymentURL', {
-        // redirectUrl: `exp://192.168.1.26:8081/--/paymentResult`,
-        amount: Number(trade.price),
-        user_id: userDetails?.user_id,
-        package_id: trade.package_id,
-        transaction_id: transaction_id,
-        payment_date: payment_date,
-      });
-      const response = result.data;
-      console.log('✔️  Payment URL generated');
-      console.log('Payment URL:', response.redirectUrl);
-      const paymentUrl = response.redirectUrl;
+      const upiUrl = encodeURI(
+        `upi://pay?pa=suryanshchandel09@sbi&pn=ASHUTOSH MISHRA&mc=0000&tid=${transaction_id}&tn=Tradedge Package Purchase&am=${trade.price}&cu=INR`
+      );
 
-      Linking.openURL(paymentUrl).catch((err) => {
-        console.error('Error opening URL:', err);
-        alert('Failed to open the URL. Please try again later.');
+      setIsRedirecting(true);
+      router.push({
+        pathname: '/paymentscreen',
+        params: {
+          paymentLink: upiUrl,
+          packageTitle: trade.title,
+          amount: trade.price,
+        },
       });
     } catch (error) {
       console.error('Error during payment:', error);
-      alert('Failed to open the URL. Please try again later.');
+      Alert.alert('Error', 'Failed to start payment. Please try again later.');
     } finally {
       setIsRedirecting(false);
     }
@@ -160,7 +143,7 @@ console.log('📦 StockContext package IDs:', packages.filter(p => p?.package_id
         <DetailsSection trade={trade} colors={colors} />
       </ScrollView>
 
-      <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}> 
+      <View style={[styles.buttonContainer, { backgroundColor: colors.background }]}>
         {purchasedPackagesId.includes(trade.package_id) ? (
           <View style={{
             borderRadius: 8,
@@ -181,7 +164,6 @@ console.log('📦 StockContext package IDs:', packages.filter(p => p?.package_id
   );
 }
 
-// Component Definitions (unchanged)
 const CardHeader: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors }) => (
   <LinearGradient
     colors={['#04810E', '#039D74']}
@@ -245,7 +227,6 @@ const DetailsSection: React.FC<{ trade: Trade; colors: any }> = ({ trade, colors
   </View>
 );
 
-// Styles (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -261,12 +242,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     padding: 8,
-  },
-  category: {
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-    flex: 1,
   },
   headerSpacer: {
     width: 32,
@@ -331,11 +306,6 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
   },
-  subscribedText: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   cardDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -343,11 +313,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
     marginBottom: 20,
-    // shadowColor: '#000',
-    // shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.1,
-    // shadowRadius: 4,
-    // elevation: 2,
   },
   detailRow: {
     flex: 1,

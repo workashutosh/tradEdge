@@ -78,7 +78,7 @@ export default function Trades() {
   const { packages, loading } = useStockContext();
   
   //const [phone, setPhone] = useState<string>('');
-  const [todaysTrades, setTodaysTrades] = useState([]); // ✅ ADD THIS
+  const [todaysTrades, setTodaysTrades] = useState([]); //  ADD THIS
   const [allTrades, setAllTrades] = useState([]);  
   const [activeTab, setActiveTab] = useState("all");
   const { userDetails } = useUser();

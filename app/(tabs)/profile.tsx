@@ -130,7 +130,7 @@ export default function Profile() {
         invested += parseFloat(payment.amount ?? '0');
         trades += 1;
       });
-
+      console.log('"portfolio',invested);
       const mockProfit = 0 * parseFloat(txn.package_details?.package_price ?? '0');
       profit += mockProfit;
     });
@@ -237,7 +237,7 @@ export default function Profile() {
   const renderKycStatus = () => (
     <ProfileSection title="Account Status">
       <KycComponent />
-    </ProfileSection>
+    </ProfileSection> 
   );
 
   const router = useRouter();

@@ -4,12 +4,12 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  useColorScheme,
   SafeAreaView,
   Dimensions,
   Text,
   Button,
-  Linking
+  Linking,
+  Alert,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { ThemedText } from '@/components/ThemedText';
@@ -20,11 +20,10 @@ import Header from '@/components/Header';
 import { useTheme, ThemeHookReturn } from '@/utils/theme';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BadgeCheck, BadgeIndianRupeeIcon } from 'lucide-react-native';
+import { BadgeCheck } from 'lucide-react-native';
 import { AnimatedButton } from '@/components/AnimatedButton';
 import { AnimatedLinkButton } from '@/components/AnimatedLinkButton';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
 import { useUser } from '@/context/UserContext';
 
 type Package = {
@@ -43,7 +42,6 @@ type Package = {
 
 const { width } = Dimensions.get('window');
 
-// Refactor styles to be a function that accepts colors
 const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
   container: {
     flex: 1,
@@ -76,7 +74,6 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 10,
     paddingBottom: 10,
-    //backgroundColor: 'red'
   },
   tagButton: {
     paddingVertical: 6,
@@ -113,7 +110,7 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
     fontWeight: 'bold',
   },
   cardSubtitle: {
-    color: 'grey', // Consider using colors.text with opacity or a specific themed grey
+    color: 'grey',
     fontSize: 14,
     fontWeight: '500',
   },
@@ -172,7 +169,7 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0', // Consider using a theme color for border
+    borderTopColor: '#e0e0e0',
   },
   fullDetailsTitle: {
     fontSize: 14,
@@ -186,7 +183,7 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
   },
   detailCheckIcon: {
     marginRight: 8,
-    marginTop: 4, // Adjust for text baseline alignment
+    marginTop: 4,
   },
   fullDetailText: {
     fontSize: 14,
@@ -199,8 +196,8 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 5,
     borderWidth: 1,
-    width: '100%', // Make button full width
-    alignItems: 'center', // Center the text
+    width: '100%',
+    alignItems: 'center',
   },
   showDetailsButtonText: {
     fontSize: 14,
@@ -209,39 +206,26 @@ const getStyles = (colors: ThemeHookReturn) => StyleSheet.create({
 });
 
 export default function Trades() {
-  // const colorScheme = useColorScheme();
-  // const isDark = colorScheme === 'dark';
-
-  const colors: ThemeHookReturn = useTheme(); // Get colors using the hook
-  const styles = getStyles(colors); // Get styles using the function with colors
-
+  const colors: ThemeHookReturn = useTheme();
+  const styles = getStyles(colors);
   const { packages, loading } = useStockContext();
   const { userDetails, userTransactions } = useUser();
 
-  // 1. Filter valid transactions
-const purchasedPackages = (userTransactions || []).filter(txn => txn.payment_history?.length > 0);
-
-// 2. Total investment = sum of all package prices
-const totalInvestment = purchasedPackages.reduce((total, item) => {
-  return total + Number(item.package_details?.package_price || 0);
-}, 0);
-
-// 3. Total trades = number of purchased packages
-const totalTrades = purchasedPackages.length;
-
-// 4. Estimated profit = sum of profitPotential (if available)
-const estimatedProfit = purchasedPackages.reduce((total, item) => {
-  const profitStr = item.package_details?.profitPotential?.replace(/[^0-9.-]/g, '');
-  const profit = profitStr ? Number(profitStr) : 0;
-  return total + profit;
-}, 0);
-
+  const purchasedPackages = (userTransactions || []).filter(txn => txn.payment_history?.length > 0);
+  const totalInvestment = purchasedPackages.reduce((total, item) => {
+    return total + Number(item.package_details?.package_price || 0);
+  }, 0);
+  const totalTrades = purchasedPackages.length;
+  const estimatedProfit = purchasedPackages.reduce((total, item) => {
+    const profitStr = item.package_details?.profitPotential?.replace(/[^0-9.-]/g, '');
+    const profit = profitStr ? Number(profitStr) : 0;
+    return total + profit;
+  }, 0);
 
   const uniqueTags = [...new Set(packages.map((pack) => pack.categoryTag))] as string[];
   const tags = uniqueTags.length > 0 ? uniqueTags : [''];
   const [selectedTag, setSelectedTag] = useState<string>(tags[0]);
   const [expandedPackages, setExpandedPackages] = useState<Set<string>>(new Set());
-
 
   const getTagStyle = (riskCategory: string): { color: string; icon: string } => {
     if (riskCategory.includes('Low')) return { color: colors.success, icon: 'check-circle' };
@@ -250,13 +234,6 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
 
   const handleTradePress = (item: Package) => {
     console.log(item);
-    // We don't want to navigate when the user intends to expand/collapse details
-    // router.push({
-    //   pathname: '/main/TradeDetails',
-    //   params: {
-    //     package_id: item.package_id,
-    //   },
-    // });
   };
 
   const toggleDetails = (packageId: string) => {
@@ -273,42 +250,48 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
 
   const filteredServices = packages.map((pack) => ({
     ...pack,
-    // profitPotential: '15-25% p.a.', // Dummy data
   })).filter((item) => item.categoryTag === selectedTag);
 
   const handleBuyNow = async (item: Package) => {
     const transaction_id = `TXN_${Date.now()}`;
-    const payment_date = new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().slice(0, 19).replace('T', ' ');
+    const payment_date = new Date(Date.now() + 5.5 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+
     try {
+      if (!userDetails?.user_id) {
+        Alert.alert('Error', 'Please log in to proceed with payment.');
+        router.push('/main/Login');
+        return;
+      }
+
       await AsyncStorage.setItem(
         'transactionDetails',
         JSON.stringify({
           package_id: item.package_id,
-          user_id: userDetails?.user_id,
+          user_id: userDetails.user_id,
           amount: item.price,
-          payment_date: payment_date,
-          transaction_id: transaction_id,
+          payment_date,
+          transaction_id,
         })
       );
-      const result = await axios.post('https://tradedge-server.onrender.com/api/paymentURL', {
-        redirectUrl: `tradedge://paymentResult`,
-        amount: Number(item.price),
-        user_id: userDetails?.user_id,
-        package_id: item.package_id,
-        transaction_id: transaction_id,
-        payment_date: payment_date,
-      });
-      const response = result.data;
-      const paymentUrl = response.redirectUrl;
-      if (!paymentUrl) {
-        alert('Payment URL not received. Please try again.');
-        return;
-      }
-      Linking.openURL(paymentUrl).catch((err) => {
-        alert('Failed to open the URL. Please try again later.');
+
+      const upiUrl = encodeURI(
+        `upi://pay?pa=suryanshchandel09@sbi&pn=ASHUTOSH MISHRA&mc=0000&tid=${transaction_id}&tn=Tradedge Package Purchase&am=${item.price}&cu=INR`
+      );
+
+      router.push({
+        pathname: '/paymentscreen',
+        params: {
+          paymentLink: upiUrl,
+          packageTitle: item.title,
+          amount: item.price,
+        },
       });
     } catch (error) {
-      alert('Failed to open the URL. Please try again later.');
+      console.error('Payment initiation failed:', error);
+      Alert.alert('Error', 'Failed to initiate payment. Please try again later.');
     }
   };
 
@@ -322,9 +305,8 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title={"Packs"} showBuyProButton={true} />
+      <Header title="Packs" showBuyProButton={true} />
 
-      {/* Fixed Tags Bar */}
       <View style={[styles.tagSection, { backgroundColor: colors.background }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagScroll}>
           {tags.map((tag, index) => (
@@ -354,32 +336,30 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
         </ScrollView>
       </View>
 
-      {/* Scrollable Content */}
       <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: 10 }]}>
         {filteredServices.length > 0 ? (
           filteredServices.map((item, idx) => (
             <TouchableOpacity
               key={idx}
-              onPress={() => handleTradePress(item)} // Make the whole card clickable
-              activeOpacity={0.7} // Ensure the card click doesn't interfere with button clicks
-              style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}>
+              onPress={() => handleTradePress(item)}
+              activeOpacity={0.7}
+              style={[styles.cardContainer, { shadowColor: colors.shadowColor }]}
+            >
               <ThemedView style={[styles.card, { backgroundColor: colors.card }]}>
-                {/* Header Section */}
                 <View style={styles.cardHeader}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <ThemedText
-                      style={[styles.cardTitle, { color: colors.vgreen }]} // Assuming vgreen for title as seen in TradeDetails
+                      style={[styles.cardTitle, { color: colors.vgreen }]}
                     >
                       {item.title}
                     </ThemedText>
                     <BadgeCheck size={24} color={colors.success} style={{ marginLeft: 5 }} />
                   </View>
-                  <ThemedText type="subtitle" style={[styles.cardSubtitle, { color: colors.text }]}> 
+                  <ThemedText type="subtitle" style={[styles.cardSubtitle, { color: colors.text }]}>
                     Tradedge Package
                   </ThemedText>
                 </View>
 
-                {/* Details Section */}
                 <View style={styles.cardDetails}>
                   <View style={styles.detailBox}>
                     <FontAwesome name="check-circle" size={12} color={colors.success} style={styles.detailIcon} />
@@ -410,7 +390,6 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
                   </View>
                 </View>
 
-                {/* Full Details Section (Conditionally Rendered) */}
                 {expandedPackages.has(item.package_id) && (
                   <View style={styles.fullDetailsSection}>
                     <ThemedText type="subtitle" style={[styles.fullDetailsTitle, { color: colors.text }]}>What we offer:</ThemedText>
@@ -423,8 +402,6 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
                   </View>
                 )}
 
-                {/* Show/Hide Details Button */}
-                {/* {console.log('Rendering Show/Hide Details Button for package:', item.package_id, 'Expanded:', expandedPackages.has(item.package_id))} */}
                 <TouchableOpacity
                   style={[styles.showDetailsButton, { backgroundColor: colors.primary, borderColor: colors.border }]}
                   onPress={() => {
@@ -442,7 +419,6 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
                   </ThemedText>
                 </TouchableOpacity>
 
-                {/* Buttons Section */}
                 <View style={styles.buttonRow}>
                   <AnimatedButton
                     title="Enquiry"
@@ -451,7 +427,6 @@ const estimatedProfit = purchasedPackages.reduce((total, item) => {
                     variant="secondary"
                     style={[{ flex: 1, paddingVertical: 12, alignSelf: 'center' }, styles.enquiryButton]}
                   />
-
                   <AnimatedLinkButton
                     title="Buy Now"
                     onPress={() => handleBuyNow(item)}
